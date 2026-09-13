@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Locale } from '@/types/planner';
 import enMessages from '@/messages/en.json';
@@ -32,9 +32,19 @@ export function LocaleProvider({
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
   const pathname = usePathname();
 
+  // Keep documentElement lang in sync with active locale on client
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = locale;
+    }
+  }, [locale]);
+
   const setLocale = useCallback(
     (newLocale: Locale) => {
       setLocaleState(newLocale);
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = newLocale;
+      }
       try {
         localStorage.setItem('content_planner_locale', newLocale);
         document.cookie = `content_planner_locale=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;

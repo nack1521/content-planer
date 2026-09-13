@@ -1,4 +1,5 @@
 import React from 'react';
+import { notFound } from 'next/navigation';
 import { LocaleProvider } from '@/context/LocaleContext';
 import { AppShell } from '@/components/shell/AppShell';
 import { Locale } from '@/types/planner';
@@ -15,15 +16,19 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const resolvedParams = await params;
-  const locale = (
-    resolvedParams.locale === 'en' || resolvedParams.locale === 'th'
-      ? resolvedParams.locale
-      : 'th'
-  ) as Locale;
+  if (resolvedParams.locale !== 'th' && resolvedParams.locale !== 'en') {
+    notFound();
+  }
+
+  const locale = resolvedParams.locale as Locale;
 
   return (
-    <LocaleProvider initialLocale={locale}>
-      <AppShell>{children}</AppShell>
-    </LocaleProvider>
+    <html lang={locale} className="h-full">
+      <body className="min-h-full flex flex-col">
+        <LocaleProvider initialLocale={locale}>
+          <AppShell>{children}</AppShell>
+        </LocaleProvider>
+      </body>
+    </html>
   );
 }

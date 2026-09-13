@@ -14,7 +14,8 @@
     "settings": "ตั้งค่า",
     "collapseNav": "ย่อแถบนำทาง",
     "expandNav": "ขยายแถบนำทาง",
-    "comingSoonBadge": "ไมล์สโตน"
+    "mainNavAria": "แถบนำทางหลัก",
+    "mobileNavAria": "แถบนำทางสำหรับอุปกรณ์พกพา"
   },
   "summary": {
     "title": "ภาพรวมการผลิตคอนเทนต์",
@@ -25,7 +26,14 @@
     "ideasCaptured": "คลังไอเดีย",
     "readyToPublish": "พร้อมเผยแพร่",
     "publishedThisMonth": "เผยแพร่แล้ว",
-    "pipelineHealth": "สัดส่วนขั้นตอนการผลิต"
+    "pipelineHealth": "สัดส่วนขั้นตอนการผลิต",
+    "filterByStatus": "กรองตามสถานะ {status}",
+    "compactToday": "วันนี้",
+    "compactMonth": "เดือนนี้",
+    "compactProd": "กำลังผลิต",
+    "allCount": "ทั้งหมด ({count})",
+    "showMoreStages": "ทุกขั้นตอน ({count})",
+    "hideStages": "ย่อขั้นตอน"
   },
   "filters": {
     "searchPlaceholder": "ค้นหาจากชื่อเรื่อง, ฮุก, แคปชัน, หรือแฮชแท็ก...",
@@ -44,7 +52,10 @@
     "filterResults": "รายการที่แสดง",
     "filterResultsPlural": "รายการที่แสดง",
     "filterSummary": "แสดง {count} จากทั้งหมด {total} รายการ",
-    "activeFilters": "ตัวกรองที่เลือก:"
+    "activeFilters": "ตัวกรองที่เลือก:",
+    "toggleFilters": "ตัวเลือกตัวกรอง",
+    "hideFilters": "ซ่อนตัวเลือกตัวกรอง",
+    "quickFilterAria": "ตัวกรองด่วนตามสถานะ"
   },
   "status": {
     "idea": "ไอเดีย",
@@ -138,8 +149,26 @@
     "items": "รายการ",
     "item": "รายการ"
   },
-  "previewNotice": {
-    "milestoneBannerTitle": "ไมล์สโตน 1 — โครงสร้างแอปพลิเคชันและหน้าแผนงานคอนเทนต์",
-    "milestoneBannerDesc": "กำลังแสดงตัวอย่างหน้าแผนคอนเทนต์พร้อมข้อมูลจำลองที่สมจริง การเชื่อมต่อ Supabase และระบบล็อกอินจะเริ่มในไมล์สโตน 2"
+  "calendar": {
+    "title": "ปฏิทิน",
+    "subtitle": "ภาพรวมกำหนดการรายเดือน",
+    "inDevelopment": "มุมมองปฏิทินกำลังอยู่ระหว่างการจัดเตรียม เมื่อมีคอนเทนต์ที่กำหนดวันเผยแพร่ จะแสดงผลในมุมมองปฏิทินรายเดือนที่นี่",
+    "backToPlanner": "กลับไปยังหน้าแผนงาน"
+  },
+  "ideas": {
+    "title": "คลังไอเดีย",
+    "subtitle": "บันทึกไอเดียด่วน",
+    "inDevelopment": "คลังไอเดียกำลังอยู่ระหว่างการจัดเตรียม บันทึกไอเดียแรกเริ่มแบบเร่งด่วนจะถูกรวบรวมไว้ที่นี่ก่อนนำไปวางแผนงาน",
+    "backToPlanner": "กลับไปยังหน้าแผนงาน"
+  },
+  "settings": {
+    "title": "ตั้งค่า",
+    "subtitle": "การตั้งค่าระบบและการแสดงผล",
+    "languageLabel": "ภาษาที่ใช้งาน",
+    "languageDesc": "ภาษาเริ่มต้นของแอปพลิเคชัน",
+    "timezoneLabel": "โซนเวลา",
+    "timezoneDesc": "โซนเวลาสำหรับกำหนดการผลิตและเผยแพร่",
+    "timezoneValue": "เอเชีย/กรุงเทพ (UTC+7:00)",
+    "backToPlanner": "กลับไปยังหน้าแผนงาน"
   }
 }

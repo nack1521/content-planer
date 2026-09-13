@@ -14,7 +14,8 @@
     "settings": "Settings",
     "collapseNav": "Collapse Navigation",
     "expandNav": "Expand Navigation",
-    "comingSoonBadge": "Milestone"
+    "mainNavAria": "Main navigation",
+    "mobileNavAria": "Mobile navigation bar"
   },
   "summary": {
     "title": "Production Overview",
@@ -25,7 +26,14 @@
     "ideasCaptured": "Idea Bank",
     "readyToPublish": "Ready to Post",
     "publishedThisMonth": "Published",
-    "pipelineHealth": "Pipeline Stage Breakdown"
+    "pipelineHealth": "Pipeline Stage Breakdown",
+    "filterByStatus": "Filter by {status}",
+    "compactToday": "Today",
+    "compactMonth": "This Month",
+    "compactProd": "In Prod",
+    "allCount": "All ({count})",
+    "showMoreStages": "All stages ({count})",
+    "hideStages": "Collapse stages"
   },
   "filters": {
     "searchPlaceholder": "Search by title, hook, caption, or hashtag...",
@@ -44,7 +52,10 @@
     "filterResults": "item shown",
     "filterResultsPlural": "items shown",
     "filterSummary": "Showing {count} of {total} content records",
-    "activeFilters": "Active filters:"
+    "activeFilters": "Active filters:",
+    "toggleFilters": "Filter options",
+    "hideFilters": "Hide filter options",
+    "quickFilterAria": "Quick filter by status"
   },
   "status": {
     "idea": "Idea",
@@ -138,8 +149,26 @@
     "items": "items",
     "item": "item"
   },
-  "previewNotice": {
-    "milestoneBannerTitle": "Milestone 1 — Application foundation and planner slice",
-    "milestoneBannerDesc": "Viewing active planner slice with realistic sample records. Supabase and authentication will connect in Milestone 2."
+  "calendar": {
+    "title": "Calendar",
+    "subtitle": "Monthly schedule overview",
+    "inDevelopment": "Calendar view is in development. Scheduled content with target publication dates will be organized here.",
+    "backToPlanner": "Back to Planner"
+  },
+  "ideas": {
+    "title": "Idea Bank",
+    "subtitle": "Quick capture concepts",
+    "inDevelopment": "Idea Bank is in development. Fast-captured content concepts and unscheduled ideas will be organized here.",
+    "backToPlanner": "Back to Planner"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Workspace and display preferences",
+    "languageLabel": "Language",
+    "languageDesc": "Application display language",
+    "timezoneLabel": "Timezone",
+    "timezoneDesc": "Production schedule timezone",
+    "timezoneValue": "Asia/Bangkok (UTC+7:00)",
+    "backToPlanner": "Back to Planner"
   }
 }

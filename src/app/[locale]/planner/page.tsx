@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { PlannerView } from '@/components/planner/PlannerView';
 
 export async function generateMetadata({
@@ -6,8 +7,11 @@ export async function generateMetadata({
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-  const { locale } = await params;
-  const isThai = locale === 'th';
+  const resolvedParams = await params;
+  if (resolvedParams.locale !== 'th' && resolvedParams.locale !== 'en') {
+    notFound();
+  }
+  const isThai = resolvedParams.locale === 'th';
 
   return {
     title: isThai
@@ -19,6 +23,15 @@ export async function generateMetadata({
   };
 }
 
-export default function PlannerPage() {
+export default async function PlannerPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const resolvedParams = await params;
+  if (resolvedParams.locale !== 'th' && resolvedParams.locale !== 'en') {
+    notFound();
+  }
+
   return <PlannerView />;
 }

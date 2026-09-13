@@ -49,7 +49,7 @@ export function MobileNav() {
   return (
     <nav
       className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 text-slate-400 py-1.5 px-3 flex justify-around items-center select-none"
-      aria-label="Mobile Navigation Bar"
+      aria-label={t('nav.mobileNavAria')}
     >
       {navItems.map((item) => {
         const Icon = item.icon;
@@ -57,12 +57,12 @@ export function MobileNav() {
           <Link
             key={item.id}
             href={item.href}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg text-[11px] font-medium transition-colors ${
-              item.active ? 'text-purple-400' : 'text-slate-400 hover:text-slate-200'
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg text-xs font-medium transition-colors ${
+              item.active ? 'text-purple-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <Icon className="w-5 h-5 mb-0.5" size={20} />
-            <span className="truncate max-w-[64px]">{item.label}</span>
+            <span className="truncate max-w-[70px]">{item.label}</span>
           </Link>
         );
       })}

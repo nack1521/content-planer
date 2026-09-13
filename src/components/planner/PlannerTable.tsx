@@ -26,11 +26,11 @@ export function PlannerTable({ items, onSelectItem }: PlannerTableProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[980px]">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/75 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <tr className="border-b border-slate-200 bg-slate-50/75 text-xs font-bold uppercase tracking-wider text-slate-600">
               <th scope="col" className="py-3 px-4 w-[34%]">
                 {t('table.headerTitle')}
               </th>
@@ -74,13 +74,13 @@ export function PlannerTable({ items, onSelectItem }: PlannerTableProps) {
                   <td className="py-3.5 px-4 align-top">
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-slate-900 line-clamp-1 group-hover:text-purple-600 transition-colors">
+                        <span className="font-semibold text-slate-900 line-clamp-1 group-hover:text-purple-600 transition-colors">
                           {item.title}
                         </span>
                       </div>
 
                       {item.hook && (
-                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
                           <span className="italic line-clamp-1">&ldquo;{item.hook}&rdquo;</span>
                           <button
                             type="button"
@@ -90,9 +90,9 @@ export function PlannerTable({ items, onSelectItem }: PlannerTableProps) {
                             aria-label={t('table.copyHook')}
                           >
                             {copiedId === item.id ? (
-                              <IconCheck className="w-3.5 h-3.5 text-emerald-600" size={14} />
+                              <IconCheck className="w-4 h-4 text-emerald-600" size={16} />
                             ) : (
-                              <IconCopy className="w-3.5 h-3.5" size={14} />
+                              <IconCopy className="w-4 h-4" size={16} />
                             )}
                           </button>
                         </div>
@@ -103,13 +103,13 @@ export function PlannerTable({ items, onSelectItem }: PlannerTableProps) {
                           {item.hashtags.slice(0, 3).map((tag) => (
                             <span
                               key={tag}
-                              className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.2 rounded"
+                              className="text-xs font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded"
                             >
                               {tag}
                             </span>
                           ))}
                           {item.hashtags.length > 3 && (
-                            <span className="text-[10px] font-mono text-slate-400">
+                            <span className="text-xs font-mono text-slate-400">
                               +{item.hashtags.length - 3}
                             </span>
                           )}
@@ -134,14 +134,14 @@ export function PlannerTable({ items, onSelectItem }: PlannerTableProps) {
 
                   {/* Format & Goal */}
                   <td className="py-3.5 px-3 align-top">
-                    <div className="space-y-1 text-xs">
+                    <div className="space-y-1">
                       {item.format && (
-                        <div className="text-slate-700 font-medium truncate max-w-[150px]">
+                        <div className="text-slate-800 font-medium text-xs sm:text-sm truncate max-w-[150px]">
                           {t(`format.${item.format}`)}
                         </div>
                       )}
                       {item.goal && (
-                        <div className="text-[11px] text-slate-400 truncate max-w-[150px]">
+                        <div className="text-xs text-slate-500 truncate max-w-[150px]">
                           {t(`goal.${item.goal}`)}
                         </div>
                       )}
@@ -152,18 +152,18 @@ export function PlannerTable({ items, onSelectItem }: PlannerTableProps) {
                   <td className="py-3.5 px-3 align-top">
                     {formattedSchedule ? (
                       <div className="space-y-0.5">
-                        <div className="flex items-center gap-1 text-xs text-slate-800 font-medium">
-                          <IconClock className="w-3.5 h-3.5 text-slate-400 shrink-0" size={14} />
-                          <span className="font-mono text-[11px]">{formattedSchedule}</span>
+                        <div className="flex items-center gap-1.5 text-slate-800 font-medium">
+                          <IconClock className="w-4 h-4 text-slate-400 shrink-0" size={16} />
+                          <span className="font-mono text-xs sm:text-sm">{formattedSchedule}</span>
                         </div>
                         {isToday && (
-                          <span className="inline-flex items-center text-[10px] font-bold text-purple-700 bg-purple-100/70 px-1.5 py-0.2 rounded">
+                          <span className="inline-flex items-center text-xs font-bold text-purple-700 bg-purple-100/70 px-1.5 py-0.5 rounded">
                             {t('common.today')}
                           </span>
                         )}
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-400 italic">
+                      <span className="text-xs sm:text-sm text-slate-400 italic">
                         {t('table.unscheduled')}
                       </span>
                     )}
@@ -183,7 +183,7 @@ export function PlannerTable({ items, onSelectItem }: PlannerTableProps) {
                   <td className="py-3.5 px-3 align-top text-right">
                     <button
                       type="button"
-                      className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                      className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                       title={t('table.openMenu')}
                       aria-label={t('table.openMenu')}
                     >

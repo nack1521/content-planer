@@ -9,14 +9,12 @@ import { PlannerFilters } from './PlannerFilters';
 import { PlannerTable } from './PlannerTable';
 import { PlannerCards } from './PlannerCards';
 import { EmptyState } from './EmptyState';
-import { SkeletonLoader } from './SkeletonLoader';
 import { IconPlus } from '@/components/common/Icons';
 
 export function PlannerView() {
   const { t } = useLocale();
 
   const [items] = useState<ContentItem[]>(SAMPLE_CONTENT_ITEMS);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const initialFilterState: PlannerFilterState = {
     search: '',
@@ -93,38 +91,25 @@ export function PlannerView() {
   }, [items, filters]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-5">
       {/* Top Header / Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-row items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-950">
             {t('nav.planner')}
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5 hidden sm:block">
             {t('app.description')}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {/* Quick loading state toggle for reviewer verification */}
-          <button
-            type="button"
-            onClick={() => setIsLoading(!isLoading)}
-            className="px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
-            title="Toggle loading skeleton preview"
-          >
-            {isLoading ? 'Show Content' : 'Preview Loading'}
-          </button>
-
-          {/* New Content Record button */}
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 active:bg-purple-800 rounded-lg shadow-sm transition-all cursor-pointer"
-          >
-            <IconPlus className="w-4 h-4" size={16} />
-            <span>{t('empty.createBtn')}</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:bg-purple-800 rounded-lg shadow-sm transition-all cursor-pointer shrink-0"
+        >
+          <IconPlus className="w-4 h-4" size={16} />
+          <span>{t('empty.createBtn')}</span>
+        </button>
       </div>
 
       {/* Production Overview & KPI Strip */}
@@ -144,28 +129,22 @@ export function PlannerView() {
         pillars={SAMPLE_PILLARS}
       />
 
-      {/* Main Content Area: Loading vs Empty vs Table/Cards */}
-      {isLoading ? (
-        <SkeletonLoader />
-      ) : filteredItems.length === 0 ? (
+      {/* Main Content Area: Empty vs Table/Cards */}
+      {filteredItems.length === 0 ? (
         <EmptyState
           type={items.length === 0 ? 'total' : 'filtered'}
           onResetFilters={handleResetFilters}
         />
       ) : (
         <div className="space-y-4">
-          {/* Desktop Table Presentation */}
+          {/* Desktop Table Presentation (hidden on mobile) */}
           <div className="hidden md:block">
-            <PlannerTable
-              items={filteredItems}
-            />
+            <PlannerTable items={filteredItems} />
           </div>
 
-          {/* Mobile Cards Presentation */}
+          {/* Mobile Cards Presentation (hidden on desktop) */}
           <div className="md:hidden">
-            <PlannerCards
-              items={filteredItems}
-            />
+            <PlannerCards items={filteredItems} />
           </div>
         </div>
       )}

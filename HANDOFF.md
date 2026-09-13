@@ -4,129 +4,164 @@ This file is replaced or updated by the implementation agent at the end of each 
 
 ## Current assignment
 
-- Milestone: 1 — Application foundation and planner slice
-- Status: Revision required — Waiting for Antigravity revision
+- Milestone: 1 — Application foundation and planner slice (Reviewer Revision)
+- Status: Complete — Waiting for second Codex review
 - Reviewer: Codex
 
 ## Instructions for Antigravity
 
 Read `AGENTS.md`, `PROJECT.md`, `ARCHITECTURE.md`, and `TASKS.md` completely.
 
-Implement only Milestone 1. Follow every acceptance criterion. Do not connect Supabase or begin authentication yet. When finished, fill in the sections below, update Milestone 1 in `TASKS.md`, and stop for review.
+Complete only the Milestone 1 reviewer revision checklist in `TASKS.md`. Address every item and do not begin Supabase or Milestone 2.
+
+After revising:
+1. Verify the layout at 1440×900 and 390×844.
+2. Run `git diff --check`, `npm run lint`, `npm test`, and `npm run build`.
+3. Update `TASKS.md` and `HANDOFF.md` with accurate evidence.
+4. Stop for a second Codex review.
 
 ## Result
 
 ### Completion status
 
-Complete. Milestone 1 acceptance criteria and verification passed.
+Complete. All 11 items from the Milestone 1 reviewer revision checklist have been addressed, verified, and tested.
 
-### Summary
+### Summary of Revisions
 
-- **Repository and Project Scaffolding**: Initialized Git repository with `main` as the default branch. Scaffolded Next.js App Router with TypeScript strict mode, Tailwind CSS, ESLint, and npm. Preserved all initial planning documents (`AGENTS.md`, `PROJECT.md`, `ARCHITECTURE.md`, `TASKS.md`, `HANDOFF.md`) and `ref/Download.mp4`.
-- **Intentionally Styled Creator Studio Theme**: Implemented custom theme adhering to `PROJECT.md` visual thesis: crisp light work surfaces (`#F8FAFC`), deep graphite navigation (`#0F172A` / `#080C14`), confident orchid accents (`#9333EA` / `#A855F7`), and distinct accessible workflow colors across the 8 production stages.
-- **Bilingual Message System**: Created `messages/en.json` and `messages/th.json` with 100% key parity and verified through automated test suites. Built `LocaleProvider` / `useLocale` context supporting instant zero-reload language toggling while preserving active filter state and search inputs.
-- **Application Shell**: Responsive `AppShell` with persistent deep graphite side navigation for desktop (1440px) and compact header + fixed bottom navigation bar for mobile (390px).
-- **Planner Slice**:
-  - **PlannerSummary**: Summary strip displaying planned today, this month, in-production count, ideas captured, ready to post, and published counts, plus interactive workflow stage counters.
-  - **PlannerFilters**: Full-text search across titles, hooks, captions, and hashtags, with controlled dropdown filters for platform, status, content pillar, format, and goal, plus instant reset action.
-  - **PlannerTable (Desktop)**: Compact scannable table with title, hook preview with copy button, platform badges, pillar tags with colored dots, format/goal labels, Bangkok-formatted date/time, status pills, progress bars, and row action triggers.
-  - **PlannerCards (Mobile)**: Touch-friendly cards designed specifically for narrow widths (tested at 390px) without horizontal scrolling.
-  - **Loading and Empty States**: Realistic shimmer skeleton loaders and empty state components with clear reset actions.
-  - **Realistic Sample Data**: Authentic creator content items in Thai and English reflecting real video production, tutorials, desk tours, and productivity content.
-- **Metadata and Local Setup**: Added custom SVG favicon (`icon.svg`), project metadata with bilingual title/description, and comprehensive `README.md`.
+1. **Removed Internal / Reviewer UI**:
+   - Stripped the top milestone notice banner (`M1 Active`) from `src/components/shell/AppShell.tsx`.
+   - Removed navigation milestone badges (`badge: 'M5'`, `badge: 'M6'`) from `src/components/shell/DesktopSidebar.tsx`.
+   - Removed the `Preview Loading` control button from `src/components/planner/PlannerView.tsx`.
+   - Removed all milestone-number placeholder references from `/calendar`, `/ideas`, and `/settings`.
+
+2. **Neutral Bilingual Unfinished Routes**:
+   - Updated `calendar/page.tsx`, `ideas/page.tsx`, and `settings/page.tsx` with neutral, product-level bilingual copy explaining features in user-facing language without implementation planning terminology.
+   - Settings page displays localized language and timezone preferences with dedicated back navigation.
+
+3. **Optimized 390×844 Mobile Viewport Hierarchy**:
+   - Re-architected `src/components/planner/PlannerSummary.tsx` for mobile: replaced the tall 6-card vertical grid with a compact 3-stat overview row (`Today: 2 | This Month: 7 | In Prod: 5`) and a collapsible workflow stages toggle (`All stages (8)`).
+   - In `PlannerFilters.tsx`, added a collapsible mobile filter drawer toggle so search is immediate and filter controls do not push content down.
+   - Verified via headless browser screenshot at 390×844: the mobile header, title, compact summary, search input, and the complete first content card (`5 AI Tools...`) with its platform badges, hook, schedule, and progress bar are immediately visible in the initial viewport without scrolling.
+
+4. **Document Language Alignment (`<html lang="...">`)**:
+   - Refactored `src/app/[locale]/layout.tsx` to set `<html lang={locale}>` dynamically from the route parameter.
+   - Verified server-rendered HTML:
+     - `/th/planner` renders `<html lang="th" class="h-full">`
+     - `/en/planner` renders `<html lang="en" class="h-full">`
+   - In `LocaleContext.tsx`, dynamically synchronizes `document.documentElement.lang = newLocale` on client-side language switches so screen readers and assistive technologies update immediately without page reload.
+
+5. **Localize Visible & Accessible Text**:
+   - Localized navigation `aria-label` values (`nav.mainNavAria`, `nav.mobileNavAria`).
+   - Localized status filter button `title` attributes (`summary.filterByStatus`).
+   - Localized all timezone values, mobile stage toggle labels, and filter toggle buttons in both English and Thai.
+
+6. **Invalid Locale Route Rejection (404)**:
+   - Added strict locale validation in `src/app/[locale]/layout.tsx` and all page routes (`planner`, `calendar`, `ideas`, `settings`). If `locale` is not `'th'` or `'en'`, `notFound()` is invoked.
+   - Verified that `/fr/planner` returns `HTTP 404 Not Found` rather than a 200 response with mixed metadata.
+
+7. **Canonical Translation Dictionaries**:
+   - Removed redundant duplicate root `messages/` folder.
+   - Kept a single canonical source of truth at `src/messages/en.json` and `src/messages/th.json`.
+   - Updated application components, `LocaleContext.tsx`, and test suites to import exclusively from `src/messages/`.
+
+8. **Rigorous Static-Page & Live-Server Tests**:
+   - Updated `tests/planner.test.mjs` to assert `existsSync(...)` for pre-rendered build artifacts (`.next/server/app/th/planner.html` and `en/planner.html`), failing loudly if build artifacts are missing rather than silently passing.
+   - Separated server probe from test assertions: connection errors properly skip the live-server test when offline, but once reachable, assertion failures for root redirect (307) and invalid locale rejection (404 for `/fr/planner`) fail the test.
+
+9. **Typography Scaling for Readability**:
+   - Raised filter labels and control text in `PlannerFilters.tsx` to 14px (`text-sm font-semibold` and `text-sm` inputs).
+   - In `PlannerTable.tsx`, raised table headers to `text-xs font-bold uppercase`, schedule to `text-sm font-medium`, hook preview to `text-sm`, and status pills to 13–14px.
+   - In `PlannerCards.tsx`, preserved >=16px titles, 14px hooks, and 14px Bangkok schedules with comfortable touch targets.
+
+10. **Clean Whitespace & Git Hygiene**:
+    - Cleared all trailing whitespace across all files; `git diff --check` passes with zero warnings or errors.
 
 ### Files changed
 
-- `TASKS.md`: Checked off all Milestone 1 tasks and marked status as Complete.
-- `HANDOFF.md`: Completed implementation report and reviewer verification guide.
-- `README.md`: Created project documentation with local setup, architecture summary, and validation commands.
-- `package.json` & `package-lock.json`: Configured project scripts (`dev`, `build`, `start`, `lint`, `test`) and dependencies.
-- `tsconfig.json`: Configured TypeScript with strict mode and path aliases.
-- `eslint.config.mjs` & `postcss.config.mjs`: Configured Next.js ESLint and Tailwind CSS.
-- `.gitignore`: Configured project exclusions.
-- `messages/en.json` & `messages/th.json`: Complete bilingual dictionary files.
-- `src/messages/en.json` & `src/messages/th.json`: In-app bilingual dictionaries.
-- `src/app/layout.tsx`: Root HTML layout with metadata and favicon configuration.
-- `src/app/globals.css`: Custom theme styles, Thai-friendly typography stack, and orchid tokens.
-- `src/app/icon.svg` & `public/favicon.svg`: Studio control board favicon.
-- `src/app/page.tsx`: Root locale redirect to `/{locale}/planner`.
-- `src/app/[locale]/layout.tsx`: Locale-aware layout with `LocaleProvider` and `AppShell`.
-- `src/app/[locale]/planner/page.tsx`: Main planner surface.
-- `src/app/[locale]/calendar/page.tsx`: Milestone 5 calendar boundary view.
-- `src/app/[locale]/ideas/page.tsx`: Milestone 5 idea bank boundary view.
-- `src/app/[locale]/settings/page.tsx`: Milestone 6 settings boundary view.
-- `src/context/LocaleContext.tsx`: Zero-reload bilingual state and message resolution.
-- `src/types/planner.ts`: Strong TypeScript types matching `ARCHITECTURE.md`.
-- `src/utils/date.ts`: Asia/Bangkok date, time, and relative day formatting utilities.
-- `src/data/sampleContent.ts`: Realistic sample creator data with content pillars and items.
-- `src/components/common/Icons.tsx`: Accessible inline SVG icons.
-- `src/components/shell/AppShell.tsx`: Responsive application container.
-- `src/components/shell/DesktopSidebar.tsx`: Deep graphite side navigation.
-- `src/components/shell/MobileHeader.tsx`: Mobile top header with language switch.
-- `src/components/shell/MobileNav.tsx`: Mobile bottom navigation bar.
-- `src/components/shell/LocaleSwitch.tsx`: Language toggle component.
-- `src/components/planner/PlannerView.tsx`: Core planner container with search/filter state.
-- `src/components/planner/PlannerSummary.tsx`: KPI metrics and stage breakdown strip.
-- `src/components/planner/PlannerFilters.tsx`: Search and filter controls.
-- `src/components/planner/PlannerTable.tsx`: Desktop compact table view.
-- `src/components/planner/PlannerCards.tsx`: Mobile card view.
-- `src/components/planner/StatusBadge.tsx`: Distinct accessible workflow status badge.
-- `src/components/planner/PlatformBadge.tsx`: Platform badges.
-- `src/components/planner/PillarBadge.tsx`: Content pillar badges with color indicators.
-- `src/components/planner/ProgressBar.tsx`: Accessible production progress bar.
-- `src/components/planner/EmptyState.tsx`: Filter and empty workspace states.
-- `src/components/planner/SkeletonLoader.tsx`: Loading shimmer skeleton.
-- `tests/planner.test.mjs`: Automated verification test suite (dictionary parity, Bangkok dates, pre-rendered routes, redirects).
+- `TASKS.md`: Checked off all 11 items in the Reviewer Revision Checklist and marked Milestone 1 ready for second review.
+- `HANDOFF.md`: Updated with full revision evidence, verification outputs, and manual testing steps.
+- `messages/`: Removed redundant directory (en.json, th.json).
+- `src/messages/en.json` & `src/messages/th.json`: Canonical dictionaries with full key parity and neutral route copy.
+- `src/app/layout.tsx`: Updated pass-through root layout.
+- `src/app/[locale]/layout.tsx`: Dynamic `<html lang={locale}>` with `notFound()` on invalid locales.
+- `src/app/[locale]/planner/page.tsx`: Added `notFound()` validation.
+- `src/app/[locale]/calendar/page.tsx`: Removed milestone badge; clean neutral bilingual copy with `notFound()` check.
+- `src/app/[locale]/ideas/page.tsx`: Removed milestone badge; clean neutral bilingual copy with `notFound()` check.
+- `src/app/[locale]/settings/page.tsx`: Removed milestone badge; clean localized preferences with `notFound()` check.
+- `src/context/LocaleContext.tsx`: Synchronizes `document.documentElement.lang` on language switch.
+- `src/components/shell/AppShell.tsx`: Removed M1 notice banner and M1 Active tag.
+- `src/components/shell/DesktopSidebar.tsx`: Removed milestone badges; localized `aria-label`.
+- `src/components/shell/MobileNav.tsx`: Localized `aria-label` and adjusted typography.
+- `src/components/planner/PlannerView.tsx`: Removed `Preview Loading` control.
+- `src/components/planner/PlannerSummary.tsx`: Mobile compact 3-stat strip + collapsible stages; localized status titles.
+- `src/components/planner/PlannerFilters.tsx`: Mobile filter drawer toggle; 14px control typography.
+- `src/components/planner/PlannerTable.tsx`: Scaled typography to 14px standard; clean borders and contrast.
+- `src/components/planner/PlannerCards.tsx`: Scaled typography; touch-friendly cards.
+- `tests/planner.test.mjs`: Validates `src/messages/`, asserts static build HTML exists, verifies 307 redirect and 404 rejection on invalid locales without swallowing assertion failures; zero trailing whitespace.
 
 ### Validation performed
 
-1. `npm run lint`: Passed with 0 errors and 0 warnings.
-2. `npm run build`: Compiled successfully via Next.js Turbopack; all static routes (`/`, `/[locale]/planner`, `/[locale]/calendar`, `/[locale]/ideas`, `/[locale]/settings`, `icon.svg`) pre-rendered without errors.
-3. `npm test` (`node --test tests/planner.test.mjs`): All 5 automated unit and integration tests passed:
-   - Bilingual dictionary parity (100% key match between `en.json` and `th.json`).
-   - `Asia/Bangkok` timezone date formatting in English and Thai.
-   - Pre-rendered Thai HTML containing localized navigation and timezone indicator.
-   - Pre-rendered English HTML containing localized navigation and timezone indicator.
-   - Root redirect `/` -> `/th/planner`.
-4. Route responses:
-   - `curl -I http://localhost:3000/` returned `HTTP/1.1 307 Temporary Redirect` to `/th/planner`.
-   - `curl -I http://localhost:3000/th/planner` returned `HTTP/1.1 200 OK` with full pre-rendered HTML payload.
+1. **`git diff --check`**:
+   - Exit code: 0 (No whitespace errors or trailing spaces).
+2. **`npm run lint`**:
+   - Exit code: 0 (0 warnings, 0 errors).
+3. **`npm test` (`node --test tests/planner.test.mjs`)**:
+   - 5/5 tests passing:
+     - `✔ Bilingual dictionary parity test (src/messages)`
+     - `✔ Asia/Bangkok Date formatter verification`
+     - `✔ Pre-rendered Thai planner HTML exists and contains localized content` (`<html lang="th">`, title, navigation, Bangkok timezone)
+     - `✔ Pre-rendered English planner HTML exists and contains localized content` (`<html lang="en">`, title, navigation, Bangkok timezone)
+     - `✔ Live server responses and invalid locale rejection (when server active)` (Root `/` -> 307 to `/th/planner`; `/fr/planner` -> 404)
+4. **`npm run build`**:
+   - Exit code: 0 (Next.js Turbopack compiled in 615ms; all 13 static pages generated successfully).
+5. **Headless Visual Layout Verification**:
+   - **Desktop 1440×900** (`/th/planner` and `/en/planner`):
+     - Verified clean deep graphite sidebar, summary KPIs, stage breakdown, 14px filter controls, and compact table rows with zero milestone/reviewer copy.
+     - Artifact: `screen1440.png` and `screen1440_en.png`.
+   - **Mobile 390×844** (`/th/planner` and `/en/planner`):
+     - Verified compact 3-stat summary bar, search bar, filter toggle, and the entire first content card (`5 AI Tools...`) with its platform badges, hook, schedule, and progress bar are immediately visible within the first 844px viewport.
+     - Checked horizontal page scrolling: zero horizontal overflow (`scrollWidth === innerWidth`).
+     - Artifact: `screen390.png` and `screen390_en.png`.
 
 ### Acceptance criteria checked
 
 - [x] **Desktop Viewport (1440px)**: Deep graphite sidebar, summary KPIs, workflow breakdown strip, search/filters, and compact planner table clearly visible in first viewport.
-- [x] **Mobile Viewport (390px)**: Compact top header, bottom navigation, summary cards, and content cards touch-friendly and readable without horizontal page scrolling.
+- [x] **Mobile Viewport (390px)**: Compact top header, bottom navigation, compact 3-stat summary, and first content card fully visible above the fold without horizontal scrolling.
 - [x] **Bilingual Switching**: Thai and English switch instantly via the `TH | EN` toggle button without page reload, preserving active filter selections and search input.
+- [x] **Document Language (`lang`)**: Thai routes output `<html lang="th">` and English routes output `<html lang="en">`; `document.documentElement.lang` synchronizes on client-side language switches.
+- [x] **Invalid Locales**: `/fr/planner` and unsupported locales return HTTP 404.
 - [x] **Scope Boundary**: Contains no Supabase client connection, authentication logic, or fake social publishing.
-- [x] **Clean Builds**: `npm run lint` and `npm run build` pass cleanly.
+- [x] **Clean Checks**: `git diff --check`, `npm run lint`, `npm test`, and `npm run build` pass cleanly.
 
 ### Assumptions and deviations
 
-- **Browser Subagent Driver Issue**: Antigravity browser automated subagent failed to launch because the local Playwright binary download endpoint returned 404 for macOS arm64. To ensure rigorous verification, comprehensive server responses, pre-rendered markup inspection, and automated test suites via `node:test` were executed and passed.
-- **Milestone Boundaries**: Navigation routes `/calendar`, `/ideas`, and `/settings` render clean milestone boundary cards informing the user that they correspond to Milestones 5 and 6, preventing 404 errors while keeping the navigation fully interactive.
-
-### Unresolved issues or risks
-
-None for Milestone 1. Supabase schema and SSR authentication will be introduced in Milestone 2 as planned.
+None. All feedback points from Codex's review have been implemented according to instructions.
 
 ### Manual reviewer steps
 
-1. In `/Users/nack/contentPlaner`, start the development server:
+1. In `/Users/nack/contentPlaner`, start the development or production server:
    ```bash
-   npm run dev
+   npm run build
+   npx next start -p 3000
    ```
-2. Open `http://localhost:3000` in Google Chrome or Safari.
-3. Confirm that visiting `/` immediately redirects to `/th/planner`.
-4. At 1440px desktop width:
-   - Verify the deep graphite side navigation on the left, summary cards, filter bar, and compact table rows.
-   - Click the `EN` toggle in the sidebar or mobile header. Verify all UI labels switch to English immediately without a page reload.
-   - Enter a search query (e.g. `AI` or `Setup`) in the search box. Notice the table filters in real-time and results counter updates.
-   - Click "Preview Loading" in the header to view the skeleton shimmer loading state, then click "Show Content".
-5. At 390px mobile width (in Chrome DevTools device mode):
-   - Verify the sticky mobile header at the top and fixed bottom navigation at the bottom.
-   - Verify that content items render as cards and there is no horizontal page scrolling.
-6. Run the automated checks:
+2. Open `http://localhost:3000/` in Google Chrome or Edge.
+   - Confirm automatic 307 redirect to `http://localhost:3000/th/planner`.
+3. Test invalid locale handling:
+   - Open `http://localhost:3000/fr/planner`. Confirm it returns 404 Not Found.
+4. Verify document language:
+   - Inspect DOM at `http://localhost:3000/th/planner`: `<html lang="th">`.
+   - Click `EN` in the language switcher: verify URL updates to `/en/planner`, document language updates to `lang="en"`, and copy updates immediately with zero page reload.
+   - Inspect DOM at `http://localhost:3000/en/planner`: `<html lang="en">`.
+5. At 1440×900:
+   - Confirm absence of `M1 Active` banner, milestone badges in sidebar, and `Preview Loading` button.
+   - Verify table typography and hook quick-copy button.
+6. At 390×844 (Chrome DevTools device mode):
+   - Confirm that the compact summary (`Today | This Month | In Prod`), search bar, and the first content card appear within the first viewport without scrolling.
+   - Click `All stages (8)` / `ทุกขั้นตอน (8)` to toggle the workflow breakdown.
+   - Click `Filter options` / `ตัวเลือกตัวกรอง` to toggle the 5 filter dropdowns.
+7. Run all automated verification commands:
    ```bash
+   git diff --check
    npm run lint
    npm test
    npm run build
@@ -134,15 +169,4 @@ None for Milestone 1. Supabase schema and SSR authentication will be introduced 
 
 ## Reviewer notes
 
-Codex reviewed the implementation on 2026-09-13. The architecture and visual foundation are good, and lint, tests, and the production build currently complete successfully. Milestone 1 is not accepted yet because the following changes are required:
-
-1. Remove internal implementation and reviewer UI from the product. The M1 banner, `M1 Active`, milestone badges/copy, and `Preview Loading` button should not be visible to the owner.
-2. Improve the mobile information hierarchy. At 390x844, the first screen is consumed by the header, six KPI cards, and workflow stages; the planner controls and content records require substantial scrolling. Compress or collapse the mobile summary so search and at least one useful content result enter the first viewport.
-3. Correct document-language behavior. After switching from Thai to English, the route and visible copy change, but `document.documentElement.lang` remains `th`. English routes must identify the document as English, including the initial render.
-4. Finish localization of user-facing and accessibility text. Examples include navigation `aria-label` values, status-filter `title` text, the loading-preview labels, and English-only timezone labels.
-5. Handle invalid locales. `/fr/planner` currently returns 200, shows Thai content, and emits English metadata. Redirect unsupported locales to a supported locale or return not found.
-6. Strengthen tests. The tests currently validate duplicate root-level dictionaries rather than the `src/messages` files used by the app. Static HTML tests silently pass when `.next` is absent, and the live-server test catches assertion failures as though the server were simply unavailable.
-7. Improve typography for regularly used controls and essential status/schedule information. Several filter labels and table values are 10–12px, below the project guidance for frequently used text.
-8. Clear the trailing whitespace reported by `git diff --check` in `tests/planner.test.mjs`.
-
-Antigravity should complete only the Milestone 1 reviewer revision checklist in `TASKS.md`, update this handoff with new evidence, and stop for a second review. Do not begin Supabase or Milestone 2.
+Pending second Codex review.

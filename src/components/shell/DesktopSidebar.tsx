@@ -31,7 +31,6 @@ export function DesktopSidebar() {
       href: `/${locale}/calendar`,
       icon: IconCalendar,
       active: pathname.includes('/calendar'),
-      badge: 'M5',
     },
     {
       id: 'ideas',
@@ -39,7 +38,6 @@ export function DesktopSidebar() {
       href: `/${locale}/ideas`,
       icon: IconLightbulb,
       active: pathname.includes('/ideas'),
-      badge: 'M5',
     },
     {
       id: 'settings',
@@ -47,7 +45,6 @@ export function DesktopSidebar() {
       href: `/${locale}/settings`,
       icon: IconSettings,
       active: pathname.includes('/settings'),
-      badge: 'M6',
     },
   ];
 
@@ -72,7 +69,7 @@ export function DesktopSidebar() {
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 p-3 space-y-1.5" aria-label="Main Navigation">
+      <nav className="flex-1 p-3 space-y-1.5" aria-label={t('nav.mainNavAria')}>
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -94,12 +91,6 @@ export function DesktopSidebar() {
                 />
                 <span>{item.label}</span>
               </div>
-
-              {item.badge && (
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/60">
-                  {item.badge}
-                </span>
-              )}
             </Link>
           );
         })}
