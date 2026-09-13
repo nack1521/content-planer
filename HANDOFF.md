@@ -5,7 +5,7 @@ This file is replaced or updated by the implementation agent at the end of each 
 ## Current assignment
 
 - Milestone: 1 — Application foundation and planner slice
-- Status: Complete — Waiting for Codex review
+- Status: Revision required — Waiting for Antigravity revision
 - Reviewer: Codex
 
 ## Instructions for Antigravity
@@ -131,3 +131,18 @@ None for Milestone 1. Supabase schema and SSR authentication will be introduced 
    npm test
    npm run build
    ```
+
+## Reviewer notes
+
+Codex reviewed the implementation on 2026-09-13. The architecture and visual foundation are good, and lint, tests, and the production build currently complete successfully. Milestone 1 is not accepted yet because the following changes are required:
+
+1. Remove internal implementation and reviewer UI from the product. The M1 banner, `M1 Active`, milestone badges/copy, and `Preview Loading` button should not be visible to the owner.
+2. Improve the mobile information hierarchy. At 390x844, the first screen is consumed by the header, six KPI cards, and workflow stages; the planner controls and content records require substantial scrolling. Compress or collapse the mobile summary so search and at least one useful content result enter the first viewport.
+3. Correct document-language behavior. After switching from Thai to English, the route and visible copy change, but `document.documentElement.lang` remains `th`. English routes must identify the document as English, including the initial render.
+4. Finish localization of user-facing and accessibility text. Examples include navigation `aria-label` values, status-filter `title` text, the loading-preview labels, and English-only timezone labels.
+5. Handle invalid locales. `/fr/planner` currently returns 200, shows Thai content, and emits English metadata. Redirect unsupported locales to a supported locale or return not found.
+6. Strengthen tests. The tests currently validate duplicate root-level dictionaries rather than the `src/messages` files used by the app. Static HTML tests silently pass when `.next` is absent, and the live-server test catches assertion failures as though the server were simply unavailable.
+7. Improve typography for regularly used controls and essential status/schedule information. Several filter labels and table values are 10–12px, below the project guidance for frequently used text.
+8. Clear the trailing whitespace reported by `git diff --check` in `tests/planner.test.mjs`.
+
+Antigravity should complete only the Milestone 1 reviewer revision checklist in `TASKS.md`, update this handoff with new evidence, and stop for a second review. Do not begin Supabase or Milestone 2.

@@ -19,7 +19,7 @@ Status: Complete
 
 ## Milestone 1 — Application foundation and planner slice
 
-Status: Complete
+Status: Revision required after Codex review
 
 Goal: Produce the first recognizable, responsive version of the product using realistic sample data. Do not connect Supabase yet.
 
@@ -39,6 +39,20 @@ Goal: Produce the first recognizable, responsive version of the product using re
 - [x] Add or update `README.md` with local setup and validation instructions.
 - [x] Run lint and production build successfully.
 
+Reviewer revision checklist:
+
+- [ ] Remove reviewer-only and internal milestone UI from the product surface, including the M1 banner, `M1 Active`, navigation milestone badges, milestone-number placeholder copy, and the `Preview Loading` control.
+- [ ] Keep unfinished routes neutral and bilingual, or hide them until their milestone; do not expose implementation planning language to the product user.
+- [ ] Rework the 390x844 first viewport so the search/planner controls and at least one content result appear without scrolling past six KPI cards and the full workflow strip.
+- [ ] Ensure the document language matches the active route and changes with the language switch; `/en/*` must not render or remain as `<html lang="th">`.
+- [ ] Localize visible text, `title`, and `aria-label` values that are currently hardcoded in English.
+- [ ] Reject or redirect unsupported locale routes instead of returning a 200 response with conflicting language and metadata.
+- [ ] Keep one canonical pair of translation dictionaries and make tests validate the same files imported by the application.
+- [ ] Make static-page tests report a real skip or failure when build output is absent; do not silently return and count the test as passed.
+- [ ] Do not swallow live-server assertion failures inside the connection-error catch block.
+- [ ] Increase frequently used filter/control labels and essential schedule/status text toward the documented readable sizes while preserving the compact layout.
+- [ ] Run `git diff --check`, lint, tests, and production build successfully after the revision.
+
 Acceptance criteria:
 
 - At 1440px wide, the first viewport clearly shows navigation, summary information, filters, and useful planner rows.
@@ -47,7 +61,7 @@ Acceptance criteria:
 - The page contains no login, database, or fake social-publishing behavior yet.
 - `npm run lint` and `npm run build` pass.
 
-Review checkpoint: Stop and request review before Milestone 2.
+Review checkpoint: Stop and request a second review before Milestone 2.
 
 ## Milestone 2 — Supabase schema and private authentication
 
