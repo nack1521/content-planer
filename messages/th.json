@@ -1,0 +1,145 @@
+{
+  "app": {
+    "title": "Content Planner",
+    "tagline": "แผงควบคุมสตูดิโอครีเอเตอร์",
+    "description": "พื้นที่วางแผนคอนเทนต์สองภาษาแบบส่วนตัว ตั้งแต่ไอเดียแรกจนถึงเผยแพร่",
+    "ownerBadge": "พื้นที่ส่วนตัว",
+    "personalWorkspace": "สตูดิโอครีเอเตอร์ส่วนตัว",
+    "timezoneBadge": "เวลาเอเชีย/กรุงเทพ (UTC+7)"
+  },
+  "nav": {
+    "planner": "แผนคอนเทนต์",
+    "calendar": "ปฏิทิน",
+    "ideas": "คลังไอเดีย",
+    "settings": "ตั้งค่า",
+    "collapseNav": "ย่อแถบนำทาง",
+    "expandNav": "ขยายแถบนำทาง",
+    "comingSoonBadge": "ไมล์สโตน"
+  },
+  "summary": {
+    "title": "ภาพรวมการผลิตคอนเทนต์",
+    "subtitle": "สถานะการทำงานในกระบวนการผลิตคอนเทนต์ปัจจุบัน",
+    "plannedToday": "กำหนดส่งวันนี้",
+    "plannedThisMonth": "ประจำเดือนนี้",
+    "inProduction": "กำลังผลิต",
+    "ideasCaptured": "คลังไอเดีย",
+    "readyToPublish": "พร้อมเผยแพร่",
+    "publishedThisMonth": "เผยแพร่แล้ว",
+    "pipelineHealth": "สัดส่วนขั้นตอนการผลิต"
+  },
+  "filters": {
+    "searchPlaceholder": "ค้นหาจากชื่อเรื่อง, ฮุก, แคปชัน, หรือแฮชแท็ก...",
+    "searchAriaLabel": "ค้นหารายการคอนเทนต์ที่วางแผนไว้",
+    "platformLabel": "แพลตฟอร์ม",
+    "allPlatforms": "ทุกแพลตฟอร์ม",
+    "statusLabel": "สถานะ",
+    "allStatuses": "ทุกสถานะ",
+    "pillarLabel": "หมวดหมู่",
+    "allPillars": "ทุกหมวดหมู่",
+    "formatLabel": "รูปแบบ",
+    "allFormats": "ทุกรูปแบบ",
+    "goalLabel": "เป้าหมาย",
+    "allGoals": "ทุกเป้าหมาย",
+    "reset": "ล้างตัวกรอง",
+    "filterResults": "รายการที่แสดง",
+    "filterResultsPlural": "รายการที่แสดง",
+    "filterSummary": "แสดง {count} จากทั้งหมด {total} รายการ",
+    "activeFilters": "ตัวกรองที่เลือก:"
+  },
+  "status": {
+    "idea": "ไอเดีย",
+    "researching": "ค้นคว้าข้อมูล",
+    "scripting": "เขียนสคริปต์",
+    "recording": "ถ่ายทำ/บันทึก",
+    "editing": "ตัดต่อ",
+    "reviewing": "ตรวจทาน",
+    "scheduled": "ตั้งเวลาแล้ว",
+    "published": "เผยแพร่แล้ว"
+  },
+  "platform": {
+    "tiktok": "TikTok",
+    "instagram": "Instagram",
+    "youtube": "YouTube",
+    "facebook": "Facebook",
+    "x": "X (Twitter)"
+  },
+  "format": {
+    "short": "วิดีโอสั้น Reel / TikTok",
+    "carousel": "ภาพสไลด์หลายรูป (Carousel)",
+    "long": "วิดีโอยาว (YouTube)",
+    "infographic": "ภาพเดี่ยว / อินโฟกราฟิก",
+    "story": "สตอรี่ / เธรดสั้น"
+  },
+  "goal": {
+    "awareness": "สร้างการรับรู้แบรนด์",
+    "engagement": "สร้างเอนเกจเมนต์และพูดคุย",
+    "growth": "เพิ่มจำนวนผู้ติดตาม",
+    "leads": "ค้นหากลุ่มลูกค้าเป้าหมาย",
+    "conversion": "ยอดขายและคอนเวอร์ชัน"
+  },
+  "pillars": {
+    "educational": "ให้ความรู้และทักษะ",
+    "behindTheScenes": "เบื้องหลังการทำงาน",
+    "lifestyleTips": "ไลฟ์สไตล์และทริค",
+    "productDeepDive": "เจาะลึกผลิตภัณฑ์",
+    "industryInsights": "วิเคราะห์เจาะลึกอุตสาหกรรม"
+  },
+  "table": {
+    "headerTitle": "คอนเทนต์และฮุกเปิดเรื่อง",
+    "headerPlatform": "แพลตฟอร์ม",
+    "headerPillar": "หมวดหมู่",
+    "headerFormatGoal": "รูปแบบและเป้าหมาย",
+    "headerSchedule": "กำหนดเผยแพร่ (BKK)",
+    "headerStatus": "สถานะการผลิต",
+    "headerProgress": "ความคืบหน้า",
+    "headerActions": "การจัดการ",
+    "unscheduled": "ยังไม่กำหนดวัน",
+    "viewAction": "ดูรายละเอียด",
+    "editAction": "แก้ไขข้อมูล",
+    "duplicateAction": "คัดลอกรายการ",
+    "archiveAction": "จัดเก็บรายการ",
+    "deleteAction": "ลบอย่างถาวร",
+    "progressLabel": "ความคืบหน้าการผลิต",
+    "openMenu": "เปิดเมนูจัดการ",
+    "copyHook": "คัดลอกฮุก",
+    "copied": "คัดลอกแล้ว!"
+  },
+  "card": {
+    "targetDate": "กำหนดการ",
+    "format": "รูปแบบ",
+    "goal": "เป้าหมาย",
+    "viewDetails": "ดูรายละเอียด",
+    "progress": "ความคืบหน้า",
+    "unscheduled": "ไอเดียรอระบุวัน"
+  },
+  "empty": {
+    "filteredTitle": "ไม่พบคอนเทนต์ที่ตรงกับเงื่อนไข",
+    "filteredDescription": "ไม่มีรายการคอนเทนต์ที่ตรงกับคำค้นหาหรือตัวกรองที่เลือกไว้ในขณะนี้",
+    "resetFilterBtn": "ล้างตัวกรองทั้งหมด",
+    "noContentTitle": "ยังไม่มีคอนเทนต์ในแผนงาน",
+    "noContentDescription": "ตารางงานของคุณว่างอยู่ เริ่มต้นบันทึกไอเดียหรือกำหนดเวลาโพสต์ได้เลย",
+    "createBtn": "สร้างรายการคอนเทนต์ใหม่"
+  },
+  "loading": {
+    "loadingData": "กำลังโหลดตารางการผลิตคอนเทนต์...",
+    "pleaseWait": "กำลังอัปเดตมุมมองเวลาตามโซนเวลาเอเชีย/กรุงเทพ"
+  },
+  "common": {
+    "localeTh": "ไทย (TH)",
+    "localeEn": "English (EN)",
+    "switchLocale": "เปลี่ยนภาษา",
+    "currentLocale": "ภาษาที่ใช้งาน",
+    "close": "ปิด",
+    "save": "บันทึก",
+    "cancel": "ยกเลิก",
+    "today": "วันนี้",
+    "tomorrow": "พรุ่งนี้",
+    "yesterday": "เมื่อวาน",
+    "items": "รายการ",
+    "item": "รายการ"
+  },
+  "previewNotice": {
+    "milestoneBannerTitle": "ไมล์สโตน 1 — โครงสร้างแอปพลิเคชันและหน้าแผนงานคอนเทนต์",
+    "milestoneBannerDesc": "กำลังแสดงตัวอย่างหน้าแผนคอนเทนต์พร้อมข้อมูลจำลองที่สมจริง การเชื่อมต่อ Supabase และระบบล็อกอินจะเริ่มในไมล์สโตน 2"
+  }
+}

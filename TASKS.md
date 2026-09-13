@@ -19,25 +19,25 @@ Status: Complete
 
 ## Milestone 1 — Application foundation and planner slice
 
-Status: Ready for implementation
+Status: Complete
 
 Goal: Produce the first recognizable, responsive version of the product using realistic sample data. Do not connect Supabase yet.
 
-- [ ] Initialize a Next.js App Router project in this repository without nesting it inside another project directory.
-- [ ] Initialize a Git repository with `main` as the default branch because this folder is not currently under Git.
-- [ ] Preserve all planning documents and `ref/Download.mp4`.
-- [ ] Configure TypeScript strict mode, Tailwind CSS, ESLint, npm, and a project-appropriate `.gitignore`.
-- [ ] Create the application shell with desktop side navigation and mobile navigation.
-- [ ] Make the Planner the default product surface.
-- [ ] Add a compact today/month summary, filters, and realistic sample content.
-- [ ] Create a responsive planner table for desktop and cards for mobile.
-- [ ] Add an intentionally styled theme matching `PROJECT.md`; do not ship framework-default styling.
-- [ ] Add complete initial English and Thai message dictionaries.
-- [ ] Add a working language switch for the implemented screen.
-- [ ] Include loading/empty-state components for the planner slice, even if sample data is shown by default.
-- [ ] Add project metadata and a simple project-specific favicon.
-- [ ] Add or update `README.md` with local setup and validation instructions.
-- [ ] Run lint and production build successfully.
+- [x] Initialize a Next.js App Router project in this repository without nesting it inside another project directory.
+- [x] Initialize a Git repository with `main` as the default branch because this folder is not currently under Git.
+- [x] Preserve all planning documents and `ref/Download.mp4`.
+- [x] Configure TypeScript strict mode, Tailwind CSS, ESLint, npm, and a project-appropriate `.gitignore`.
+- [x] Create the application shell with desktop side navigation and mobile navigation.
+- [x] Make the Planner the default product surface.
+- [x] Add a compact today/month summary, filters, and realistic sample content.
+- [x] Create a responsive planner table for desktop and cards for mobile.
+- [x] Add an intentionally styled theme matching `PROJECT.md`; do not ship framework-default styling.
+- [x] Add complete initial English and Thai message dictionaries.
+- [x] Add a working language switch for the implemented screen.
+- [x] Include loading/empty-state components for the planner slice, even if sample data is shown by default.
+- [x] Add project metadata and a simple project-specific favicon.
+- [x] Add or update `README.md` with local setup and validation instructions.
+- [x] Run lint and production build successfully.
 
 Acceptance criteria:
 
@@ -51,7 +51,7 @@ Review checkpoint: Stop and request review before Milestone 2.
 
 ## Milestone 2 — Supabase schema and private authentication
 
-Status: Blocked by Milestone 1 and Supabase project configuration
+Status: Blocked by Milestone 1 review and Supabase project configuration
 
 - [ ] Add `.env.example` using the variable names from `ARCHITECTURE.md`.
 - [ ] Add browser and server Supabase clients using supported SSR session handling.
