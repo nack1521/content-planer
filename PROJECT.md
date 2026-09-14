@@ -19,17 +19,18 @@ The product is currently for one owner. It should feel like a creator's control 
 
 ## Primary user journey
 
-1. Capture a content idea.
-2. Add its platform, pillar, format, and goal.
-3. Develop the hook, caption, call to action, hashtags, notes, and media.
-4. Schedule a publication date and time.
-5. Move the content through its production status.
-6. Review upcoming work in the planner or calendar.
+1. Capture a content idea or import an existing numbered content record.
+2. Add its objective, platform, format, main message, production detail, and call to action.
+3. Add external asset references and published social links without automatically publishing anything.
+4. Schedule a publication date and optional time.
+5. Track personal review state and production tasks separately from the content lifecycle.
+6. Review upcoming work in the planner, task list, or calendar.
 7. Mark the item as published.
 
 ## Main navigation
 
 - Planner / แผนคอนเทนต์
+- Tasks / งานผลิต
 - Calendar / ปฏิทิน
 - Ideas / คลังไอเดีย
 - Settings / ตั้งค่า
@@ -50,22 +51,42 @@ The default authenticated route opens the Planner.
 
 Each record supports:
 
+- an optional source number for migration and cross-reference;
 - title or topic;
+- objective in the owner's original wording;
 - one or more target platforms;
 - content pillar;
 - format;
 - goal;
 - planned publication date and time;
 - workflow status;
+- personal review status;
 - progress percentage;
-- hook;
+- main message or hook;
+- production detail;
 - caption;
 - call to action;
 - hashtags;
 - notes;
+- external asset, idea-source, note, and published-platform links;
 - optional image or video attachments.
 
 Users can create, edit, duplicate, archive, and delete a record. Destructive deletion requires confirmation.
+
+### Production tasks
+
+- Tasks are a first-class personal work list rather than being embedded into the content status.
+- A task has a title, status, due date, priority, type, and optional description.
+- A task may link to one content record or remain standalone.
+- Linked tasks are visible from both the Tasks view and the content editor.
+- Initial task data can be imported once from the owner's Notion CSV export.
+
+### Existing-data migration
+
+- The website becomes the main workspace after a reviewed one-time import from the owner's Excel and Notion exports.
+- Imports must be dry-run first, idempotent, private, and traceable without committing source files or private URLs.
+- Ambiguous dates and incomplete rows require an owner-visible review before hosted data is written.
+- Detailed mapping and audited baseline counts are defined in `DATA_IMPORT_PLAN.md`.
 
 ### Workflow statuses
 
@@ -120,6 +141,7 @@ Custom workflows can be considered later. They are not required for the MVP.
 - Public marketing website.
 - Fully customizable workflows.
 - Drag-and-drop calendar scheduling in the first release.
+- Ongoing two-way synchronization with Excel, Google Sheets, or Notion.
 
 ## Experience direction
 

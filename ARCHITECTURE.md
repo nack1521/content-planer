@@ -34,6 +34,7 @@ Use the current stable package versions selected by the official project generat
 /{locale}/login
 /{locale}/auth/callback
 /{locale}/planner
+/{locale}/tasks
 /{locale}/calendar
 /{locale}/ideas
 /{locale}/settings
@@ -48,6 +49,7 @@ Supported locales are `en` and `th`. Protected routes require an authenticated o
 - `PlannerFilters`: search and controlled filters.
 - `PlannerTable`: desktop record view.
 - `PlannerCards`: mobile record view.
+- `TaskList`: personal production tasks with optional content relationships.
 - `ContentEditor`: sheet on desktop, full-screen presentation on mobile.
 - `ContentPreview`: selected content and media preview.
 - `CalendarView`: month grid with scheduled records.
@@ -85,14 +87,20 @@ Unique index: `(user_id, lower(name_en))` where appropriate.
 - `id uuid primary key default gen_random_uuid()`
 - `user_id uuid not null references auth.users(id) on delete cascade`
 - `title text not null`
+- `source_number integer null`
+- `objective text null`
 - `platforms text[] not null default '{}'`
 - `content_pillar_id uuid null references content_pillars(id) on delete set null`
 - `format text null`
 - `goal text null`
 - `status text not null default 'idea'`
+- `review_status text null`
+- `source_content_status text null`
 - `progress smallint not null default 0` with range constraint `0..100`
 - `publish_at timestamptz null`
+- `publish_time_known boolean not null default true`
 - `hook text null`
+- `production_detail text null`
 - `caption text null`
 - `cta text null`
 - `hashtags text[] not null default '{}'`
@@ -107,6 +115,7 @@ Allowed status values:
 
 Recommended indexes:
 
+- unique `(user_id, source_number)` where `source_number is not null`
 - `(user_id, publish_at)`
 - `(user_id, status)`
 - `(user_id, archived_at)`
@@ -124,6 +133,50 @@ Recommended indexes:
 - `sort_order integer not null default 0`
 - `created_at timestamptz not null default now()`
 
+### `content_links`
+
+- `id uuid primary key default gen_random_uuid()`
+- `user_id uuid not null references auth.users(id) on delete cascade`
+- `content_item_id uuid not null`
+- `link_type text not null` with `idea_source|asset|published|note` constraint
+- `platform text null` using the centralized platform values
+- `url text not null`
+- `label text null`
+- `sort_order integer not null default 0`
+- `created_at timestamptz not null default now()`
+
+Use a same-owner composite foreign key to `content_items`. Enable owner-scoped RLS and explicit grants.
+
+### `production_tasks`
+
+- `id uuid primary key default gen_random_uuid()`
+- `user_id uuid not null references auth.users(id) on delete cascade`
+- `content_item_id uuid null`
+- `title text not null`
+- `status text not null` with `not_started|in_progress|done` constraint
+- `due_date date null`
+- `priority text null` with `low|medium|high` constraint
+- `task_type text null` with `video|photo|post|other` constraint
+- `description text null`
+- `import_key text null`
+- `created_at timestamptz not null default now()`
+- `updated_at timestamptz not null default now()`
+
+Use a same-owner optional composite foreign key to `content_items`, a per-owner partial unique index for `import_key`, owner-scoped RLS, and explicit grants.
+
+### `reference_accounts`
+
+- `id uuid primary key default gen_random_uuid()`
+- `user_id uuid not null references auth.users(id) on delete cascade`
+- `platform text not null`
+- `account_label text not null`
+- `url text not null`
+- `notes text null`
+- `created_at timestamptz not null default now()`
+- `updated_at timestamptz not null default now()`
+
+Use a per-owner URL uniqueness rule, owner-scoped RLS, and explicit grants.
+
 ## Modeling decisions
 
 - The idea bank uses `content_items` with status `idea`; it does not need a separate ideas table.
@@ -131,6 +184,10 @@ Recommended indexes:
 - Platforms and hashtags are arrays in the MVP because they are user-owned labels without independent behavior.
 - Workflow statuses are fixed application constants for the MVP.
 - Archiving is reversible. Permanent deletion is a separate confirmed action.
+- Production tasks are separate records because one content item can require multiple actions and standalone work is valid.
+- External links are separate from private uploaded media and are never fetched or copied automatically.
+- The source number is a migration reference, not the database primary key.
+- Existing Excel and Notion data is imported once through the reviewed dry-run workflow in `DATA_IMPORT_PLAN.md`; ongoing external synchronization is not part of the MVP.
 
 ## Authentication and authorization
 
@@ -206,4 +263,3 @@ Rules:
 ## Future-compatible boundaries
 
 Automatic social publishing, teams, analytics, AI generation, and custom workflows are intentionally excluded. Keep platform names and workflow logic centralized so these capabilities can be added later without designing them now.
-

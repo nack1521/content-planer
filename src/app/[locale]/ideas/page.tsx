@@ -1,10 +1,7 @@
-import { Metadata } from 'next';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { Locale } from '@/types/planner';
-import { IconLightbulb, IconPlanner } from '@/components/common/Icons';
-import enMessages from '@/messages/en.json';
-import thMessages from '@/messages/th.json';
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getReferenceAccountsAction } from "@/app/actions/reference-accounts";
+import { ReferenceAccountsView } from "@/components/ideas/ReferenceAccountsView";
 
 export async function generateMetadata({
   params,
@@ -12,15 +9,17 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const resolvedParams = await params;
-  if (resolvedParams.locale !== 'th' && resolvedParams.locale !== 'en') {
+  if (resolvedParams.locale !== "th" && resolvedParams.locale !== "en") {
     notFound();
   }
-  const isThai = resolvedParams.locale === 'th';
+  const isThai = resolvedParams.locale === "th";
   return {
-    title: isThai ? 'คลังไอเดีย — Content Planner' : 'Idea Bank — Content Planner',
+    title: isThai
+      ? "บัญชีอ้างอิงและแรงบันดาลใจ — Content Planner"
+      : "Reference Accounts & Inspiration — Content Planner",
     description: isThai
-      ? 'คลังไอเดียคอนเทนต์และบันทึกความคิดด่วน'
-      : 'Quick capture repository for content ideas and concepts',
+      ? "รวบรวมบัญชีอ้างอิงและแนวคิดคอนเทนต์สำหรับการผลิต"
+      : "Curated reference accounts and inspiration bank for production",
   };
 }
 
@@ -30,30 +29,15 @@ export default async function IdeasPage({
   params: Promise<{ locale: string }>;
 }) {
   const resolvedParams = await params;
-  if (resolvedParams.locale !== 'th' && resolvedParams.locale !== 'en') {
+  if (resolvedParams.locale !== "th" && resolvedParams.locale !== "en") {
     notFound();
   }
-  const locale = resolvedParams.locale as Locale;
-  const messages = locale === 'th' ? thMessages : enMessages;
+
+  const { accounts, error } = await getReferenceAccountsAction();
 
   return (
-    <div className="py-16 px-4 text-center max-w-lg mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm my-8">
-      <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-100 shadow-xs">
-        <IconLightbulb className="w-7 h-7" size={28} />
-      </div>
-      <h2 className="text-xl font-bold text-slate-900 mb-2">
-        {messages.ideas.title}
-      </h2>
-      <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-        {messages.ideas.inDevelopment}
-      </p>
-      <Link
-        href={`/${locale}/planner`}
-        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-colors cursor-pointer"
-      >
-        <IconPlanner className="w-4 h-4" size={16} />
-        <span>{messages.ideas.backToPlanner}</span>
-      </Link>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <ReferenceAccountsView initialAccounts={accounts} initialError={error} />
     </div>
   );
 }

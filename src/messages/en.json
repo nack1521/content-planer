@@ -15,7 +15,8 @@
     "collapseNav": "Collapse Navigation",
     "expandNav": "Expand Navigation",
     "mainNavAria": "Main navigation",
-    "mobileNavAria": "Mobile navigation bar"
+    "mobileNavAria": "Mobile navigation bar",
+    "tasks": "Tasks"
   },
   "summary": {
     "title": "Production Overview",
@@ -79,7 +80,8 @@
     "carousel": "Multi-slide Carousel",
     "long": "Long-form Video",
     "infographic": "Infographic Single",
-    "story": "Story / Thread"
+    "story": "Story / Thread",
+    "photo": "Photo Post"
   },
   "goal": {
     "awareness": "Brand Awareness",
@@ -159,7 +161,14 @@
     "title": "Idea Bank",
     "subtitle": "Quick capture concepts",
     "inDevelopment": "Idea Bank is in development. Fast-captured content concepts and unscheduled ideas will be organized here.",
-    "backToPlanner": "Back to Planner"
+    "backToPlanner": "Back to Planner",
+    "referenceAccountsTitle": "Reference Accounts",
+    "referenceAccountsSubtitle": "Curated accounts for creative benchmarking and style inspiration",
+    "newReferenceAccount": "New Reference Account",
+    "loading": "Loading reference accounts...",
+    "loadError": "Failed to load reference accounts",
+    "emptyAccountsTitle": "No reference accounts saved yet",
+    "emptyAccountsDescription": "Save inspiring creator accounts across TikTok, Instagram, and YouTube to reference during planning."
   },
   "settings": {
     "title": "Settings",
@@ -195,5 +204,191 @@
     "signingOut": "Signing out...",
     "ownerOnlyBadge": "Personal Workspace • Owner Only",
     "backToLogin": "Back to Sign In"
+  },
+  "review_status": {
+    "in_process": "In Process",
+    "revise": "Needs Revision",
+    "approved": "Approved"
+  },
+  "tasks": {
+    "title": "Production Tasks",
+    "subtitle": "Manage scripts, video edits, and production workflows",
+    "newTask": "New Task",
+    "editTask": "Edit Task",
+    "deleteTask": "Delete Task",
+    "allStatuses": "All Statuses",
+    "allPriorities": "All Priorities",
+    "allTypes": "All Types",
+    "status": {
+      "not_started": "Not Started",
+      "in_progress": "In Progress",
+      "done": "Done"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "fields": {
+      "title": "Task Title",
+      "status": "Status",
+      "priority": "Priority",
+      "taskType": "Task Type",
+      "dueDate": "Due Date",
+      "linkedContent": "Linked Content",
+      "description": "Description",
+      "none": "Standalone (No linked content)",
+      "titlePlaceholder": "e.g. Cut draft for Episode 144",
+      "descPlaceholder": "Additional instructions or notes"
+    },
+    "empty": "No tasks found matching your filters.",
+    "createSuccess": "Task created successfully.",
+    "updateSuccess": "Task updated successfully.",
+    "deleteSuccess": "Task deleted successfully.",
+    "confirmDelete": "Are you sure you want to delete this task?",
+    "save": "Save Task",
+    "cancel": "Cancel",
+    "standalone": "Standalone",
+    "sourceNumber": "Source #{num}",
+    "type": {
+      "video": "Video",
+      "photo": "Photo",
+      "post": "Post",
+      "other": "Other"
+    },
+    "loadError": "Failed to load production tasks",
+    "retry": "Retry",
+    "openContent": "Open Content Record",
+    "loading": "Loading production tasks...",
+    "emptyDescription": "No production tasks created yet. Add a task to track shooting, script revisions, or edits.",
+    "markComplete": "Mark task complete",
+    "markIncomplete": "Mark task incomplete",
+    "filterDue": {
+      "label": "Due Date",
+      "all": "All Due Dates",
+      "overdue": "Overdue",
+      "today": "Due Today",
+      "thisWeek": "Due This Week",
+      "noDueDate": "No Due Date"
+    },
+    "errors": {
+      "titleRequired": "Task title is required",
+      "saveFailed": "Failed to save task",
+      "deleteFailed": "Failed to delete task"
+    }
+  },
+  "recordModal": {
+    "createTitle": "Create Content Record",
+    "editTitle": "Edit Content Record",
+    "title": "Title",
+    "titlePlaceholder": "e.g. 5 tips for better acoustic design",
+    "platforms": "Platforms",
+    "pillar": "Content Pillar",
+    "noPillar": "No Pillar",
+    "format": "Format",
+    "goal": "Goal",
+    "status": "Workflow Status",
+    "progress": "Progress ({val}%)",
+    "schedule": "Scheduled Date & Time (Asia/Bangkok)",
+    "hook": "Hook / Main Message",
+    "hookPlaceholder": "What makes them stop scrolling?",
+    "objective": "Objective",
+    "productionDetail": "Production Detail",
+    "reviewStatus": "Review Status",
+    "notes": "Notes / Links",
+    "save": "Save Record",
+    "cancel": "Cancel",
+    "duplicate": "Duplicate",
+    "archive": "Archive",
+    "restore": "Restore",
+    "delete": "Delete",
+    "confirmDelete": "Are you sure you want to delete this content record permanently?",
+    "cta": "Call to Action (CTA)",
+    "ctaPlaceholder": "e.g. Click link in bio to learn more",
+    "caption": "Caption",
+    "captionPlaceholder": "Full post caption text",
+    "hashtags": "Hashtags",
+    "hashtagsPlaceholder": "e.g. #tips #creator",
+    "links": "Content Links",
+    "addLink": "Add Link",
+    "removeLink": "Remove",
+    "linkType": "Link Type",
+    "linkUrl": "URL",
+    "linkLabel": "Label",
+    "linkTypes": {
+      "idea_source": "Idea Source",
+      "asset": "Asset / Drive",
+      "published": "Published URL",
+      "note": "Reference / Note"
+    },
+    "timeKnown": "Set specific publication time",
+    "dateOnly": "Date only",
+    "publishDate": "Publish Date",
+    "publishTime": "Time (Asia/Bangkok)",
+    "unassigned": "Unassigned / None",
+    "close": "Close dialog",
+    "loadError": "Failed to load planner data",
+    "retry": "Retry",
+    "errors": {
+      "titleRequired": "Title is required",
+      "urlInvalid": "All links must have a valid http/https URL",
+      "dateFormatInvalid": "Invalid publication date format",
+      "saveFailed": "Failed to save record",
+      "deleteFailed": "Failed to delete record",
+      "duplicateFailed": "Failed to duplicate record",
+      "archiveFailed": "Failed to archive record"
+    },
+    "objectivePlaceholder": "e.g. Educate audience about product features",
+    "productionDetailPlaceholder": "e.g. Talking head on camera with B-roll graphics",
+    "linkLabelPlaceholder": "e.g. Master Cut Drive",
+    "notesPlaceholder": "Notes or production references",
+    "linkUrlPlaceholder": "https://...",
+    "removeLinkAria": "Remove link",
+    "addLinkAria": "Add link to this content item",
+    "duplicatePrefix": "Copy of "
+  },
+  "planner": {
+    "subtitle": "Plan, draft, and track multi-platform content from idea to publication",
+    "createPost": "New Post",
+    "loading": "Loading creator workspace...",
+    "totalCount": "Showing {count} items",
+    "allPlatforms": "All Platforms"
+  },
+  "referenceAccounts": {
+    "unnamed": "Unnamed Account",
+    "editAccount": "Edit account",
+    "openUrl": "Open profile",
+    "createTitle": "Add Reference Account",
+    "editTitle": "Edit Reference Account",
+    "deleteAccount": "Delete Account",
+    "confirmDelete": "Are you sure you want to delete this reference account?",
+    "fields": {
+      "label": "Account Name / Handle",
+      "labelPlaceholder": "e.g. @coolcreator",
+      "platform": "Platform",
+      "url": "Profile URL",
+      "notes": "Notes & Observations",
+      "notesPlaceholder": "Content style, tone, format ideas...",
+      "urlPlaceholder": "https://..."
+    },
+    "errors": {
+      "labelRequired": "Account name is required",
+      "urlInvalid": "Valid profile URL starting with http:// or https:// is required",
+      "saveFailed": "Failed to save reference account",
+      "deleteFailed": "Failed to delete reference account"
+    }
+  },
+  "errors": {
+    "unauthorized": "Authentication required. Please sign in again.",
+    "invalid_id": "Invalid record ID.",
+    "not_found": "The requested record was not found.",
+    "service_error": "Service temporarily unavailable. Please try again.",
+    "failed_to_load": "Failed to load data. Please check your connection.",
+    "validation_failed": "Validation failed. Please check the input fields.",
+    "db_error": "Database error occurred while processing the request.",
+    "unknown": "An unexpected error occurred.",
+    "save_failed": "Failed to save record. Please try again.",
+    "fetch_error": "Failed to load records. Please try again.",
+    "content_item_not_found": "Associated content item was not found."
   }
 }

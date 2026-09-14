@@ -30,7 +30,7 @@ export function PlannerCards({ items, onSelectItem }: PlannerCardsProps) {
       {items.map((item) => {
         const isToday = isTodayBangkok(item.publish_at);
         const formattedSchedule = item.publish_at
-          ? formatBangkokDateTime(item.publish_at, locale, true)
+          ? formatBangkokDateTime(item.publish_at, locale, item.publish_time_known ?? true)
           : null;
 
         return (

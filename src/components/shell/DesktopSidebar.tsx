@@ -8,6 +8,7 @@ import { LocaleSwitch } from './LocaleSwitch';
 import { signOutAction } from '@/app/actions/auth';
 import {
   IconPlanner,
+  IconTasks,
   IconCalendar,
   IconLightbulb,
   IconSettings,
@@ -33,6 +34,13 @@ export function DesktopSidebar() {
       href: `/${locale}/planner`,
       icon: IconPlanner,
       active: pathname.includes('/planner') || pathname === `/${locale}`,
+    },
+    {
+      id: 'tasks',
+      label: t('nav.tasks'),
+      href: `/${locale}/tasks`,
+      icon: IconTasks,
+      active: pathname.includes('/tasks'),
     },
     {
       id: 'calendar',

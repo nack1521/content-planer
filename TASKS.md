@@ -128,50 +128,72 @@ Review checkpoint: Accepted by Codex on 2026-09-14 after local automated verific
 
 ## Milestone 2.5 — Swiss-inspired planner prototype
 
-Status: Ready
+Status: Superseded by owner decision
 
-Goal: Decide the application’s new visual structure before building persistent planner CRUD. This is a read-only, throwaway prototype milestone; it must not change Supabase data or become production UI directly.
-
-- [ ] Work on a clearly named throwaway prototype branch, not directly on `main`.
-- [ ] Prototype on the existing `/{locale}/planner` route and preserve its current auth and data boundaries.
-- [ ] Provide three structurally different variants selected with `?variant=A`, `?variant=B`, and `?variant=C`:
-  - A — Institutional Ledger: strict grid, compact index/table, and numbered information hierarchy.
-  - B — Editorial Desk: primary work queue with a contrasting schedule or detail rail.
-  - C — Modular Index: asymmetric Swiss modules combining summary, workflow, and content index.
-- [ ] Give all variants the shared minimal Swiss-inspired institutional foundation defined in `PROJECT.md` while changing layout and hierarchy, not merely colors.
-- [ ] Include realistic Thai and English content at useful desktop and mobile densities.
-- [ ] Add a floating prototype switcher with clickable and keyboard previous/next controls; keep the selected variant in the URL.
-- [ ] Keep every prototype interaction in memory and read-only. Do not add, update, or delete hosted or local Supabase records.
-- [ ] Hide the prototype switcher and prototype-only rendering from production builds.
-- [ ] Run lint and a production build, then provide local review URLs and stop for the owner’s visual decision.
-
-Acceptance criteria:
-
-- The owner can compare three meaningfully different planner structures without changing data.
-- No variant uses purple gradients, glass effects, excessive rounded cards, decorative shadows, or rainbow status styling.
-- Thai and English remain readable and intentional at desktop and mobile widths.
-- The selected direction and any borrowed elements are recorded before production implementation begins.
-
-Review checkpoint: Stop and request the owner’s visual selection. After selection, capture the prototype branch, document the verdict, and implement only the chosen direction in production-quality code.
+The owner chose to keep the current production design for now and prioritize alignment with the real Excel and Notion workflow. No A/B/C prototype code is to be merged into `main`. Historical prototype work remains isolated on its prototype branch only.
 
 ## Milestone 3 — Planner persistence and record management
 
-Status: Blocked by Milestone 2.5 visual decision
+Status: Accepted by Codex on 2026-09-14
 
-- [ ] Replace planner sample data with authenticated Supabase reads.
-- [ ] Implement create, edit, duplicate, archive, restore, and confirmed delete actions.
-- [ ] Implement the full content record fields defined in `PROJECT.md`.
-- [ ] Implement search and filters.
-- [ ] Persist status and progress updates.
-- [ ] Add validated forms and useful success/error feedback.
-- [ ] Add focused tests for validation and record transformations.
-- [ ] Run lint, tests, and production build successfully.
+Final review evidence:
+- 143/143 complete checks passed (`npm test`)
+- 85/85 pgTAP database checks passed (`npm run test:db`)
+- Production build passed (`npm run build`)
+- ESLint passed with 0 errors and 0 warnings (`npm run lint`)
+- `git diff --check` passed cleanly
+- No hosted migrations or hosted imports were performed
 
-Review checkpoint: Stop and request CRUD/data review before Milestone 4.
+Initial Milestone 3 implementation:
+- [x] Add a reviewed migration for source references, objective, production detail, review status, source status, date-only precision, and the `photo` format (`supabase/migrations/20260914000002_add_workflow_tables.sql`).
+- [x] Add owner-scoped `content_links`, `production_tasks`, and `reference_accounts` tables with same-owner foreign-key integrity, explicit grants, RLS, indexes, and executable database tests (`supabase/tests/database/rls.test.sql`).
+- [x] Replace planner sample data with authenticated Supabase reads.
+- [x] Implement create, edit, duplicate, archive, restore, and confirmed delete actions (`src/app/actions/content.ts`, `RecordModal.tsx`).
+- [x] Implement workflow-aligned content record fields defined in `PROJECT.md` and `DATA_IMPORT_PLAN.md`.
+- [x] Add bilingual Tasks / งานโปรดักชัน route (`/[locale]/tasks`) with task CRUD, filters, standalone tasks, and optional content relationships (`src/components/tasks/TasksView.tsx`, `src/app/actions/tasks.ts`).
+- [x] Build an explicit-path import command that defaults to dry-run, never commits source data or private URLs, and is idempotent (`scripts/import-data.mjs`, `scripts/parse-sources.py`).
+- [x] Match audited dry-run baseline: 158 auto candidates, 1 incomplete flagged, 54 placeholders skipped, 12 linked tasks, 4 standalone tasks, 1 blank skipped, 30 reference accounts.
+
+Milestone 3 reviewer revision checklist:
+- [x] 1. Remove production fallback sample data: authenticated empty database shows real empty state, read failures show error state with retry, server-side initial reads implemented for planner and tasks.
+- [x] 2. Align task UI and database schema: removed `archived` status and `urgent` priority from UI and validation. Planned MVP enums enforced: status (`not_started`, `in_progress`, `done`), priority (`low`, `medium`, `high`), type (`video`, `photo`, `post`, `other`) with fixed selector dropdown.
+- [x] 3. Add server-side runtime validation to every mutation: UUIDs, trimmed titles (max 500), optional text (max 5000), enum allowlists, arrays, URLs, progress 0-100, and dates validated in `src/utils/validation.ts`. Clean error messages returned without raw database leakage. Owner-scoped row confirmation via `.select('id')`.
+- [x] 4. Complete content editing: added editable CTA, caption, hashtags, and content links to `RecordModal.tsx`. Preserved nullable goal and format without defaulting to short/awareness. Tasks page allows opening related content records in `RecordModal`.
+- [x] 5. Correct publishing-date behavior: explicit Asia/Bangkok <-> UTC conversion (`src/utils/timezone.ts`), respect `publish_time_known` (date-only display when false), setting time sets `publish_time_known=true`, safety stop on importer blocking commit if 60 date warnings exist without reviewed decisions.
+- [x] 6. Harden the importer: check and halt on every Supabase query, insert, update, and delete error (`checkError`). Counters increment only on verified success. Stable source-derived task keys (`notion-{slug}-{hash}`). Unambiguous Notion content-number linking. Combined FB/IG link label preserved. Safe link reconciliation (no wipe before insert). Added isolated database test proving idempotency across two runs and failure propagation (`tests/import.test.mjs`).
+- [x] 7. Finish localization and accessibility: 100% exact Thai/English key parity (253 keys each). Localized statuses, headings, placeholders, errors, saving states. `RecordModal` and `TaskModal` have dialog semantics (`role="dialog"`, `aria-modal="true"`, `aria-labelledby`), accessible close button, Escape key handling, focus trap and focus restoration.
+- [x] 8. Restore project documentation: restored `TASKS.md` history and future roadmap from `HEAD`, Milestone 3 revision status added, drag-and-drop calendar scope removed (MVP non-goal), `HANDOFF.md` changed to "Revision required" with truthful evidence.
+- [x] 9. Strengthen verification: tested authenticated empty database, CRUD & validation, UI enums vs DB constraints, expanded pgTAP RLS tests to 60 assertions (update/delete/reassignment/cascade/set null - 60/60 passed), Bangkok date conversions, and local import idempotency.
+
+Reviewer revision 2 checklist (Milestone 3 second review findings):
+- [x] 1. Make real importer executable under RLS: authenticated owner session via credentials or locally discovered Supabase development configuration; strict local safeguard unconditionally blocking non-local hosts (hosted imports disabled until separately approved milestone); executed actual `scripts/import-data.mjs` entry point in tests.
+- [x] 2. Validate every date decision: require valid decision for every warning source number before commit; reject missing, extra, duplicate, malformed, or invalid calendar dates (such as Feb 30); permit explicit null for "leave unscheduled"; print only source numbers and decisions (0 private URLs printed); tested that a 1-entry file cannot bypass 60 warnings.
+- [x] 3. Prevent partial content/link writes: reviewed database function `public.upsert_content_item_with_links` in PostgreSQL migration with pre-validation of all links before any row modification; atomic link replacement; failure tests demonstrate original content and links remain unchanged on error.
+- [x] 4. Make runtime validation strict: invalid create statuses rejected without silent fallback; invalid optional-value types rejected without silent conversion to null; `publish_time_known` strictly validated as boolean; strict ISO timestamps and genuine calendar dates (rejecting Feb 30); oversized text rejected without silent truncation.
+- [x] 5. Finish localization: removed hardcoded English loading messages, placeholders, validation messages, fallback errors, and "Copy of" prefix; added corresponding Thai/English keys (321 keys with 100% parity); translated stable server error codes (`src/utils/errors.ts`); added automated component string scanner test (`tests/localization-scanner.test.mjs`).
+- [x] 6. Make tests exercise production code: double-run idempotency test against freshly reset isolated DB; actual authenticated server actions for content, task, and reference account CRUD; link rollback test; decoupled application suite using sanitized fixtures in `tests/fixtures/`; separate optional source-audit command (`npm run audit:sources`); test runner (`tests/run-tests.mjs`) starts/verifies local Supabase environment.
+- [x] 7. Complete Excel/Notion replacement workflow: added searchable/editable reference-account view in Ideas (`src/components/ideas/ReferenceAccountsView.tsx`); added task filtering by due date (`all`, `overdue`, `today`, `this_week`, `no_due_date`); verified 30 imported reference accounts are accessible to owner.
+- [x] 8. Correct accessibility claims: real Tab/Shift+Tab focus containment in `RecordModal`, `TasksView`, and `ReferenceAccountsView`; label-to-control associations with `htmlFor` and `id`; accessible names on icon-only buttons (`aria-label`); keyboard accessibility test suite (`tests/accessibility.test.mjs`).
+- [x] 9. Update project truthfully: updated `TASKS.md` and `HANDOFF.md` keeping status as revision required with truthful evidence and test counts.
+
+Reviewer revision 3 checklist (Milestone 3 focused final revision):
+- [x] 1. Guarantee local test isolation: `tests/run-tests.mjs` overwrites `NEXT_PUBLIC_SUPABASE_URL` and publishable key with values strictly queried from local Supabase stack (`npx supabase status -o json`); aborts before running application/action tests unless resolved hostname is exactly `127.0.0.1` or `localhost`; `tests/actions.test.mjs` applies forced-local overwrite and abort guard; added regression test proving pre-existing hosted environment variables cannot be used.
+- [x] 2. Keep Milestone 3 importer local-only: disabled hosted override paths until separate milestone; CLI rejects passwords and service-role keys as arguments; credentials come strictly from env or locally discovered Supabase config; genuine local authenticated user JWT session established via `signInWithPassword` so PostgreSQL `auth.uid()` evaluates properly in `upsert_content_item_with_links`; production passwordless auth design preserved.
+- [x] 3. Harden argument handling and documentation: CLI rejects all unknown arguments; replaced `--notion` with `--csv`; removed nonexistent `--allow-non-owner-dev` and `--user-id` options; verified all documented commands execute cleanly without error.
+- [x] 4. Complete database-boundary validation: `upsert_content_item_with_links` validates `p_item` is object, `p_links` is array/null; pre-validates all links (HTTP/HTTPS, length <= 2048, label <= 255, platform allowlist, sort order 0..10000); rejects empty platform arrays and invalid platforms without silent fallback; verified via 85 pgTAP tests including atomic rollback and rejection cases.
+- [x] 5. Correct mutations and localization: `updateReferenceAccountAction` and `deleteReferenceAccountAction` verify exactly one affected row via `.select("id")` returning `not_found` otherwise; all server actions return stable error codes; `ReferenceAccountsView` maps codes through shared `getLocalizedErrorMessage`; content creation defaults status to `idea` only when omitted and rejects explicitly empty or invalid status.
+- [x] 6. Strengthen importer verification: asserted real output counts for first-run creation (created: 2, updated: 0) and second-run updates (created: 0, updated: 2); verified representative row contents and relationships under RLS; expanded privacy assertions to reject HTTP URLs, source URLs, credentials, and private paths (`/Users/`); cleaned up test user before and after runs for isolated standalone reproducibility.
+- [x] 7. Align RPC with canonical enums: platforms (`tiktok`, `instagram`, `youtube`, `facebook`, `x` for item and links), formats (`short`, `carousel`, `long`, `infographic`, `story`, `photo`), goals (`awareness`, `engagement`, `growth`, `leads`, `conversion`), removed unsupported `education` and `retention`.
+- [x] 8. Add authenticated RPC/server-action enum tests: comprehensive test covering every accepted platform, format, and goal via both server actions and direct RPC, verifying unsupported values fail atomically and detecting future drift between TypeScript validation, SQL constraints, and the RPC.
+- [x] 9. Restore explicit privileges: revoked function execution from `PUBLIC` and `anon`; granted execution only to `authenticated`; added pgTAP `has_function_privilege` tests proving `anon` cannot execute and `authenticated` can.
+- [x] 10. Clean importer contract: removed `--user-id`; removed predictable fallback password and generated ephemeral local password via `randomUUID()`; checked and handled errors from `admin.updateUserById`; corrected stale importer header and stale hosted-override text in `TASKS.md`; fixed dry-run summary printing `0 skipped blank` instead of undefined.
+- [x] 11. Correct `TASKS.md` and `HANDOFF.md`: updated documentation claiming only evidence produced by tests; status kept as `Revision required` awaiting Codex review.
+
+Review checkpoint: Milestone 3 accepted by Codex on 2026-09-14. Ready for Milestone 4 assignment.
 
 ## Milestone 4 — Content editor, preview, and media
 
-Status: Blocked by Milestone 3
+Status: Ready for assignment
 
 - [ ] Implement the responsive content editor.
 - [ ] Add hook, caption, call-to-action, hashtags, and notes editing.

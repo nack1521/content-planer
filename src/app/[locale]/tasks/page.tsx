@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { PlannerView } from '@/components/planner/PlannerView';
+import { TasksView } from '@/components/tasks/TasksView';
+import { getTasksAction } from '@/app/actions/tasks';
 import { getContentItemsAction, getContentPillarsAction } from '@/app/actions/content';
 
 export async function generateMetadata({
@@ -16,15 +17,15 @@ export async function generateMetadata({
 
   return {
     title: isThai
-      ? 'แผนคอนเทนต์ — Content Planner'
-      : 'Content Planner — Creator Studio Control Board',
+      ? 'งานโปรดักชัน — Content Planner'
+      : 'Production Tasks — Content Planner',
     description: isThai
-      ? 'พื้นที่วางแผนคอนเทนต์สองภาษาแบบส่วนตัว ตั้งแต่ไอเดียแรกจนถึงเผยแพร่'
-      : 'Private bilingual workspace for planning social content from idea to publication',
+      ? 'จัดการงานผลิตและขั้นตอนการทำงานคอนเทนต์'
+      : 'Manage production tasks and content workflows',
   };
 }
 
-export default async function PlannerPage({
+export default async function TasksPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -35,16 +36,18 @@ export default async function PlannerPage({
   }
 
   // Server-side initial reads
-  const [itemsRes, pillarsRes] = await Promise.all([
+  const [tasksRes, itemsRes, pillarsRes] = await Promise.all([
+    getTasksAction(),
     getContentItemsAction(),
     getContentPillarsAction(),
   ]);
 
   return (
-    <PlannerView
-      initialItems={itemsRes.error ? undefined : itemsRes.items}
+    <TasksView
+      initialTasks={tasksRes.error ? undefined : tasksRes.tasks}
+      initialContentItems={itemsRes.error ? undefined : itemsRes.items}
       initialPillars={pillarsRes.error ? undefined : pillarsRes.pillars}
-      initialError={itemsRes.error === 'unauthorized' ? null : itemsRes.error || pillarsRes.error}
+      initialError={tasksRes.error === 'unauthorized' ? null : tasksRes.error || itemsRes.error}
     />
   );
 }
