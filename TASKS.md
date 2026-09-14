@@ -65,7 +65,7 @@ Review checkpoint: Accepted by Codex on 2026-09-14 after automated, live-route, 
 
 ## Milestone 2 — Supabase schema and private authentication
 
-Status: Blocked by Supabase project configuration
+Status: Ready for implementation — Supabase project configured locally on 2026-09-14
 
 - [ ] Add `.env.example` using the variable names from `ARCHITECTURE.md`.
 - [ ] Add browser and server Supabase clients using supported SSR session handling.
