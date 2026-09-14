@@ -19,7 +19,7 @@ Status: Complete
 
 ## Milestone 1 — Application foundation and planner slice
 
-Status: Complete — Ready for second Codex review
+Status: Accepted after second Codex review
 
 Goal: Produce the first recognizable, responsive version of the product using realistic sample data. Do not connect Supabase yet.
 
@@ -61,11 +61,11 @@ Acceptance criteria:
 - The page contains no login, database, or fake social-publishing behavior yet.
 - `npm run lint` and `npm run build` pass.
 
-Review checkpoint: Stop and request a second review before Milestone 2.
+Review checkpoint: Accepted by Codex on 2026-09-14 after automated, live-route, desktop, and mobile verification.
 
 ## Milestone 2 — Supabase schema and private authentication
 
-Status: Blocked by Milestone 1 review and Supabase project configuration
+Status: Blocked by Supabase project configuration
 
 - [ ] Add `.env.example` using the variable names from `ARCHITECTURE.md`.
 - [ ] Add browser and server Supabase clients using supported SSR session handling.

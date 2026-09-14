@@ -5,7 +5,7 @@ This file is replaced or updated by the implementation agent at the end of each 
 ## Current assignment
 
 - Milestone: 1 — Application foundation and planner slice (Reviewer Revision)
-- Status: Complete — Waiting for second Codex review
+- Status: Accepted after second Codex review
 - Reviewer: Codex
 
 ## Instructions for Antigravity
@@ -169,4 +169,20 @@ None. All feedback points from Codex's review have been implemented according to
 
 ## Reviewer notes
 
-Pending second Codex review.
+Milestone 1 was accepted by Codex on 2026-09-14.
+
+Independent reviewer verification:
+
+- `git diff --check`: passed.
+- `npm run lint`: passed with no warnings or errors.
+- `npm test` with the production server running: 5 tests passed, 0 skipped, 0 failed.
+- `npm run build`: passed; all 13 static pages were generated.
+- `/` returned a 307 redirect to `/th/planner` when no English preference cookie was present.
+- `/fr/planner` returned 404.
+- Server-rendered `/th/planner` and `/en/planner` used the matching `html` language.
+- At 390×844, the planner had no horizontal overflow and showed the compact summary, search controls, and one complete content card in the first viewport.
+- Switching English to Thai preserved the active `Desk` search, updated the URL and document language, and retained one matching card.
+- Navigation after the language switch opened `/th/calendar` with Thai product copy.
+- At 1440×900, the first viewport showed the sidebar, summary, filters, and three useful planner rows.
+
+Milestone 2 remains blocked only by Supabase project configuration. Do not place real credentials in tracked files or this handoff.
