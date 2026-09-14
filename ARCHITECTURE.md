@@ -90,9 +90,8 @@ tests/
 
 ### `user_preferences`
 
-- `id uuid primary key default gen_random_uuid()`
-- `user_id uuid not null references auth.users(id) on delete cascade`
-- `preferred_locale text not null default 'th'` with `th|en` constraint
+- `user_id uuid primary key references auth.users(id) on delete cascade`
+- `locale text not null default 'th'` with the `th|en` constraint (`locale in ('th', 'en')`)
 - `timezone text not null default 'Asia/Bangkok'`
 - `default_platforms text[] not null default '{}'`
 - `created_at timestamptz not null default now()`
@@ -172,7 +171,7 @@ RLS: Enabled, owner-scoped (`auth.uid() = user_id`).
 - `sort_order integer not null default 0`
 - `created_at timestamptz not null default now()`
 
-*Note: Retained in PostgreSQL and Supabase Storage migrations for architectural continuity, but intentionally unexposed in Sprint 1 client UI, actions, and routes.*
+*Note: Defined in `supabase/migrations/20260914000000_create_mvp_schema.sql` and preserved for architectural continuity, but intentionally unexposed in Sprint 1 client UI, actions, and routes.*
 
 ### `production_tasks`
 
@@ -208,7 +207,7 @@ RLS: Enabled, owner-scoped (`auth.uid() = user_id`).
 ## Modeling decisions
 
 - **Link-only Sprint 1 MVP**: Asset storage and reference in Sprint 1 rely completely on `content_links` (Google Drive links, asset folders, external references, published URLs). Direct media uploads, signed viewing URLs, and storage quotas are deferred to Sprint 2.
-- **Dormant media schema**: The `content_media` table and `content-media` private storage bucket exist from earlier foundational migrations but remain completely dormant in Sprint 1.
+- **Dormant media schema**: The `public.content_media` table (defined in `supabase/migrations/20260914000000_create_mvp_schema.sql`) and the `content-media` private storage bucket (defined in `supabase/migrations/20260914000001_create_storage_and_user_trigger.sql`) are retained as dormant Sprint 2 infrastructure and are not exposed in Sprint 1.
 - **Link security & privacy**: External links are never scraped, downloaded, or embedded via third-party iframes in Sprint 1. Link cards show sanitized domain names, labels, and platform badges, opening securely via `target="_blank" rel="noopener noreferrer"`.
 - **Text post preview**: Platform-neutral client-side preview rendering hook, caption, CTA, and hashtags.
 - **Unsaved changes protection**: The editor tracks dirty state against initial record values, prompting a confirmation dialog on modal dismissal or browser navigation (`beforeunload`).
@@ -226,7 +225,7 @@ RLS: Enabled, owner-scoped (`auth.uid() = user_id`).
 ## Media storage policy (Sprint 1 vs Sprint 2)
 
 - **Sprint 1**: Direct file uploads are disabled. No upload UI, signed URL generators, or large-file streaming endpoints are mounted.
-- **Sprint 2 Infrastructure**: The private Supabase Storage bucket `content-media` is retained with owner-only RLS policies. It will be activated in Sprint 2 alongside resumable uploads and storage quota management.
+- **Sprint 2 Infrastructure**: The private Supabase Storage bucket `content-media` and its access policies (defined in `supabase/migrations/20260914000001_create_storage_and_user_trigger.sql`) are retained with owner-only RLS policies. The bucket was provisioned and verified in Milestone 2 on hosted Supabase, but will remain unexposed until activated in Sprint 2 alongside resumable uploads and storage quota management.
 
 ## Localization architecture
 

@@ -5,8 +5,12 @@
 - **Current Milestone**: Milestone 3 **Accepted** by Codex on 2026-09-14.
 - **Next Milestone**: Milestone 4 **Ready for assignment** (do not implement yet).
 - **Scope Alignment**: Sprint 1 is scoped to a complete seven-milestone private MVP for one owner, operating as a **link-only workspace** for external URLs (idea sources, assets, notes, and published posts).
-- **Infrastructure Status**: The existing `content_media` table, private `content-media` Supabase Storage bucket, and security policies are preserved as **dormant Sprint 2 infrastructure**; they are not exposed in the Sprint 1 user interface.
-- **Hosted Supabase Status**: Clean. No hosted migrations or hosted imports have been performed. All development and testing remain strictly isolated to the local Supabase stack (`127.0.0.1:54321`).
+- **Infrastructure Status**: The existing `public.content_media` table (defined in `supabase/migrations/20260914000000_create_mvp_schema.sql`), private `content-media` Supabase Storage bucket, and security policies (defined in `supabase/migrations/20260914000001_create_storage_and_user_trigger.sql`) are preserved as **dormant Sprint 2 infrastructure**; they are not exposed in the Sprint 1 user interface.
+- **Hosted Supabase Status**:
+  - Milestone 2 baseline schema, owner authentication setup, private `content-media` bucket, disabled public signup, and preferences were applied and verified on hosted Supabase.
+  - The Milestone 3 migration (`supabase/migrations/20260914000002_add_workflow_tables.sql`) and Excel/Notion data import have not been applied to hosted Supabase.
+  - Milestone 3 automated verification used only the isolated local Supabase stack (`127.0.0.1:54321`).
+  - Do not modify hosted Supabase.
 
 ---
 
@@ -104,9 +108,9 @@ The following items are strictly out of scope for Sprint 1:
 
 ## Dormant Infrastructure Notice
 
-- Database table `public.content_media` remains defined in migration `20260912000001_initial_schema.sql` with owner RLS policies intact.
-- Storage bucket `content-media` remains configured with private owner access.
-- Neither the table nor the bucket is dropped or modified. They are retained as **dormant Sprint 2 infrastructure** and must not be exposed in the Sprint 1 application interface or server actions.
+- Database table `public.content_media` is defined in `supabase/migrations/20260914000000_create_mvp_schema.sql` with owner RLS policies intact.
+- The `content-media` bucket and policies are defined in `supabase/migrations/20260914000001_create_storage_and_user_trigger.sql` with private owner access.
+- Neither the table nor the bucket is dropped or modified. They were applied and verified in the Milestone 2 baseline on hosted Supabase, and are retained as **dormant Sprint 2 infrastructure**; they must not be exposed in the Sprint 1 application interface, server actions, or routes.
 
 ---
 
@@ -137,4 +141,4 @@ The following items are strictly out of scope for Sprint 1:
 - **Production Build**: 17/17 routes compiled cleanly with Turbopack (`npm run build`).
 - **ESLint**: 0 errors, 0 warnings (`npm run lint`).
 - **Code Formatting / Diffs**: Clean, no whitespace errors (`git diff --check`).
-- **Database Status**: Local stack running and verified; zero hosted modifications.
+- **Database Status**: Local stack running and verified with 143/143 tests and 85/85 pgTAP assertions. The Milestone 3 migration and data import have not been applied to hosted Supabase, preserving the verified Milestone 2 hosted baseline without modification.

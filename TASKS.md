@@ -4,6 +4,7 @@
 
 The project roadmap is structured into two phases:
 - **Sprint 1 (Milestones 1–7)**: Complete private MVP for one owner. **Link-only scope**: collects and organizes external URLs (idea sources, assets, notes, and published posts). Direct media uploads, subscriptions, public sign-up, multi-user SaaS functionality, and automatic social publishing are deferred to Sprint 2.
+- **Dormant Infrastructure**: The `public.content_media` table (defined in `supabase/migrations/20260914000000_create_mvp_schema.sql`) and private `content-media` storage bucket (defined in `supabase/migrations/20260914000001_create_storage_and_user_trigger.sql`) were established in Milestone 2 and remain dormant in Sprint 1; they are not exposed in the interface.
 - **Sprint 2 Backlog**: Media upload pipeline, resumable large files, storage quotas, billing/subscriptions, public accounts, multi-user SaaS workspaces, and platform API integrations.
 
 ### Sprint 1 Roadmap Overview:
@@ -154,7 +155,7 @@ Final review evidence:
 - Production build passed (`npm run build`)
 - ESLint passed with 0 errors and 0 warnings (`npm run lint`)
 - `git diff --check` passed cleanly
-- No hosted migrations or hosted imports were performed
+- Milestone 3 migration (20260914000002_add_workflow_tables.sql) and data import were not applied to hosted Supabase (Milestone 2 baseline schema, auth, bucket, and preferences remain on hosted Supabase without modification)
 
 Initial Milestone 3 implementation:
 - [x] Add a reviewed migration for source references, objective, production detail, review status, source status, date-only precision, and the `photo` format (`supabase/migrations/20260914000002_add_workflow_tables.sql`).
@@ -278,10 +279,10 @@ Acceptance criteria:
 
 Status: Deferred until Sprint 1 MVP completion
 
-- [ ] **Private Media Upload UI**: Image and video upload interface directly attached to content records.
+- [ ] **Private Media Upload UI**: Image and video upload interface directly attached to content records (backed by `public.content_media` defined in `supabase/migrations/20260914000000_create_mvp_schema.sql`).
 - [ ] **Large-File & Resumable Uploads**: Chunked, resumable uploads (TUS protocol) with progress indicators and error recovery.
 - [ ] **Media Organization**: Visual media ordering, preview gallery, and file removal controls.
-- [ ] **Temporary Signed Viewing URLs**: Short-lived signed URLs from private `content-media` bucket.
+- [ ] **Temporary Signed Viewing URLs**: Short-lived signed URLs from private `content-media` bucket (defined in `supabase/migrations/20260914000001_create_storage_and_user_trigger.sql`).
 - [ ] **Storage Quotas**: Configurable storage limits, file size caps, and usage monitoring per account.
 - [ ] **Subscriptions and Billing**: Stripe integration for paid tiers, checkout flow, customer portal, and webhook handling.
 - [ ] **Public Accounts & Multi-Tenant SaaS**: Public registration flow, multi-user workspace schemas, team invitations, and role-based permissions (RBAC).

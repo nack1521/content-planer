@@ -16,7 +16,7 @@ The project roadmap is structured into two distinct release phases:
 - Backend: Supabase (PostgreSQL with Row Level Security).
 - Timezone: Asia/Bangkok.
 - Scope: content planning, production task management, and external link workspace.
-- Media handling: **Link-only for Sprint 1**. Direct file/media uploads are deferred to Sprint 2. Existing `content_media` database table and private storage bucket are preserved as dormant Sprint 2 infrastructure and not exposed in the Sprint 1 interface.
+- Media handling: **Link-only for Sprint 1**. Direct file/media uploads are deferred to Sprint 2. The existing `public.content_media` database table (defined in `supabase/migrations/20260914000000_create_mvp_schema.sql`) and private `content-media` storage bucket (defined in `supabase/migrations/20260914000001_create_storage_and_user_trigger.sql`) are preserved as dormant Sprint 2 infrastructure and not exposed in the Sprint 1 interface.
 - Authentication: passwordless Supabase login for the owner; public sign-up disabled.
 - Social publishing: excluded from Sprint 1.
 
