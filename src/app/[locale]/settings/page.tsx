@@ -5,14 +5,18 @@ import Link from 'next/link';
 import { useLocale } from '@/context/LocaleContext';
 import { LocaleSwitch } from '@/components/shell/LocaleSwitch';
 import { signOutAction } from '@/app/actions/auth';
-import { getPreferencesAction } from '@/app/actions/preferences';
+import { getPreferencesAction, updateDefaultPlatformsAction } from '@/app/actions/preferences';
 import { IconSettings, IconPlanner, IconClock, IconLogOut } from '@/components/common/Icons';
 import { UserPreferences } from '@/utils/supabase/preferences';
+import { Platform } from '@/types/planner';
+
+const AVAILABLE_PLATFORMS: Platform[] = ['tiktok', 'instagram', 'youtube', 'facebook', 'x'];
 
 export default function SettingsPage() {
   const { t, locale } = useLocale();
   const [isPending, startTransition] = useTransition();
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+  const [savedNotice, setSavedNotice] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -31,6 +35,25 @@ export default function SettingsPage() {
       await signOutAction(locale);
     });
   };
+
+  const handleTogglePlatform = (platform: Platform) => {
+    const current = preferences?.default_platforms || [];
+    const next = current.includes(platform)
+      ? current.filter((p) => p !== platform)
+      : [...current, platform];
+
+    setPreferences((prev) => (prev ? { ...prev, default_platforms: next } : null));
+
+    startTransition(async () => {
+      const ok = await updateDefaultPlatformsAction(next);
+      if (ok) {
+        setSavedNotice(true);
+        setTimeout(() => setSavedNotice(false), 2000);
+      }
+    });
+  };
+
+  const defaultPlatforms = preferences?.default_platforms || [];
 
   return (
     <div className="py-8 px-2 sm:px-4 max-w-xl mx-auto space-y-6">
@@ -77,6 +100,44 @@ export default function SettingsPage() {
             <div className="flex items-center gap-1.5 text-xs font-mono font-medium text-purple-700 bg-purple-50 px-3 py-1.5 rounded-lg border border-purple-200">
               <IconClock className="w-3.5 h-3.5" size={14} />
               <span>{preferences?.timezone || t('settings.timezoneValue')}</span>
+            </div>
+          </div>
+
+          {/* Default Platforms Setting */}
+          <div className="py-2 border-b border-slate-100 space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-semibold text-slate-800 block text-sm">
+                  {t('settings.defaultPlatformsLabel')}
+                </span>
+                <span className="text-xs text-slate-500">
+                  {t('settings.defaultPlatformsDesc')}
+                </span>
+              </div>
+              {savedNotice && (
+                <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                  {t('settings.saved')}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {AVAILABLE_PLATFORMS.map((platform) => {
+                const isSelected = defaultPlatforms.includes(platform);
+                return (
+                  <button
+                    key={platform}
+                    type="button"
+                    onClick={() => handleTogglePlatform(platform)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
+                      isSelected
+                        ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {t(`platforms.${platform}`)}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

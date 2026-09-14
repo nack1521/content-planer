@@ -90,29 +90,9 @@ test('Pre-rendered English planner HTML exists and contains localized content', 
 });
 
 // 4. Validate live server if running
-test('Live server responses and invalid locale rejection (when server active)', async (t) => {
-  let isReachable = false;
-  try {
-    const probe = await fetch('http://localhost:3000/', { redirect: 'manual' });
-    isReachable = probe.status < 500;
-  } catch (err) {
-    const isConnRefused =
-      err &&
-      (err.code === 'ECONNREFUSED' ||
-        err.cause?.code === 'ECONNREFUSED' ||
-        (Array.isArray(err.cause?.errors) &&
-          err.cause.errors.some((e) => e.code === 'ECONNREFUSED')));
-    if (isConnRefused) {
-      t.skip('Local server not running on port 3000');
-      return;
-    }
-    throw err;
-  }
-
-  if (!isReachable) {
-    t.skip('Local server not ready');
-    return;
-  }
+test('Live server responses and invalid locale rejection', async () => {
+  const probe = await fetch('http://localhost:3000/', { redirect: 'manual' });
+  assert.ok(probe.status < 500, 'Local test server must be reachable on port 3000');
 
   const rootRes = await fetch('http://localhost:3000/', { redirect: 'manual' });
   assert.equal(rootRes.status, 307);

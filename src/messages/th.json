@@ -169,7 +169,10 @@
     "timezoneLabel": "โซนเวลา",
     "timezoneDesc": "โซนเวลาสำหรับกำหนดการผลิตและเผยแพร่",
     "timezoneValue": "เอเชีย/กรุงเทพ (UTC+7:00)",
-    "backToPlanner": "กลับไปยังหน้าแผนงาน"
+    "backToPlanner": "กลับไปยังหน้าแผนงาน",
+    "defaultPlatformsLabel": "แพลตฟอร์มเริ่มต้น",
+    "defaultPlatformsDesc": "แพลตฟอร์มที่เลือกไว้ล่วงหน้าสำหรับคอนเทนต์ใหม่",
+    "saved": "บันทึกแล้ว"
   },
   "auth": {
     "loginTitle": "เข้าสู่ระบบ",

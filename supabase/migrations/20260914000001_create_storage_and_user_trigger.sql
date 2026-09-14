@@ -85,6 +85,9 @@ begin
 end;
 $$;
 
+-- Explicitly revoke execute from public, anon, and authenticated so it cannot be invoked directly
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+
 -- Trigger runs after a new user is inserted into auth.users
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created

@@ -2,8 +2,8 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { isAllowedEmail, normalizeEmail } from '@/utils/auth/allowedEmail';
+import { getAppOrigin } from '@/utils/url/getOrigin';
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import { Locale } from '@/types/planner';
 
 export interface AuthActionResult {
@@ -40,10 +40,7 @@ export async function sendMagicLinkAction(
     return { success: true };
   }
 
-  const headerList = await headers();
-  const host = headerList.get('x-forwarded-host') || headerList.get('host') || 'localhost:3000';
-  const protocol = headerList.get('x-forwarded-proto') || 'http';
-  const origin = `${protocol}://${host}`;
+  const origin = getAppOrigin();
 
   try {
     const supabase = await createClient();

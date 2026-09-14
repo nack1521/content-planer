@@ -88,7 +88,7 @@ create table if not exists public.content_items (
   updated_at timestamptz not null default now(),
   constraint content_items_id_user_id_uq unique (id, user_id),
   constraint content_items_pillar_fk foreign key (content_pillar_id, user_id)
-    references public.content_pillars (id, user_id) on delete set null
+    references public.content_pillars (id, user_id) on delete set null (content_pillar_id)
 );
 
 alter table public.content_items enable row level security;

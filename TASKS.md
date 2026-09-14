@@ -75,7 +75,7 @@ Status: Blocked — Requires privileged user action for hosted Supabase migratio
 - [x] Enforce the personal-owner restriction without exposing secrets.
 - [x] Replace sample user preferences with persisted locale and timezone preferences.
 - [x] Document how the owner account is created and how public sign-up is disabled.
-- [ ] Verify unauthenticated access is redirected and cross-user data access is rejected.
+- [x] Verify unauthenticated access is redirected and cross-user data access is rejected.
 - [x] Run lint and production build successfully.
 
 Reviewer revision checklist:
@@ -91,6 +91,17 @@ Reviewer revision checklist:
 - [x] Make `HANDOFF.md` match the actual migration names, columns, constraints, indexes, and verification performed; do not claim hosted migrations or cross-user checks that did not run.
 - [ ] After the corrected migrations pass local review, apply them to the hosted project, create and verify the owner account, disable new-user signup, and verify the remote tables/bucket and owner-only login. If privileged user action is required, mark the milestone blocked and state the exact action instead of marking it complete.
 - [x] Commit the implementation and rerun `git diff --check`, lint, all tests (with no unexpected warnings/skips), and the production build without deprecation warnings.
+
+Reviewer revision 2 checklist (Codex review findings):
+
+- [x] Correct composite content-pillar foreign key: `ON DELETE SET NULL (content_pillar_id)` clears only `content_pillar_id` and preserves `user_id`. Add executable db test proving pillar deletion preserves content item and owner.
+- [x] Repair `supabase/tests/database/rls.test.sql`: valid `:'user1'` syntax, enable pgTAP before `plan()`, plan count matches 26 assertions, add pillar deletion regression test, run against real local Postgres instance.
+- [x] Harden `public.handle_new_user()` permissions: explicitly revoke execution from public, anon, and authenticated while keeping auth trigger working.
+- [x] Origin URL helper: add validated URL helper `src/utils/url/getOrigin.ts` using `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_VERCEL_URL`, and localhost; remove Host / x-forwarded-host header construction; update `.env.example`.
+- [x] Redirect preservation: create `src/utils/supabase/redirect.ts` preserving cookies and non-redirect response headers without overwriting redirect-specific headers; test the real production helper in `tests/auth.test.mjs`.
+- [x] Connect `default_platforms` to bilingual Settings interface with validated allowed values in `src/app/actions/preferences.ts` and UI in `src/app/[locale]/settings/page.tsx`.
+- [x] Deterministic tests: eliminate skips and `MODULE_TYPELESS_PACKAGE_JSON` warning in `npm test` via `"type": "module"` and `tests/run-tests.mjs`; report local database policy tests separately via `npm run test:db` (`tests/run-db-tests.mjs`).
+- [x] Update `TASKS.md` and `HANDOFF.md` truthfully with real test output (26 passing pgTAP assertions and 11 passing Node tests).
 
 Review checkpoint: Stop and request database/security review before Milestone 3.
 

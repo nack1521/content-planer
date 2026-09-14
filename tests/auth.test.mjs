@@ -5,14 +5,7 @@ import { join } from 'node:path';
 import { normalizeEmail, isAllowedEmail } from '../src/utils/auth/allowedEmail.ts';
 import { NextResponse } from 'next/server.js';
 
-// Helper matching src/utils/supabase/proxy.ts contract
-function createRedirectResponse(url, sourceResponse, status = 307) {
-  const redirectResponse = NextResponse.redirect(url, status);
-  sourceResponse.cookies.getAll().forEach((cookie) => {
-    redirectResponse.cookies.set(cookie);
-  });
-  return redirectResponse;
-}
+import { createRedirectResponse } from '../src/utils/supabase/redirect.ts';
 
 // 1. Email Normalization and Single-Owner Validation
 test('Allowed email normalization and authorization', () => {
@@ -161,6 +154,22 @@ test('Database migrations enforce RLS, empty search_path, composite FKs and owne
   // Verify no hardcoded passwords, tokens, or service-role keys are present
   assert.ok(!schemaSql.includes('service_role'), 'Migrations must not contain service_role privileges');
   assert.ok(!storageSql.includes('service_role'), 'Storage migrations must not contain service_role privileges');
+
+  // Verify composite content-pillar foreign key uses ON DELETE SET NULL on content_pillar_id only
+  assert.ok(
+    /foreign\s+key\s+\(content_pillar_id,\s*user_id\)\s+references\s+public\.content_pillars\s*\(id,\s*user_id\)\s+on\s+delete\s+set\s+null\s+\(content_pillar_id\)/i.test(
+      schemaSql
+    ),
+    'content_items composite foreign key must specify on delete set null (content_pillar_id)'
+  );
+
+  // Verify handle_new_user execution permissions are explicitly revoked
+  assert.ok(
+    storageSql.includes(
+      'revoke execute on function public.handle_new_user() from public, anon, authenticated;'
+    ),
+    'handle_new_user execution must be explicitly revoked from public, anon, authenticated'
+  );
 });
 
 // 3. Supabase SSR Proxy Contract & Cookie Propagation
@@ -181,15 +190,22 @@ test('Proxy contract adheres to Next.js 16 conventions and preserves cookies on 
   assert.ok(proxyUtil.includes('createRedirectResponse'), 'Proxy must use createRedirectResponse to preserve cookies');
   assert.ok(proxyUtil.includes('!supabaseUrl || !supabaseKey || !allowedEmail'), 'Proxy must fail closed when config missing');
 
-  // Verify cookie preservation behavior
+  // Verify cookie and header preservation behavior
   const sourceResponse = NextResponse.next();
   sourceResponse.cookies.set('sb-access-token', 'test-token', { path: '/', httpOnly: true });
   sourceResponse.cookies.set('sb-refresh-token', 'test-refresh', { path: '/', httpOnly: true });
+  sourceResponse.headers.set('x-source-trace', 'trace-id-abc-123');
+  sourceResponse.headers.set('x-correlation-id', 'corr-456');
+  sourceResponse.headers.set('location', 'http://localhost:3000/stale-destination');
 
   const redirectResponse = createRedirectResponse('http://localhost:3000/th/login', sourceResponse);
 
   assert.equal(redirectResponse.status, 307);
+  // Preserves redirect location without being overwritten by source
   assert.equal(redirectResponse.headers.get('location'), 'http://localhost:3000/th/login');
+  // Preserves source non-redirect headers
+  assert.equal(redirectResponse.headers.get('x-source-trace'), 'trace-id-abc-123');
+  assert.equal(redirectResponse.headers.get('x-correlation-id'), 'corr-456');
 
   const accessTokenCookie = redirectResponse.cookies.get('sb-access-token');
   const refreshTokenCookie = redirectResponse.cookies.get('sb-refresh-token');
@@ -265,29 +281,9 @@ test('Pre-rendered Thai and English login HTML exist and contain localized conte
 });
 
 // 6. Live Server Route Protection and Auth Endpoints
-test('Live server route protection and auth endpoints (when server active)', async (t) => {
-  let isReachable = false;
-  try {
-    const probe = await fetch('http://localhost:3000/', { redirect: 'manual' });
-    isReachable = probe.status < 500;
-  } catch (err) {
-    const isConnRefused =
-      err &&
-      (err.code === 'ECONNREFUSED' ||
-        err.cause?.code === 'ECONNREFUSED' ||
-        (Array.isArray(err.cause?.errors) &&
-          err.cause.errors.some((e) => e.code === 'ECONNREFUSED')));
-    if (isConnRefused) {
-      t.skip('Local server not running on port 3000');
-      return;
-    }
-    throw err;
-  }
-
-  if (!isReachable) {
-    t.skip('Local server not ready');
-    return;
-  }
+test('Live server route protection and auth endpoints', async () => {
+  const probe = await fetch('http://localhost:3000/', { redirect: 'manual' });
+  assert.ok(probe.status < 500, 'Local test server must be reachable on port 3000');
 
   // Unauthenticated requests to protected routes must redirect to localized login
   const protectedRoutes = [

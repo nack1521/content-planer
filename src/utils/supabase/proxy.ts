@@ -1,25 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { isAllowedEmail } from '@/utils/auth/allowedEmail';
+import { createRedirectResponse } from './redirect';
 
-/**
- * Creates a redirect response that preserves all cookies and headers set on the
- * source response (such as session refresh cookies or sign-out clearing cookies).
- */
-export function createRedirectResponse(
-  url: URL | string,
-  sourceResponse: NextResponse,
-  status = 307
-): NextResponse {
-  const redirectResponse = NextResponse.redirect(url, status);
-
-  // Propagate all cookies from source response to redirect response
-  sourceResponse.cookies.getAll().forEach((cookie) => {
-    redirectResponse.cookies.set(cookie);
-  });
-
-  return redirectResponse;
-}
+export { createRedirectResponse };
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({

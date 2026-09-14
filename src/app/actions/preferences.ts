@@ -2,7 +2,9 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { getUserPreferences, updateUserPreferences, UserPreferences } from '@/utils/supabase/preferences';
-import { Locale } from '@/types/planner';
+import { Locale, Platform } from '@/types/planner';
+
+const ALLOWED_PLATFORMS: Set<string> = new Set(['tiktok', 'instagram', 'youtube', 'facebook', 'x']);
 
 /**
  * Server action to retrieve the authenticated owner's persisted preferences.
@@ -47,9 +49,18 @@ export async function updateLocalePreferenceAction(locale: Locale): Promise<bool
 }
 
 /**
- * Server action to update default platforms preference.
+ * Server action to update default platforms preference with validated allowed values.
  */
 export async function updateDefaultPlatformsAction(default_platforms: string[]): Promise<boolean> {
+  if (!Array.isArray(default_platforms)) {
+    return false;
+  }
+
+  // Validate allowed platform identifiers
+  const validPlatforms: Platform[] = default_platforms.filter(
+    (p): p is Platform => ALLOWED_PLATFORMS.has(p)
+  );
+
   try {
     const supabase = await createClient();
     const { data: claimsData } = await supabase.auth.getClaims();
@@ -59,7 +70,7 @@ export async function updateDefaultPlatformsAction(default_platforms: string[]):
       return false;
     }
 
-    return await updateUserPreferences(supabase, userId, { default_platforms });
+    return await updateUserPreferences(supabase, userId, { default_platforms: validPlatforms });
   } catch (err) {
     console.error('updateDefaultPlatformsAction error:', err);
     return false;

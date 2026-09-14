@@ -169,7 +169,10 @@
     "timezoneLabel": "Timezone",
     "timezoneDesc": "Production schedule timezone",
     "timezoneValue": "Asia/Bangkok (UTC+7:00)",
-    "backToPlanner": "Back to Planner"
+    "backToPlanner": "Back to Planner",
+    "defaultPlatformsLabel": "Default Platforms",
+    "defaultPlatformsDesc": "Platforms selected by default for new content",
+    "saved": "Saved"
   },
   "auth": {
     "loginTitle": "Sign In",

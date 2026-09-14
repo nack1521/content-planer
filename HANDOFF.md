@@ -10,19 +10,24 @@ This file is replaced or updated at the end of each implementation cycle. Do not
 
 ## Implementation Summary
 
-All Milestone 2 reviewer revision items have been addressed and locally verified in accordance with `AGENTS.md`, `PROJECT.md`, `ARCHITECTURE.md`, `TASKS.md`, and reviewer instructions. In compliance with the explicit instruction not to apply migrations to the hosted project without privileged user action, the milestone is marked blocked with the exact steps required to unblock it.
+All Milestone 2 reviewer revision items and Codex findings have been addressed and locally verified in accordance with `AGENTS.md`, `PROJECT.md`, `ARCHITECTURE.md`, `TASKS.md`, and reviewer instructions. In compliance with the explicit instruction not to apply migrations to the hosted project without privileged user action, the milestone is marked blocked with the exact steps required to unblock it.
 
-### 1. Next.js 16 Proxy Architecture (`src/proxy.ts`)
+### 1. Next.js 16 Proxy Architecture & Redirect Preservation (`src/proxy.ts`, `src/utils/supabase/redirect.ts`)
 - Removed the deprecated `src/middleware.ts` file convention.
-- Created `src/proxy.ts` exporting a named `async function proxy(request: NextRequest)` and route matcher, eliminating all Next.js 16 middleware deprecation warnings during build.
+- Created `src/proxy.ts` exporting a named `async function proxy(request: NextRequest)` and route matcher, eliminating Next.js 16 middleware deprecation warnings during build.
 - Implemented `src/utils/supabase/proxy.ts`:
   - **Fail-Closed Security**: If `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, or `ALLOWED_EMAIL` is missing from the environment, all unauthenticated requests to protected application routes redirect to `/${locale}/login?error=service_error`. Protected content is never exposed when configuration is missing.
   - **Supabase SSR Contract**: Session claims are validated using `supabase.auth.getClaims()`.
-  - **Cookie & Header Propagation**: Custom redirects use `createRedirectResponse(url, sourceResponse)` to propagate all cookies and headers (including refreshed session cookies or deletion cookies from `setAll`).
+  - **Header & Cookie Preservation Helper (`src/utils/supabase/redirect.ts`)**: Custom redirects use `createRedirectResponse(url, sourceResponse, status)` which propagates all cookies (`sourceResponse.cookies.getAll()`) and non-redirect response headers (`x-*`, tracing, session headers) without overwriting redirect-specific headers (`location`, `content-type`, `content-length`).
   - **No Redirect Loop on Unauthorized Session**: When an authenticated user does not match `ALLOWED_EMAIL`, the proxy executes `await supabase.auth.signOut()` and passes the resulting cookie clearance headers to the redirect response. The browser deletes the cookie immediately, preventing an infinite redirect loop.
 
-### 2. Server Action & Callback Security Hardening
+### 2. Server Action, Callback Security Hardening & Validated URL Origins
+- `src/utils/url/getOrigin.ts`:
+  - Validates and constructs the application origin URL strictly from environment configuration: prioritizing `NEXT_PUBLIC_SITE_URL`, then `NEXT_PUBLIC_VERCEL_URL` / `VERCEL_URL`, and falling back to `http://localhost:3000` only during local development.
+  - Does NOT construct magic-link callback origins from untrusted request headers (`Host` or `x-forwarded-host`).
+  - `.env.example` updated with variable names (`NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_VERCEL_URL`) without real values.
 - `src/app/actions/auth.ts`:
+  - Uses `getAppOrigin()` to generate callback redirect URLs.
   - Enforces runtime validation on `locale` (`locale === 'en' ? 'en' : 'th'`).
   - Returns a uniform, neutral success response for unauthorized emails, completely preventing user enumeration and unauthorized OTP dispatches.
 - `src/app/[locale]/auth/callback/route.ts`:
@@ -30,25 +35,27 @@ All Milestone 2 reviewer revision items have been addressed and locally verified
   - Validates `locale` and triggers `notFound()` for invalid locales.
   - Re-checks server-side `isAllowedEmail(user.email)`; if unauthorized, signs out and redirects to `/login?error=unauthorized`.
 
-### 3. Persisted User Preferences Connected to the Application
-- `src/app/actions/preferences.ts`: Created server actions:
-  - `getPreferencesAction()`: Reads `user_preferences` for the authenticated owner via `getUserPreferences`.
-  - `updateLocalePreferenceAction(locale)`: Validates and updates the owner's locale via `updateUserPreferences`.
-  - `updateDefaultPlatformsAction(platforms)`: Updates default platforms via `updateUserPreferences`.
+### 3. Persisted User Preferences & Default Platforms Connected to Settings UI
+- `src/app/actions/preferences.ts`: Server actions connecting user preferences:
+  - `getPreferencesAction()`: Reads `user_preferences` for the authenticated owner.
+  - `updateLocalePreferenceAction(locale)`: Validates and updates the owner's locale.
+  - `updateDefaultPlatformsAction(platforms)`: Validates platform entries against `ALLOWED_PLATFORMS` (`tiktok`, `instagram`, `youtube`, `facebook`, `x`) and updates `default_platforms`.
 - `src/context/LocaleContext.tsx`: Connected `updateLocalePreferenceAction(newLocale)` on language toggle to persist changes to Supabase asynchronously without blocking client navigation.
-- `src/app/[locale]/settings/page.tsx`: Reads and displays persisted user preferences (timezone and locale) on mount via `getPreferencesAction()`.
+- `src/app/[locale]/settings/page.tsx`:
+  - Loads and displays persisted timezone, locale, and default platform preferences on mount via `getPreferencesAction()`.
+  - Features interactive platform toggle pills for all supported platforms with optimistic state updates and server action persistence.
+  - Bilingual localization keys added in `src/messages/en.json` and `src/messages/th.json` (`settings.defaultPlatformsLabel`, `settings.defaultPlatformsDesc`, `settings.saved`).
 
-### 4. Hardened Database Schema & SQL Security
+### 4. Hardened Database Schema, Foreign Keys & Function Permissions
 - `supabase/migrations/20260914000000_create_mvp_schema.sql`:
   - Tables:
-    - `user_preferences`: `user_id` (PK, cascade), `locale` (`th` or `en`), `timezone` (default `'Asia/Bangkok'`), `default_platforms`, timestamps.
+    - `user_preferences`: `user_id` (PK, cascade), `locale` (`th` or `en`), `timezone` (default `'Asia/Bangkok'`), `default_platforms` (text array), timestamps.
     - `content_pillars`: `id`, `user_id`, `name_en`, `name_th`, `color`, `sort_order`, timestamps. Unique constraint on `(id, user_id)`. Unique index on `(user_id, lower(name_en))`.
-    - `content_items`: `id`, `user_id`, `title`, `platforms`, `content_pillar_id`, `format` (`short`, `carousel`, `long`, `infographic`, `story`), `goal` (`awareness`, `engagement`, `growth`, `leads`, `conversion`), `status` (`idea`, `researching`, `scripting`, `recording`, `editing`, `reviewing`, `scheduled`, `published`), `progress` (0..100), `publish_at`, `hook`, `caption`, `cta`, `hashtags`, `notes`, `archived_at`, timestamps. Unique constraint on `(id, user_id)`.
-    - Composite Foreign Key: `foreign key (content_pillar_id, user_id) references public.content_pillars (id, user_id) on delete set null`, guaranteeing same-owner integrity between items and pillars at the database constraint level.
+    - `content_items`: `id`, `user_id`, `title`, `platforms`, `content_pillar_id`, `format`, `goal`, `status`, `progress` (0..100), `publish_at`, `hook`, `caption`, `cta`, `hashtags`, `notes`, `archived_at`, timestamps. Unique constraint on `(id, user_id)`.
+    - Composite Foreign Key: `foreign key (content_pillar_id, user_id) references public.content_pillars (id, user_id) on delete set null (content_pillar_id)`, guaranteeing that deleting a referenced pillar sets only `content_pillar_id` to null while preserving the required `user_id` and the content item.
     - Composite Indexes: `(user_id, publish_at)`, `(user_id, status)`, `(user_id, archived_at)`.
-    - `content_media`: `id`, `user_id`, `content_item_id`, `storage_path`, `media_type` (`image`, `video`), `original_name`, `mime_type`, `size_bytes`, `sort_order`, `created_at`.
-    - Composite Foreign Key: `foreign key (content_item_id, user_id) references public.content_items (id, user_id) on delete cascade`, guaranteeing same-owner integrity between media and items at the database constraint level.
-    - Index: `(user_id, content_item_id)`.
+    - `content_media`: `id`, `user_id`, `content_item_id`, `storage_path`, `media_type`, `original_name`, `mime_type`, `size_bytes`, `sort_order`, `created_at`.
+    - Composite Foreign Key: `foreign key (content_item_id, user_id) references public.content_items (id, user_id) on delete cascade`, guaranteeing same-owner integrity between media and items.
   - `handle_updated_at()` trigger function explicitly configured with `set search_path = ''`.
   - Row Level Security (RLS) enabled on all 4 tables with strict `auth.uid() = user_id` policies for `SELECT`, `INSERT`, `UPDATE`, and `DELETE`.
   - Same-owner subqueries enforced on both `INSERT` and `UPDATE` for `content_items` (`content_pillar_id`) and `content_media` (`content_item_id`).
@@ -56,19 +63,23 @@ All Milestone 2 reviewer revision items have been addressed and locally verified
 - `supabase/migrations/20260914000001_create_storage_and_user_trigger.sql`:
   - Private `content-media` bucket (`public = false`, 100MB max limit, image and video MIME restrictions).
   - Storage policies on `storage.objects` partitioned by owner folder: `auth.uid()::text = (storage.foldername(name))[1]`.
-  - `handle_new_user()` security definer function configured with `set search_path = ''` to eliminate search path injection vulnerabilities.
-  - Trigger `on_auth_user_created` on `auth.users` to automatically provision `user_preferences` with default Thai locale and Bangkok timezone.
+  - `handle_new_user()` security definer function configured with `set search_path = ''`.
+  - **Explicit Permission Revocation**: Added `revoke execute on function public.handle_new_user() from public, anon, authenticated;` so that public roles cannot invoke it directly, while maintaining trigger execution via the auth event.
+  - Trigger `on_auth_user_created` on `auth.users` to automatically provision `user_preferences`.
 
-### 5. Executable Database Policy Tests & Test Suite
-- `supabase/tests/database/rls.test.sql`: 24 executable pgTAP assertions covering:
-  1. Complete denial of `anon` role from selecting or inserting into all 4 tables.
-  2. Owner 1 CRUD across preferences, pillars, items, and media.
-  3. Owner 2 isolation (cannot read, update, or alter Owner 1 records).
-  4. Cross-owner foreign relationship integrity rejection on both `INSERT` and `UPDATE` (Owner 2 cannot reference Owner 1 pillars or content items).
-  5. Storage bucket owner folder isolation (Owner 2 cannot upload to or read from Owner 1 storage folder).
-- `tests/auth.test.mjs`: 6 automated tests verifying email normalization, migration RLS invariants (empty search path, composite FKs, explicit grants), proxy contract cookie preservation, translation dictionary auth parity, static pre-rendered HTML, and live server route protection.
-- `tests/planner.test.mjs`: 5 foundation tests verifying bilingual parity, Bangkok date formatting, static planner HTML, and live route handling.
-- `package.json`: Configured to execute both suites: `"test": "node --test tests/planner.test.mjs tests/auth.test.mjs"`.
+### 5. Executable Database Policy Tests & Deterministic Test Runners
+- `supabase/tests/database/rls.test.sql`:
+  - Uses valid psql variable syntax (`:'user1'`, `:'user2'`).
+  - Enables `pgtap` extension before `plan(26)`.
+  - Plan count matches the 26 actual assertions.
+  - Tests 20-23: Executable regression test proving that deleting a referenced pillar succeeds, preserves the content item and its `user_id`, and sets only `content_pillar_id` to null.
+  - Storage bucket isolation assertions (Owner 2 cannot upload to or select from Owner 1 storage folder).
+  - Successfully executed against real local PostgreSQL instance (`investment-postgres-1`) with all 26 assertions passing.
+- `tests/run-db-tests.mjs`: Dedicated local database test runner script (`npm run test:db`) that resets `content_planner_test`, applies migrations, and executes pgTAP assertions cleanly.
+- `tests/run-tests.mjs`: Next.js test runner that launches local server on port 3000 if not already running, preventing silent test skips.
+- `package.json`: Configured with `"type": "module"`, eliminating `MODULE_TYPELESS_PACKAGE_JSON` warning.
+  - `"test": "node tests/run-tests.mjs"` (11 passed, 0 skipped, 0 failed).
+  - `"test:db": "node tests/run-db-tests.mjs"` (26 passed, 0 failed).
 
 ## Verification Results
 
@@ -76,7 +87,8 @@ All Milestone 2 reviewer revision items have been addressed and locally verified
 |---|---|---|---|
 | Whitespace Check | `git diff --check` | PASS | 0 trailing whitespace or formatting issues |
 | ESLint | `npm run lint` | PASS | 0 errors, 0 warnings |
-| Test Suite | `npm test` | PASS | 11 passed, 0 failed, 0 skipped (with live server) |
+| Node Test Suite | `npm test` | PASS | 11 passed, 0 failed, 0 skipped (live server route tests executed) |
+| Local Database Policy Tests | `npm run test:db` | PASS | 26 passed, 0 failed (pgTAP against local Postgres instance) |
 | Production Build | `npm run build` | PASS | Turbopack compilation succeeded with 0 deprecation warnings |
 | Live Route Protection | `curl -I http://localhost:3000/th/planner` | PASS | HTTP 307 -> `/th/login` |
 | Live Route Protection | `curl -I http://localhost:3000/en/planner` | PASS | HTTP 307 -> `/en/login` |
@@ -103,7 +115,13 @@ All Milestone 2 reviewer revision items have been addressed and locally verified
 - `supabase/migrations/20260914000000_create_mvp_schema.sql`: Hardened schema with composite FKs, empty search_path, explicit grants.
 - `supabase/migrations/20260914000001_create_storage_and_user_trigger.sql`: Private storage bucket and security definer trigger with empty search_path.
 - `supabase/tests/database/rls.test.sql`: pgTAP executable database policy test suite.
-- `tests/auth.test.mjs`: Automated tests for proxy contract, security invariants, and auth.
+- `src/utils/supabase/redirect.ts`: Production redirect response helper preserving cookies and non-redirect headers.
+- `src/utils/url/getOrigin.ts`: Validated application origin URL resolver.
+- `supabase/tests/database/setup-local-db.sql`: Local database test harness bootstrap.
+- `tests/run-db-tests.mjs`: Local database policy test runner (`npm run test:db`).
+- `tests/run-tests.mjs`: Next.js deterministic test runner.
+- `tests/auth.test.mjs`: Tests production `createRedirectResponse`, composite FK, function revocation, route protection without skips.
+- `tests/planner.test.mjs`: Removed skips from live server tests.
 - `package.json`: Updated test runner command.
 - `TASKS.md`: Updated checklist and blocked status.
 - `HANDOFF.md`: This handoff document.
