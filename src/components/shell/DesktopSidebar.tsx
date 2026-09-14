@@ -1,21 +1,30 @@
 'use client';
 
-import React from 'react';
+import React, { useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLocale } from '@/context/LocaleContext';
 import { LocaleSwitch } from './LocaleSwitch';
+import { signOutAction } from '@/app/actions/auth';
 import {
   IconPlanner,
   IconCalendar,
   IconLightbulb,
   IconSettings,
   IconClock,
+  IconLogOut,
 } from '@/components/common/Icons';
 
 export function DesktopSidebar() {
   const { t, locale } = useLocale();
   const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
+
+  const handleSignOut = () => {
+    startTransition(async () => {
+      await signOutAction(locale);
+    });
+  };
 
   const navItems = [
     {
@@ -96,7 +105,7 @@ export function DesktopSidebar() {
         })}
       </nav>
 
-      {/* Footer Info & Locale Switch */}
+      {/* Footer Info & Actions */}
       <div className="p-4 border-t border-slate-800/80 space-y-3 bg-slate-950/50">
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-400 font-medium">{t('common.currentLocale')}</span>
@@ -107,6 +116,17 @@ export function DesktopSidebar() {
           <IconClock className="w-3.5 h-3.5 text-purple-400 shrink-0" size={14} />
           <span className="truncate">{t('app.timezoneBadge')}</span>
         </div>
+
+        {/* Sign Out Button */}
+        <button
+          type="button"
+          onClick={handleSignOut}
+          disabled={isPending}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-slate-400 hover:text-rose-300 hover:bg-rose-950/40 rounded-lg border border-slate-800 hover:border-rose-900/60 transition-all cursor-pointer disabled:opacity-50"
+        >
+          <IconLogOut className="w-4 h-4" size={16} />
+          <span>{isPending ? t('auth.signingOut') : t('auth.signOut')}</span>
+        </button>
       </div>
     </aside>
   );

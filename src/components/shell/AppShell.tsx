@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { DesktopSidebar } from './DesktopSidebar';
 import { MobileHeader } from './MobileHeader';
 import { MobileNav } from './MobileNav';
@@ -10,6 +11,13 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
+  const isAuthRoute = pathname?.includes('/login') || pathname?.includes('/auth/');
+
+  if (isAuthRoute) {
+    return <div className="min-h-screen bg-slate-950 antialiased">{children}</div>;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row antialiased selection:bg-purple-500 selection:text-white">
       {/* Desktop Persistent Sidebar */}

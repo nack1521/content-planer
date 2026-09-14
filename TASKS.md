@@ -65,18 +65,32 @@ Review checkpoint: Accepted by Codex on 2026-09-14 after automated, live-route, 
 
 ## Milestone 2 — Supabase schema and private authentication
 
-Status: Ready for implementation — Supabase project configured locally on 2026-09-14
+Status: Blocked — Requires privileged user action for hosted Supabase migration and setup
 
-- [ ] Add `.env.example` using the variable names from `ARCHITECTURE.md`.
-- [ ] Add browser and server Supabase clients using supported SSR session handling.
-- [ ] Create versioned SQL migrations for all MVP tables, constraints, indexes, timestamps, and RLS policies.
-- [ ] Create private Storage bucket policies for owner-scoped media.
-- [ ] Implement passwordless email login, callback, logout, and protected application routes.
-- [ ] Enforce the personal-owner restriction without exposing secrets.
-- [ ] Replace sample user preferences with persisted locale and timezone preferences.
-- [ ] Document how the owner account is created and how public sign-up is disabled.
+- [x] Add `.env.example` using the variable names from `ARCHITECTURE.md`.
+- [x] Add browser and server Supabase clients using supported SSR session handling.
+- [x] Create versioned SQL migrations for all MVP tables, constraints, indexes, timestamps, and RLS policies.
+- [x] Create private Storage bucket policies for owner-scoped media.
+- [x] Implement passwordless email login, callback, logout, and protected application routes.
+- [x] Enforce the personal-owner restriction without exposing secrets.
+- [x] Replace sample user preferences with persisted locale and timezone preferences.
+- [x] Document how the owner account is created and how public sign-up is disabled.
 - [ ] Verify unauthenticated access is redirected and cross-user data access is rejected.
-- [ ] Run lint and production build successfully.
+- [x] Run lint and production build successfully.
+
+Reviewer revision checklist:
+
+- [x] Do not apply the current migrations to the hosted project. Correct and locally verify them first.
+- [x] Replace the deprecated Next.js `middleware.ts` convention with `proxy.ts` and a named `proxy` export, following the installed Next.js 16 documentation.
+- [x] Make authentication fail closed when Supabase environment configuration is absent; protected content must never become public because configuration is missing.
+- [x] Follow the current Supabase SSR proxy contract: validate with `getClaims()`, propagate cookies and response headers produced by `setAll`, preserve them on every custom redirect, and prove an unauthorized session is actually cleared without a login redirect loop.
+- [x] Validate locale arguments at runtime in server actions and restrict callback destinations to approved localized application routes.
+- [x] Harden the SQL security model: set an empty `search_path` on security-definer functions, define explicit grants/roles, and enforce same-owner integrity for every foreign relationship on both insert and update, including content-item pillars and media parents.
+- [x] Connect `user_preferences` to the application. Loading and changing locale/default preferences must read and write the authenticated owner's row rather than leaving the new helpers unused.
+- [x] Add executable database policy tests (for example, Supabase local + pgTAP) that exercise anonymous and two-user CRUD, cross-owner foreign keys, and Storage policies. SQL text matching is not evidence that hosted or local RLS works.
+- [x] Make `HANDOFF.md` match the actual migration names, columns, constraints, indexes, and verification performed; do not claim hosted migrations or cross-user checks that did not run.
+- [ ] After the corrected migrations pass local review, apply them to the hosted project, create and verify the owner account, disable new-user signup, and verify the remote tables/bucket and owner-only login. If privileged user action is required, mark the milestone blocked and state the exact action instead of marking it complete.
+- [x] Commit the implementation and rerun `git diff --check`, lint, all tests (with no unexpected warnings/skips), and the production build without deprecation warnings.
 
 Review checkpoint: Stop and request database/security review before Milestone 3.
 

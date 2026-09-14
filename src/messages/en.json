@@ -170,5 +170,26 @@
     "timezoneDesc": "Production schedule timezone",
     "timezoneValue": "Asia/Bangkok (UTC+7:00)",
     "backToPlanner": "Back to Planner"
+  },
+  "auth": {
+    "loginTitle": "Sign In",
+    "loginSubtitle": "Access your personal content planning studio",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "owner@example.com",
+    "sendMagicLink": "Send Magic Link",
+    "sending": "Sending magic link...",
+    "magicLinkSentTitle": "Check Your Inbox",
+    "neutralSuccessMessage": "If this email address is authorized for this workspace, you will receive a secure sign-in link shortly.",
+    "invalidEmailMessage": "Please enter a valid email address.",
+    "unauthorizedTitle": "Unauthorized Access",
+    "unauthorizedMessage": "This is a private personal workspace. Access is restricted to the workspace owner.",
+    "errorTitle": "Sign In Error",
+    "errorGeneric": "An error occurred while sending the sign-in link. Please try again.",
+    "callbackVerifying": "Verifying your sign-in link...",
+    "callbackSuccess": "Sign-in verified. Redirecting to your planner...",
+    "signOut": "Sign Out",
+    "signingOut": "Signing out...",
+    "ownerOnlyBadge": "Personal Workspace • Owner Only",
+    "backToLogin": "Back to Sign In"
   }
 }

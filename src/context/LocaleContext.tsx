@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Locale } from '@/types/planner';
+import { updateLocalePreferenceAction } from '@/app/actions/preferences';
 import enMessages from '@/messages/en.json';
 import thMessages from '@/messages/th.json';
 
@@ -51,6 +52,11 @@ export function LocaleProvider({
       } catch {
         // Fallback gracefully
       }
+
+      // Persist to Supabase user_preferences if authenticated
+      updateLocalePreferenceAction(newLocale).catch(() => {
+        // Non-blocking fallback for unauthenticated views (e.g. login page)
+      });
 
       // Smoothly update URL pathname to reflect new locale without hard page reload
       if (pathname) {
