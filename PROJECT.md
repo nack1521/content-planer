@@ -125,7 +125,12 @@ Custom workflows can be considered later. They are not required for the MVP.
 
 The product should be a working application from the first viewport. Avoid an oversized hero or promotional copy.
 
-Visual thesis: a polished creator-studio control board with crisp light work surfaces, deep graphite navigation, a confident orchid accent, and distinct but accessible workflow colors. The design should be modern and personal rather than corporate.
+Visual thesis: a minimal Swiss-inspired institutional workspace: precise, calm, typographic, and deliberately structured rather than decorative. Use a warm off-white work surface, near-black text, thin neutral rules, and one restrained cobalt accent. Red is reserved for destructive actions, errors, and overdue work.
+
+- Prefer a rigorous grid, strong typographic hierarchy, square or subtly rounded geometry, and generous but purposeful whitespace.
+- Avoid gradients, glass effects, oversized rounded cards, decorative shadows, excessive pills, and a rainbow of status colors.
+- Use a Thai-friendly sans-serif stack with a Helvetica/Arial character in Latin text; Thai and English must feel equally intentional.
+- Let labels, numbers, rules, alignment, and spacing create hierarchy. Icons are secondary and should be used only when they improve recognition.
 
 - Desktop: persistent side navigation, compact summary strip, filters, and planner table.
 - Mobile: compact header, bottom navigation, summary cards, and content cards.
@@ -144,4 +149,3 @@ Visual thesis: a polished creator-studio control board with crisp light work sur
 ## MVP success criteria
 
 The release is successful when the owner can securely sign in, capture an idea, turn it into a planned post, add writing and media, schedule it, update its production status, find it in planner and calendar views, switch languages, and return later without losing data.
-

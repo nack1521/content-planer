@@ -65,7 +65,7 @@ Review checkpoint: Accepted by Codex on 2026-09-14 after automated, live-route, 
 
 ## Milestone 2 — Supabase schema and private authentication
 
-Status: Blocked — Requires privileged user action for hosted Supabase migration and setup
+Status: Accepted after Codex security, hosted setup, and persistence review
 
 - [x] Add `.env.example` using the variable names from `ARCHITECTURE.md`.
 - [x] Add browser and server Supabase clients using supported SSR session handling.
@@ -89,7 +89,7 @@ Reviewer revision checklist:
 - [x] Connect `user_preferences` to the application. Loading and changing locale/default preferences must read and write the authenticated owner's row rather than leaving the new helpers unused.
 - [x] Add executable database policy tests (for example, Supabase local + pgTAP) that exercise anonymous and two-user CRUD, cross-owner foreign keys, and Storage policies. SQL text matching is not evidence that hosted or local RLS works.
 - [x] Make `HANDOFF.md` match the actual migration names, columns, constraints, indexes, and verification performed; do not claim hosted migrations or cross-user checks that did not run.
-- [ ] After the corrected migrations pass local review, apply them to the hosted project, create and verify the owner account, disable new-user signup, and verify the remote tables/bucket and owner-only login. If privileged user action is required, mark the milestone blocked and state the exact action instead of marking it complete.
+- [x] After the corrected migrations pass local review, apply them to the hosted project, create and verify the owner account, disable new-user signup, and verify the remote tables/bucket and owner-only login. If privileged user action is required, mark the milestone blocked and state the exact action instead of marking it complete.
 - [x] Commit the implementation and rerun `git diff --check`, lint, all tests (with no unexpected warnings/skips), and the production build without deprecation warnings.
 
 Reviewer revision 2 checklist (Codex review findings):
@@ -124,11 +124,39 @@ Reviewer revision 4 checklist (Settings platform localization defect):
 - [x] Do not modify Supabase migrations or hosted data.
 - [x] Run verification: `git diff --check`, `npm run lint`, `npm test` (13 passed, 0 failed, 0 skipped), `npm run test:db` (26 passed, 0 failed), and `npm run build`.
 
-Review checkpoint: Stop and request database/security review before Milestone 3.
+Review checkpoint: Accepted by Codex on 2026-09-14 after local automated verification, hosted schema and private bucket inspection, anonymous access checks, owner-only login, disabled signup, and persisted preference verification.
+
+## Milestone 2.5 — Swiss-inspired planner prototype
+
+Status: Ready
+
+Goal: Decide the application’s new visual structure before building persistent planner CRUD. This is a read-only, throwaway prototype milestone; it must not change Supabase data or become production UI directly.
+
+- [ ] Work on a clearly named throwaway prototype branch, not directly on `main`.
+- [ ] Prototype on the existing `/{locale}/planner` route and preserve its current auth and data boundaries.
+- [ ] Provide three structurally different variants selected with `?variant=A`, `?variant=B`, and `?variant=C`:
+  - A — Institutional Ledger: strict grid, compact index/table, and numbered information hierarchy.
+  - B — Editorial Desk: primary work queue with a contrasting schedule or detail rail.
+  - C — Modular Index: asymmetric Swiss modules combining summary, workflow, and content index.
+- [ ] Give all variants the shared minimal Swiss-inspired institutional foundation defined in `PROJECT.md` while changing layout and hierarchy, not merely colors.
+- [ ] Include realistic Thai and English content at useful desktop and mobile densities.
+- [ ] Add a floating prototype switcher with clickable and keyboard previous/next controls; keep the selected variant in the URL.
+- [ ] Keep every prototype interaction in memory and read-only. Do not add, update, or delete hosted or local Supabase records.
+- [ ] Hide the prototype switcher and prototype-only rendering from production builds.
+- [ ] Run lint and a production build, then provide local review URLs and stop for the owner’s visual decision.
+
+Acceptance criteria:
+
+- The owner can compare three meaningfully different planner structures without changing data.
+- No variant uses purple gradients, glass effects, excessive rounded cards, decorative shadows, or rainbow status styling.
+- Thai and English remain readable and intentional at desktop and mobile widths.
+- The selected direction and any borrowed elements are recorded before production implementation begins.
+
+Review checkpoint: Stop and request the owner’s visual selection. After selection, capture the prototype branch, document the verdict, and implement only the chosen direction in production-quality code.
 
 ## Milestone 3 — Planner persistence and record management
 
-Status: Blocked by Milestone 2
+Status: Blocked by Milestone 2.5 visual decision
 
 - [ ] Replace planner sample data with authenticated Supabase reads.
 - [ ] Implement create, edit, duplicate, archive, restore, and confirmed delete actions.

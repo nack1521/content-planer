@@ -5,12 +5,12 @@ This file is replaced or updated at the end of each implementation cycle. Do not
 ## Current assignment
 
 - Milestone: 2 — Supabase schema and private authentication
-- Status: Blocked — Requires privileged user action for hosted Supabase migration and setup
+- Status: Accepted by Codex on 2026-09-14
 - Reviewer: Codex
 
 ## Implementation Summary
 
-All Milestone 2 reviewer revision items and second Codex review findings have been resolved and verified locally in accordance with `AGENTS.md`, `PROJECT.md`, `ARCHITECTURE.md`, `TASKS.md`, and reviewer instructions. Migrations have **not** been applied to hosted Supabase, Milestone 3 has **not** been started, and no unrelated projects or containers were accessed.
+All Milestone 2 implementation and reviewer revision items are complete. The migrations were verified locally before the owner applied them to the hosted Supabase project. Codex then verified the hosted schema, private storage configuration, owner-only authentication, disabled public signup, anonymous access denial, and persisted default-platform preference. Milestone 3 has not been started.
 
 ### 1. Isolated Local Supabase Stack & Truthful Database Policy Verification
 - **Replaced `tests/run-db-tests.mjs`**: Completely purged all logic that discovered arbitrary containers, external usernames, passwords, or unrelated project databases.
@@ -89,29 +89,23 @@ All Milestone 2 reviewer revision items and second Codex review findings have be
 - `src/utils/supabase/redirect.ts`: Explicit allowlist `ALLOWED_REDIRECT_HEADERS`; strictly excludes Next.js internal middleware headers.
 - `src/utils/url/getOrigin.ts`: Robust URL parser returning origin only; fails closed in production; allows localhost only in development.
 - `src/app/actions/auth.ts`: Uses `getAppOrigin()` with fail-closed try/catch.
-- `src/app/[locale]/settings/page.tsx`: Independent pending states (`isSavingPlatforms` vs `isSigningOut`), disabled buttons during save, optimistic rollback on error.
+- `src/app/[locale]/settings/page.tsx`: Independent pending states (`isSavingPlatforms` vs `isSigningOut`), disabled buttons during save, optimistic rollback on error, and canonical platform translations.
 - `src/messages/en.json`, `src/messages/th.json`: Added `settings.saveError` translation keys.
 - `tests/run-db-tests.mjs`: Safe isolated runner using only `npx supabase start`, `db reset --local`, and `test db --local`.
 - `tests/run-tests.mjs`: Always builds from current source; spins up isolated server on dynamic port; passes `TEST_BASE_URL`; terminates in `finally`.
 - `tests/auth.test.mjs`: Added middleware control header exclusion test, `getAppOrigin()` test suite, Settings platform localization regression test, and dynamic `baseUrl`.
 - `tests/planner.test.mjs`: Dynamic `baseUrl` consumption.
-- `TASKS.md`: Updated checklist and blocked status.
+- `TASKS.md`: Updated reviewer checklists and acceptance status.
 - `HANDOFF.md`: This handoff document.
 
-## Exact User Action Required to Unblock Hosted Setup
+## Hosted Verification and Reviewer Acceptance
 
-The local implementation, schema migrations, and test suites are complete and locally verified on Content Planner's isolated Supabase stack. In accordance with reviewer instructions, migrations have not been applied to hosted Supabase. To unblock Milestone 2:
+- The owner applied both reviewed migrations successfully in the hosted Supabase SQL Editor.
+- The hosted schema contains `user_preferences`, `content_pillars`, `content_items`, and `content_media` with the expected relationships.
+- The hosted `content-media` bucket is private and shows the four owner-scoped policies, the configured MIME restrictions, and the 100 MB limit.
+- The owner account exists, owner magic-link login reaches the protected planner, and public new-user signup is disabled.
+- Anonymous requests were denied for all four public tables, and anonymous storage listing disclosed no objects.
+- Updating `default_platforms` to TikTok completed successfully; reopening Settings loaded TikTok as selected from the authenticated preference row.
+- The Settings platform labels now use the canonical `platform.*` translations and no longer display raw keys.
 
-1. **Apply Migrations to Hosted Supabase**:
-   - Execute the SQL in `supabase/migrations/20260914000000_create_mvp_schema.sql` and `supabase/migrations/20260914000001_create_storage_and_user_trigger.sql` via the Supabase Dashboard SQL Editor (or via `npx supabase db push` if CLI link is authenticated).
-2. **Provision Owner Account**:
-   - Start the local dev server (`npm run dev`) or visit the deployed application.
-   - Navigate to `http://localhost:3000/th/login`.
-   - Submit the email configured in `ALLOWED_EMAIL` to receive the magic link.
-   - Complete login via the magic link callback to trigger `on_auth_user_created`, creating the owner's initial `user_preferences` row.
-3. **Disable Public Sign-ups**:
-   - In the Supabase Project Dashboard under **Authentication -> Configuration -> User Signups**, toggle off **"Allow new users to sign up"**.
-4. **Notify Reviewer**:
-   - Once the above three steps are completed on hosted Supabase, prompt Codex to perform remote table/bucket verification and accept Milestone 2.
-
-Do not begin Milestone 3 until Milestone 2 is officially accepted by Codex.
+Milestone 2 is accepted. The next implementation assignment is Milestone 2.5, the read-only Swiss-inspired planner prototype. Do not begin Milestone 3 until the owner selects a prototype direction.
