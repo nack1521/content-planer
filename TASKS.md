@@ -115,6 +115,15 @@ Reviewer revision 3 checklist (Second Codex review findings):
 - [x] Preserve valid migration fixes: composite foreign key `ON DELETE SET NULL (content_pillar_id)`, handle_new_user execution revocation, and trusted magic-link origin.
 - [x] Run safe verification checks: `git diff --check`, `npm run lint`, `npm test` (12 passed, 0 failed, 0 skipped), `npm run test:db` (26 passed, 0 failed), and `npm run build`.
 
+Reviewer revision 4 checklist (Settings platform localization defect):
+
+- [x] Correct platform translation lookup namespace: updated `src/app/[locale]/settings/page.tsx` from `platforms.${platform}` to `platform.${platform}`, matching canonical dictionary keys without adding duplicate keys.
+- [x] Add focused regression test in `tests/auth.test.mjs` verifying platform translation lookup, dictionary key structure, and ensuring no raw `platforms.*` keys leak in pre-rendered Settings HTML.
+- [x] Preserve saving, success notice, rollback, and error feedback in Settings.
+- [x] Confirmed default platforms do not control Planner filters (preselects platforms for future content form only).
+- [x] Do not modify Supabase migrations or hosted data.
+- [x] Run verification: `git diff --check`, `npm run lint`, `npm test` (13 passed, 0 failed, 0 skipped), `npm run test:db` (26 passed, 0 failed), and `npm run build`.
+
 Review checkpoint: Stop and request database/security review before Milestone 3.
 
 ## Milestone 3 — Planner persistence and record management

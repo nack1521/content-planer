@@ -168,7 +168,7 @@ export default function SettingsPage() {
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    {t(`platforms.${platform}`)}
+                    {t(`platform.${platform}`)}
                   </button>
                 );
               })}

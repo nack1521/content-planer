@@ -406,3 +406,76 @@ test('Validated getAppOrigin origin resolution and fail-closed security', () => 
     process.env = origEnv;
   }
 });
+
+
+// 8. Settings Page Platform Localization Regression Test
+test('Settings page uses valid platform.* keys without raw platforms.* leakage', () => {
+  const settingsTsxPath = join(process.cwd(), 'src/app/[locale]/settings/page.tsx');
+  assert.ok(existsSync(settingsTsxPath), 'src/app/[locale]/settings/page.tsx must exist');
+
+  const settingsTsx = readFileSync(settingsTsxPath, 'utf8');
+
+  // Verify settings page uses platform.${platform} and NOT platforms.${platform}
+  assert.ok(
+    settingsTsx.includes('platform.${platform}'),
+    'Settings page must look up platform labels using platform.${platform}'
+  );
+  assert.ok(
+    !settingsTsx.includes('platforms.${platform}'),
+    'Settings page must not use incorrect platforms.${platform} namespace'
+  );
+
+  // Verify dictionary definitions in en.json and th.json
+  const enPath = join(process.cwd(), 'src/messages/en.json');
+  const thPath = join(process.cwd(), 'src/messages/th.json');
+  const en = JSON.parse(readFileSync(enPath, 'utf8'));
+  const th = JSON.parse(readFileSync(thPath, 'utf8'));
+
+  assert.ok(en.platform, 'en.json must define platform namespace');
+  assert.ok(th.platform, 'th.json must define platform namespace');
+  assert.equal(en.platforms, undefined, 'en.json must not define duplicate platforms namespace');
+  assert.equal(th.platforms, undefined, 'th.json must not define duplicate platforms namespace');
+
+  const expectedPlatforms = ['tiktok', 'instagram', 'youtube', 'facebook', 'x'];
+  for (const p of expectedPlatforms) {
+    assert.ok(en.platform[p], `en.platform missing key: ${p}`);
+    assert.ok(th.platform[p], `th.platform missing key: ${p}`);
+    assert.ok(typeof en.platform[p] === 'string' && en.platform[p].length > 0);
+    assert.ok(typeof th.platform[p] === 'string' && th.platform[p].length > 0);
+  }
+
+  // Verify pre-rendered Settings HTML (both Thai and English)
+  const thHtmlPath = join(process.cwd(), '.next/server/app/th/settings.html');
+  const enHtmlPath = join(process.cwd(), '.next/server/app/en/settings.html');
+
+  assert.ok(existsSync(thHtmlPath), `Missing build artifact: ${thHtmlPath}. Run "npm run build" first.`);
+  assert.ok(existsSync(enHtmlPath), `Missing build artifact: ${enHtmlPath}. Run "npm run build" first.`);
+
+  const thHtml = readFileSync(thHtmlPath, 'utf8');
+  const enHtml = readFileSync(enHtmlPath, 'utf8');
+
+  // Must NOT contain raw translation keys like platforms.tiktok
+  for (const p of expectedPlatforms) {
+    assert.ok(
+      !thHtml.includes(`platforms.${p}`),
+      `Thai settings HTML must not leak raw translation key: platforms.${p}`
+    );
+    assert.ok(
+      !enHtml.includes(`platforms.${p}`),
+      `English settings HTML must not leak raw translation key: platforms.${p}`
+    );
+  }
+
+  // Must contain correctly localized platform labels
+  for (const p of expectedPlatforms) {
+    const label = en.platform[p];
+    assert.ok(
+      thHtml.includes(label),
+      `Thai settings HTML must contain localized platform label: ${label}`
+    );
+    assert.ok(
+      enHtml.includes(label),
+      `English settings HTML must contain localized platform label: ${label}`
+    );
+  }
+});

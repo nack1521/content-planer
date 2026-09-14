@@ -43,12 +43,14 @@ All Milestone 2 reviewer revision items and second Codex review findings have be
 - **Fail-Closed in Production**: In production, if `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_VERCEL_URL` are absent or invalid, `getAppOrigin()` throws an Error. `src/app/actions/auth.ts` catches this and returns a neutral response to prevent credential disclosure.
 - **Unit Tests**: Added unit tests in `tests/auth.test.mjs` verifying development localhost fallback, production fail-closed behavior on missing/invalid/non-http URLs, origin normalization (stripping paths, credentials, queries, fragments), preview deployments, and local HTTP origins.
 
-### 5. Settings Persistence Feedback & State Separation (`src/app/[locale]/settings/page.tsx`)
+### 5. Settings Persistence Feedback, Platform Localization & State Separation (`src/app/[locale]/settings/page.tsx`)
+- **Corrected Platform Localization Namespace**: Fixed translation lookup from `platforms.${platform}` to `platform.${platform}`, matching canonical dictionary keys (`en.platform` and `th.platform`). Every platform button (`TikTok`, `Instagram`, `YouTube`, `Facebook`, `X (Twitter)`) renders its localized label without duplicate dictionary keys.
 - **Independent Pending States**: Separated platform saving (`isSavingPlatforms`) from sign-out (`isSigningOut`).
 - **No Sign-Out False Label**: Sign-out button exclusively displays `{isSigningOut ? t('auth.signingOut') : t('auth.signOut')}`, eliminating the issue where saving platform preferences displayed "Signing out".
 - **Update Serialization & Disabling**: Platform buttons are disabled while saving (`disabled={isSavingPlatforms}`) to serialize persistence requests.
 - **Optimistic Reversion & Error Notice**: If `updateDefaultPlatformsAction` fails or throws, optimistic platform selection is reverted to previous state and a bilingual error notice (`settings.saveError`) is displayed for 4 seconds.
-- **Bilingual Dictionaries**: Added `settings.saveError` to `src/messages/en.json` and `src/messages/th.json`.
+- **Bilingual Dictionaries**: Maintained `settings.saveError` in `src/messages/en.json` and `src/messages/th.json`.
+- **Decoupled from Planner Filters**: Confirmed `default_platforms` does not alter or control Planner view filters; preferences are reserved for preselecting platforms in the future new-content editor.
 
 ### 6. Preserved Schema & Migration Hardening
 - `supabase/migrations/20260914000000_create_mvp_schema.sql`:
@@ -69,7 +71,7 @@ All Milestone 2 reviewer revision items and second Codex review findings have be
 |---|---|---|---|
 | Whitespace Check | `git diff --check` | PASS | 0 trailing whitespace or formatting issues |
 | ESLint | `npm run lint` | PASS | 0 errors, 0 warnings |
-| Node Test Suite | `npm test` | PASS | 12 passed, 0 failed, 0 skipped (isolated test server on dynamic port) |
+| Node Test Suite | `npm test` | PASS | 13 passed, 0 failed, 0 skipped (isolated test server on dynamic port) |
 | Isolated Supabase Policy Tests | `npm run test:db` | PASS | 26 passed, 0 failed (`npx supabase test db --local` against isolated stack) |
 | Production Build | `npm run build` | PASS | Turbopack compilation succeeded with 0 deprecation warnings |
 | Live Route Protection | HTTP Probe `/th/planner` | PASS | HTTP 307 -> `/th/login` |
@@ -91,7 +93,7 @@ All Milestone 2 reviewer revision items and second Codex review findings have be
 - `src/messages/en.json`, `src/messages/th.json`: Added `settings.saveError` translation keys.
 - `tests/run-db-tests.mjs`: Safe isolated runner using only `npx supabase start`, `db reset --local`, and `test db --local`.
 - `tests/run-tests.mjs`: Always builds from current source; spins up isolated server on dynamic port; passes `TEST_BASE_URL`; terminates in `finally`.
-- `tests/auth.test.mjs`: Added middleware control header exclusion test, `getAppOrigin()` test suite, and dynamic `baseUrl`.
+- `tests/auth.test.mjs`: Added middleware control header exclusion test, `getAppOrigin()` test suite, Settings platform localization regression test, and dynamic `baseUrl`.
 - `tests/planner.test.mjs`: Dynamic `baseUrl` consumption.
 - `TASKS.md`: Updated checklist and blocked status.
 - `HANDOFF.md`: This handoff document.
