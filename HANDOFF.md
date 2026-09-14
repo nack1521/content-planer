@@ -1,290 +1,140 @@
-# Milestone 3 Handoff — Accepted by Codex
+# Content Planner Handoff — Sprint 1 Link-Only MVP Roadmap
 
-## Milestone Status
+## Current Status Overview
 
-**Status: Accepted by Codex on 2026-09-14**
-
-Milestone 3 has been independently verified and accepted by Codex. Milestone 4 is now marked **Ready for assignment** and has not been started. No hosted migrations have been applied, no hosted data has been imported, and the repository has not been deployed.
-
-### Final Verification Evidence
-- **143/143** complete automated checks passed (`npm test`)
-- **85/85** pgTAP database checks passed on isolated local Supabase (`npm run test:db`)
-- Production build compiled and generated successfully with 0 errors (`npm run build`)
-- ESLint passed with 0 errors and 0 warnings (`npm run lint`)
-- `git diff --check` passed cleanly with 0 whitespace errors
-- No hosted migrations or hosted imports were performed
+- **Current Milestone**: Milestone 3 **Accepted** by Codex on 2026-09-14.
+- **Next Milestone**: Milestone 4 **Ready for assignment** (do not implement yet).
+- **Scope Alignment**: Sprint 1 is scoped to a complete seven-milestone private MVP for one owner, operating as a **link-only workspace** for external URLs (idea sources, assets, notes, and published posts).
+- **Infrastructure Status**: The existing `content_media` table, private `content-media` Supabase Storage bucket, and security policies are preserved as **dormant Sprint 2 infrastructure**; they are not exposed in the Sprint 1 user interface.
+- **Hosted Supabase Status**: Clean. No hosted migrations or hosted imports have been performed. All development and testing remain strictly isolated to the local Supabase stack (`127.0.0.1:54321`).
 
 ---
 
-## Completed Corrections
+## Sprint 1 Roadmap
 
-### 1. RPC Alignment with Canonical Enums
-- **Platforms**: Updated `public.upsert_content_item_with_links` in `supabase/migrations/20260914000002_add_workflow_tables.sql` to accept the canonical platform list on both content items and content links:
-  - `tiktok`, `instagram`, `youtube`, `facebook`, `x`
-- **Formats**: Aligned RPC allowed formats with database constraint:
-  - `short`, `carousel`, `long`, `infographic`, `story`, `photo`
-- **Goals**: Aligned RPC allowed goals with database constraint:
-  - `awareness`, `engagement`, `growth`, `leads`, `conversion`
-  - Removed unsupported `education` and `retention`.
-
-### 2. Comprehensive Drift and Atomic Rollback Tests
-- **Authenticated Server Action Coverage**: In `tests/actions.test.mjs`, verified that every accepted platform, format, and goal can be saved and retrieved.
-- **Direct Authenticated RPC Coverage**: Verified that `client.rpc("upsert_content_item_with_links", ...)` succeeds for every accepted platform, format, and goal, proving 100% alignment between TypeScript validation (`src/utils/validation.ts`), database check constraints, and the PostgreSQL RPC.
-- **Atomic Rollback on Invalid Values**:
-  - Server actions reject invalid formats (`magazine`), invalid goals (`education`, `retention`), invalid platforms (`linkedin`), and invalid link platforms (`snapchat`) with `validation_failed`, leaving existing records and links untouched.
-  - Direct RPC calls reject invalid formats, goals, platforms, and link platforms with SQLSTATE `22023`.
-
-### 3. Explicit Function Privileges
-- **Revocation and Restricted Grant**:
-  - `revoke execute on function public.upsert_content_item_with_links(jsonb, jsonb) from public, anon;`
-  - `grant execute on function public.upsert_content_item_with_links(jsonb, jsonb) to authenticated;`
-- **pgTAP Privilege Tests**: Added explicit `has_function_privilege` assertions in `supabase/tests/database/rls.test.sql` proving `anon` cannot execute `upsert_content_item_with_links` and `authenticated` can.
-
-### 4. Clean Importer Contract
-- **Removed `--user-id`**: The CLI strictly rejects `--user-id` as an unknown argument, relying on `--email` (or `LOCAL_IMPORT_EMAIL` / `ALLOWED_EMAIL`). Added test in `tests/import.test.mjs` asserting `--user-id` is rejected.
-- **Removed Predictable Fallback Password**: Replaced `local-import-dev-password` with `process.env.LOCAL_IMPORT_PASSWORD || randomUUID()`, generating a cryptographically secure ephemeral password per run.
-- **Handled `updateUserById` Errors**: Added `checkError(updateErr, ...)` to check and handle errors returned by `adminClient.auth.admin.updateUserById`.
-- **Corrected Importer Header & `TASKS.md`**: Updated importer header rule 2 to state that hosted imports are strictly disabled until a separately approved milestone; updated `TASKS.md` to remove stale `--allow-hosted --confirm-hosted-import` text.
-- **Fixed Dry-Run Task Summary**: Fixed reference from `csv.skipped_blank_tasks_count` to `csv.skipped_blank_tasks?.length ?? 0`, printing `0 skipped blank` instead of `undefined skipped blank`.
+1. **Milestone 1 — Foundation and responsive design**
+   - **Status**: Accepted
+   - Application shell, responsive grid, visual tokens, mock data, and base bilingual routing.
+2. **Milestone 2 — Supabase database, passwordless owner authentication, and security**
+   - **Status**: Accepted
+   - Initial database schema, RLS, passwordless magic-link authentication, owner isolation, settings preferences.
+3. **Milestone 3 — Planner persistence, tasks, Excel/Notion replacement workflow, and external links**
+   - **Status**: Accepted by Codex on 2026-09-14
+   - Workflow-aligned schema, server actions with runtime validation, atomic RPC (`upsert_content_item_with_links`), production tasks page, reference accounts, and idempotent dry-run importer CLI.
+   - Verification evidence: 143/143 automated checks passing, 85/85 pgTAP database checks passing, clean build, clean lint.
+4. **Milestone 4 — Content editor, link workspace, text post preview, copy controls, and unsaved-change protection**
+   - **Status**: Ready for assignment
+   - Polish existing editor modal, full external link CRUD, safe link cards, platform-neutral text post preview, one-click copy buttons, and unsaved-changes dirty protection.
+5. **Milestone 5 — Calendar and idea bank**
+   - **Status**: Planned (Blocked by Milestone 4)
+   - Monthly calendar of scheduled content, quick-capture idea bank, status promotion workflow.
+6. **Milestone 6 — Bilingual completion, responsive QA, and release quality**
+   - **Status**: Planned (Blocked by Milestone 5)
+   - 100% Thai/English parity, keyboard accessibility, mobile/desktop edge case review, zero console/lint errors.
+7. **Milestone 7 — Vercel release and hosted Supabase setup**
+   - **Status**: Planned (Blocked by Milestone 6 and deployment access)
+   - Production deployment on Vercel, migration application to hosted Supabase, production dry-run data import, live smoke test.
 
 ---
 
-## Executed Commands and Exact Results
+## Revised Milestone 4 Scope and Requirements
 
-### 1. Whitespace / Diff Check
-Command:
-```bash
-git diff --check
-```
-Result: Exited 0 with clean output (no whitespace errors).
+When Milestone 4 is assigned, the implementation must adhere to the following specifications:
 
-### 2. ESLint
-Command:
-```bash
-npm run lint
-```
-Result:
-```
-> content-planner@0.1.0 lint
-> eslint
-```
-Exited 0 with 0 errors and 0 warnings.
+### 1. Preserve & Polish Existing Editor
+- Preserve all existing form fields (title, status, publication date/time, content pillar, platforms, format, goal, main message/hook, production notes, caption, hashtags, call-to-action).
+- Do not rebuild or discard working components. Maintain existing accessibility and styling.
 
-### 3. Isolated Local Supabase pgTAP Database Tests
-Command:
-```bash
-npm run test:db
-```
-Result:
-```
-=== Running Isolated Content Planner Supabase pgTAP Test Suite ===
-Resetting isolated local database (npx supabase db reset --local)...
-...
-Executing pgTAP tests on isolated local database (npx supabase test db --local)...
-Connecting to local database...
-/Users/nack/contentPlaner/supabase/tests/database/rls.test.sql .. ok
-All tests successful.
-Files=1, Tests=85,  0 wallclock secs ( 0.02 usr  0.01 sys +  0.01 cusr  0.00 csys =  0.05 CPU)
-Result: PASS
+### 2. External Link Workspace (CRUD)
+- Support external links for:
+  - `idea_source`: Inspiration, reference articles, competitor links.
+  - `asset`: Google Drive, Dropbox, Figma, Canva, or cloud asset folder links.
+  - `note`: Research documents, production briefs, script docs.
+  - `published`: Live social post links once published (TikTok, IG, YouTube, Facebook, X).
+- Attributes: URL, label, link type, optional platform (`tiktok`, `instagram`, `youtube`, `facebook`, `x`), sort order.
+- Validate HTTP and HTTPS URLs strictly on client and server.
+- Safe link cards:
+  - Display label, platform badge, sanitized domain name.
+  - Controls: Copy URL, Open link, Reorder (move up/down), and Remove link.
+  - Open external links safely in a new tab with `target="_blank" rel="noopener noreferrer"`.
+- **Zero remote fetching rule**: Do not fetch remote pages, scrape OpenGraph metadata, download files, generate thumbnails, or embed third-party iframes in Sprint 1.
 
-[SUCCESS] All Content Planner pgTAP database tests passed on isolated local Supabase stack.
-```
-Exited 0 with 85/85 passing database tests.
+### 3. Platform-Neutral Text Post Preview
+- Clean, readable text preview rendering the core copy elements:
+  - Hook (main message)
+  - Caption (preserving line breaks)
+  - Call to action (CTA)
+  - Hashtags (formatted and tagged)
 
-### 4. Next.js Production Build
-Command:
-```bash
-npm run build
-```
-Result:
-```
-> content-planner@0.1.0 build
-> next build
+### 4. Copy Controls & Feedback
+- One-click copy buttons for:
+  - Caption
+  - Call to Action
+  - Hashtags
+  - Individual link URLs
+- Accessible visual and auditory/toast feedback on success and failure with full Thai and English localization.
 
-▲ Next.js 16.3.5 (Turbopack)
-- Environments: .env.local
-✓ Running next.config.ts took 62ms
+### 5. Unsaved-Change Protection
+- Track form dirty state against initial database record values.
+- Warn with confirmation dialog before closing the modal or discarding changes.
+- Intercept window navigation (`beforeunload`) when unsaved changes exist.
 
-  Creating an optimized production build ...
-✓ Compiled successfully in 890ms
-  Running TypeScript ...
-  Finished TypeScript in 1414ms ...
-✓ Generating static pages using 7 workers (17/17) in 342ms
-  Finalizing page optimization ...
-```
-Exited 0 with all 17 routes compiled and generated successfully.
-
-### 5. Direct Importer CLI Dry-Run
-Command:
-```bash
-node scripts/import-data.mjs   --excel tests/fixtures/sample-planner.xlsx   --csv tests/fixtures/sample-notion.csv   --decisions tests/fixtures/sample-decisions.json
-```
-Result:
-```
-================================================================
-            CONTENT PLANNER DATA IMPORTER (MILESTONE 3)
-================================================================
-Execution Mode:  DRY-RUN (NO WRITES)
-
-Sources:
-  - Excel:  sample-planner.xlsx
-  - CSV:    sample-notion.csv
-
-Parsing external source files...
-
-Parsed Entity Summary:
-  - Automatic Content Candidates: 2
-  - Incomplete Row Flagged:       0
-  - Empty Placeholder Rows:       0
-  - Embedded Links Extracted:     2
-  - Reference Accounts:           2
-  - Notion Production Tasks:      1 linked, 1 standalone, 0 skipped blank
-
-================================================================
-                   PUBLICATION DATE REVIEW REPORT
-================================================================
-Total Dates Checked: 2
-  - Consistent (OK):  0
-  - Flagged Warnings: 2
-
-Flagged Ambiguous Dates Requiring Explicit Review:
-No. | Visual Month | Proposed Date | Warning Reason
-----+--------------+---------------+-------------------------------------
-1   | June         | NONE          | UNKNOWN_FORMAT (Watch this before buying plaster)
-2   | June         | NONE          | UNKNOWN_FORMAT (Five hacks you must know)
-
-Loaded and validated 2 reviewed date decisions from sample-decisions.json
-
-================================================================
-                        DRY-RUN VERDICT
-================================================================
-Dry-run preview completed successfully.
-No database records were created or modified.
-================================================================
-```
-Exited 0 with `0 skipped blank` and 0 private URLs.
-
-### 6. Direct Importer CLI Commit (First Run — Creation)
-Command:
-```bash
-node scripts/import-data.mjs   --excel tests/fixtures/sample-planner.xlsx   --csv tests/fixtures/sample-notion.csv   --decisions tests/fixtures/sample-decisions.json   --commit   --email testowner@example.com
-```
-Result:
-```
->>> COMMIT MODE ACTIVATED <<<
-Database Host: 127.0.0.1:54321 (LOCAL SAFEGUARD PASS)
-[AUTH] Authenticated as genuine local user: testowner@example.com (ID: 8ef35dd1-40b0-44f5-af7c-40aff0ef67e2)
-
-Importing 2 content items and links atomically...
-[OK] Content items: 2 (created: 2, updated: 0).
-[OK] Content links: 2 (created: 2, updated: 0).
-
-Processing production tasks...
-[OK] Production tasks: 2 (created: 2, updated: 0).
-
-Processing 2 reference accounts...
-[OK] Reference accounts: 2 (created: 2, updated: 0).
-
-================================================================
-                    IMPORT COMMIT COMPLETE
-================================================================
-Content items:      2 (created: 2, updated: 0)
-Content links:      2 (created: 2, updated: 0)
-Production tasks:   2 (created: 2, updated: 0)
-Reference accounts: 2 (created: 2, updated: 0)
-All records committed successfully without errors.
-================================================================
-```
-Exited 0.
-
-### 7. Direct Importer CLI Commit (Second Run — Idempotency)
-Command:
-```bash
-node scripts/import-data.mjs   --excel tests/fixtures/sample-planner.xlsx   --csv tests/fixtures/sample-notion.csv   --decisions tests/fixtures/sample-decisions.json   --commit   --email testowner@example.com
-```
-Result:
-```
->>> COMMIT MODE ACTIVATED <<<
-Database Host: 127.0.0.1:54321 (LOCAL SAFEGUARD PASS)
-[AUTH] Authenticated as genuine local user: testowner@example.com (ID: 8ef35dd1-40b0-44f5-af7c-40aff0ef67e2)
-
-Importing 2 content items and links atomically...
-[OK] Content items: 2 (created: 0, updated: 2).
-[OK] Content links: 2 (created: 0, updated: 2).
-
-Processing production tasks...
-[OK] Production tasks: 2 (created: 0, updated: 2).
-
-Processing 2 reference accounts...
-[OK] Reference accounts: 2 (created: 0, updated: 2).
-
-================================================================
-                    IMPORT COMMIT COMPLETE
-================================================================
-Content items:      2 (created: 0, updated: 2)
-Content links:      2 (created: 0, updated: 2)
-Production tasks:   2 (created: 0, updated: 2)
-Reference accounts: 2 (created: 0, updated: 2)
-All records committed successfully without errors.
-================================================================
-```
-Exited 0.
-
-### 8. Complete Test Runner (`npm test`)
-Command:
-```bash
-npm test
-```
-Result:
-```
-=== 1. Verifying and Preparing Isolated Local Supabase Environment ===
-Connecting to local database...
-/Users/nack/contentPlaner/supabase/tests/database/rls.test.sql .. ok
-All tests successful.
-Files=1, Tests=85,  0 wallclock secs ( 0.02 usr  0.01 sys +  0.01 cusr  0.00 csys =  0.05 CPU)
-Result: PASS
-Verified local Supabase test environment: 127.0.0.1:54321
-
-=== 2. Running Production Domain & Validation Suites ===
-✔ 15/15 tests passed
-
-=== 3. Running Accessibility & Keyboard Navigation Suite ===
-✔ 6/6 tests passed
-
-=== 4. Running Localization & String Scanner Suite ===
-✔ 5/5 tests passed
-
-=== 5. Running Production Importer CLI & Idempotency Suite ===
-✔ 10/10 tests passed
-
-=== 6. Running Authenticated Server Actions & Atomic Rollback Suite ===
-✔ 8/8 tests passed (including canonical enums and drift detection)
-
-=== 7. Building Content Planner Application from Current Source ===
-✓ Compiled successfully
-
-=== 8. Running Live Server & HTTP Integration Suites ===
-✔ 14/14 tests passed
-
-=== [SUCCESS] ALL CLEAN-ENVIRONMENT CHECKS AND TEST SUITES PASSED ===
-```
-Exited 0 with all 143 tests passing (85 pgTAP + 58 node/live server).
+### 6. Verification & Standards
+- Preserve responsive desktop side-sheet and mobile full-screen layouts.
+- Full keyboard navigation and ARIA accessibility.
+- Equal coverage for Thai and English.
+- Unit and integration tests covering URL validation, link ordering, text preview rendering, copy feedback, and dirty state detection.
+- Stop for Codex review upon completion.
 
 ---
 
-## Changed Files
+## Explicitly Removed from Sprint 1 (Deferred to Sprint 2)
 
-- `supabase/migrations/20260914000002_add_workflow_tables.sql`: Aligned RPC with canonical platforms (`tiktok`, `instagram`, `youtube`, `facebook`, `x`), formats (`short`, `carousel`, `long`, `infographic`, `story`, `photo`), and goals (`awareness`, `engagement`, `growth`, `leads`, `conversion`), removing unsupported `education` and `retention`; revoked function execution from `PUBLIC` and `anon`; granted execution exclusively to `authenticated`.
-- `supabase/tests/database/rls.test.sql`: Expanded to 85 pgTAP assertions verifying function privileges (`anon` cannot execute, `authenticated` can), accepted platforms (`x`), formats, goals, and atomic rollback on unsupported values.
-- `tests/actions.test.mjs`: Added comprehensive drift detection and canonical enum test suite covering all accepted platforms, formats, and goals via both server actions and direct RPC, and verifying atomic rollback.
-- `scripts/import-data.mjs`: Removed `--user-id`, removed predictable password fallback, generated ephemeral random password, checked `updateUserById` error, corrected header, fixed `0 skipped blank` task summary.
-- `tests/import.test.mjs`: Added test asserting `--user-id` is rejected as an unsupported argument.
-- `TASKS.md` & `HANDOFF.md`: Updated to truthfully claim only evidence produced by tests; status maintained as `Revision required`.
+The following items are strictly out of scope for Sprint 1:
+- Image/video file upload UI.
+- Signed upload URLs and private media-viewing URLs.
+- Large-file streaming or resumable file upload handlers.
+- Media ordering, preview carousels, and file removal.
+- Subscription, pricing, or billing functionality (e.g., Stripe).
+- Public user registration or sign-up workflows.
+- Automatic publishing to social media APIs.
+- Social metrics or engagement analytics scraping.
 
 ---
 
-## Remaining Scope and Review Request
+## Dormant Infrastructure Notice
 
-- **Hosted Supabase Status**: No migrations have been applied to hosted Supabase. No hosted data has been imported.
-- **Milestone 4 Status**: Milestone 4 has not been started.
-- **Review Stop**: Stopping here for Codex review of the Milestone 3 focused final revision.
+- Database table `public.content_media` remains defined in migration `20260912000001_initial_schema.sql` with owner RLS policies intact.
+- Storage bucket `content-media` remains configured with private owner access.
+- Neither the table nor the bucket is dropped or modified. They are retained as **dormant Sprint 2 infrastructure** and must not be exposed in the Sprint 1 application interface or server actions.
+
+---
+
+## Sprint 2 Backlog (Deferred Capabilities)
+
+1. **Private Media Upload Pipeline**:
+   - Direct file upload UI for images and videos attached to content items.
+   - Resumable large-file uploads using chunking / TUS protocol.
+   - Client and server-side file type (JPEG, PNG, WebP, MP4, MOV) and size limit enforcement.
+   - Temporary signed viewing URLs generated on demand with short expiration.
+   - Visual media gallery, reordering, and deletion controls.
+   - Storage quotas and account usage monitoring.
+2. **Commercial & Multi-User SaaS Capabilities**:
+   - Public user registration, email verification, and onboarding flow.
+   - Stripe integration for subscriptions, tier management, customer portal, and webhooks.
+   - Multi-tenant workspace architecture (`workspaces`, `workspace_members`).
+   - Role-based access control (Admin, Creator, Editor, Viewer).
+3. **Platform Automations & Integrations**:
+   - Direct social publishing integrations via official platform APIs (TikTok, Meta, YouTube, X).
+   - Post performance metrics and analytics ingestion.
+
+---
+
+## Verification Evidence (Current Milestone 3 Baseline)
+
+- **Automated Test Suite**: 143/143 tests passing (`npm test`).
+- **pgTAP Database Tests**: 85/85 assertions passing (`npm run test:db`).
+- **Production Build**: 17/17 routes compiled cleanly with Turbopack (`npm run build`).
+- **ESLint**: 0 errors, 0 warnings (`npm run lint`).
+- **Code Formatting / Diffs**: Clean, no whitespace errors (`git diff --check`).
+- **Database Status**: Local stack running and verified; zero hosted modifications.

@@ -1,10 +1,22 @@
 # Content Planner Milestones
 
-## Execution rule
+## Product Roadmap & Execution Rules
 
-An implementation agent must complete only the first unchecked milestone, update this file, write `HANDOFF.md`, and stop for review.
+The project roadmap is structured into two phases:
+- **Sprint 1 (Milestones 1–7)**: Complete private MVP for one owner. **Link-only scope**: collects and organizes external URLs (idea sources, assets, notes, and published posts). Direct media uploads, subscriptions, public sign-up, multi-user SaaS functionality, and automatic social publishing are deferred to Sprint 2.
+- **Sprint 2 Backlog**: Media upload pipeline, resumable large files, storage quotas, billing/subscriptions, public accounts, multi-user SaaS workspaces, and platform API integrations.
 
-Do not mark a milestone complete unless every acceptance criterion and required check passes. Individual checklist items may be checked as they are completed.
+### Sprint 1 Roadmap Overview:
+1. Foundation and responsive design — **Accepted**.
+2. Supabase database, passwordless owner authentication, and security — **Accepted**.
+3. Planner persistence, tasks, Excel/Notion replacement workflow, and external links — **Accepted**.
+4. Content editor, link workspace, text post preview, copy controls, and unsaved-change protection — **Ready for assignment**.
+5. Calendar and idea bank.
+6. Bilingual completion, responsive QA, and release quality.
+7. Vercel release and hosted Supabase setup.
+
+### Execution Rule
+An implementation agent must complete only the first unchecked milestone, update this file, write `HANDOFF.md`, and stop for review. Do not mark a milestone complete unless every acceptance criterion and required check passes. Individual checklist items may be checked as they are completed.
 
 ## Milestone 0 — Product and architecture planning
 
@@ -191,21 +203,24 @@ Reviewer revision 3 checklist (Milestone 3 focused final revision):
 
 Review checkpoint: Milestone 3 accepted by Codex on 2026-09-14. Ready for Milestone 4 assignment.
 
-## Milestone 4 — Content editor, preview, and media
+## Milestone 4 — Content editor, link workspace, text post preview, copy controls, and unsaved-change protection
 
 Status: Ready for assignment
 
-- [ ] Implement the responsive content editor.
-- [ ] Add hook, caption, call-to-action, hashtags, and notes editing.
-- [ ] Add private image/video upload, ordering, preview, and removal.
-- [ ] Validate file type and configured size limits.
-- [ ] Add temporary signed media URLs.
-- [ ] Add the post preview.
-- [ ] Add copy controls for caption, CTA, and hashtags.
-- [ ] Warn about unsaved changes.
-- [ ] Run lint, relevant tests, and production build successfully.
+- [ ] Preserve and polish the existing content editor; do not rebuild completed fields.
+- [ ] Support external link CRUD for idea sources, assets, notes, and published posts.
+- [ ] Store URL, label, link type, optional platform, and ordering.
+- [ ] Validate HTTP/HTTPS links strictly.
+- [ ] Show safe link cards with label, platform, domain, copy, open, reorder, and remove controls.
+- [ ] Open external links safely in a new tab (`target="_blank" rel="noopener noreferrer"`).
+- [ ] Do not fetch remote pages, scrape metadata, download files, generate thumbnails, or automatically embed third-party content in Sprint 1.
+- [ ] Add a platform-neutral text preview for hook, caption, CTA, and hashtags.
+- [ ] Add localized copy controls and success/error feedback.
+- [ ] Warn before closing or navigating away with unsaved changes.
+- [ ] Preserve desktop, mobile, accessibility, and Thai/English behavior.
+- [ ] Add relevant tests and stop for Codex review.
 
-Review checkpoint: Stop and request media/security review before Milestone 5.
+Review checkpoint: Stop and request editor/link-workspace review before Milestone 5.
 
 ## Milestone 5 — Calendar and idea bank
 
@@ -230,7 +245,7 @@ Status: Blocked by Milestone 5
 - [ ] Verify Thai typography, wrapping, dates, times, and form validation.
 - [ ] Verify keyboard navigation and visible focus.
 - [ ] Verify loading, empty, error, offline, success, and destructive confirmation states.
-- [ ] Verify planner, editor, calendar, ideas, login, and settings on mobile and desktop.
+- [ ] Verify planner, editor, calendar, ideas, tasks, login, and settings on mobile and desktop.
 - [ ] Remove debug output, dead sample code, and unresolved placeholders.
 - [ ] Run lint, all tests, and production build successfully.
 
@@ -252,7 +267,22 @@ Status: Blocked by Milestone 6 and deployment access
 
 Acceptance criteria:
 
-- The owner can sign in and complete the full MVP journey in production.
+- The owner can sign in and complete the full link-only MVP journey in production.
 - Thai and English work in production.
-- Data and private media persist securely.
+- Data and external links persist securely.
 - Required production checks pass with no known release blocker.
+
+---
+
+## Sprint 2 Backlog (Deferred Capabilities)
+
+Status: Deferred until Sprint 1 MVP completion
+
+- [ ] **Private Media Upload UI**: Image and video upload interface directly attached to content records.
+- [ ] **Large-File & Resumable Uploads**: Chunked, resumable uploads (TUS protocol) with progress indicators and error recovery.
+- [ ] **Media Organization**: Visual media ordering, preview gallery, and file removal controls.
+- [ ] **Temporary Signed Viewing URLs**: Short-lived signed URLs from private `content-media` bucket.
+- [ ] **Storage Quotas**: Configurable storage limits, file size caps, and usage monitoring per account.
+- [ ] **Subscriptions and Billing**: Stripe integration for paid tiers, checkout flow, customer portal, and webhook handling.
+- [ ] **Public Accounts & Multi-Tenant SaaS**: Public registration flow, multi-user workspace schemas, team invitations, and role-based permissions (RBAC).
+- [ ] **Platform Social Publishing**: Direct API publishing integrations for TikTok, Meta (Instagram/Facebook), YouTube, and X with post performance analytics.
