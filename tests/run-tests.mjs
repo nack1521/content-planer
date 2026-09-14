@@ -1,17 +1,27 @@
-import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { spawn } from "node:child_process";
+import { createServer } from "node:net";
 
-async function waitForServer(url, timeoutMs = 15000) {
+function getFreePort() {
+  return new Promise((resolve, reject) => {
+    const srv = createServer();
+    srv.listen(0, "127.0.0.1", () => {
+      const port = srv.address().port;
+      srv.close(() => resolve(port));
+    });
+    srv.on("error", reject);
+  });
+}
+
+async function waitForServer(url, timeoutMs = 25000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
-      const res = await fetch(url, { redirect: 'manual' });
+      const res = await fetch(url, { redirect: "manual" });
       if (res.status < 500) {
         return true;
       }
     } catch {
-      // ignore until server starts listening
+      // wait until server listens
     }
     await new Promise((resolve) => setTimeout(resolve, 150));
   }
@@ -19,57 +29,64 @@ async function waitForServer(url, timeoutMs = 15000) {
 }
 
 async function main() {
-  // Ensure Next.js production build exists for static artifact tests
-  const buildDir = join(process.cwd(), '.next');
-  if (!existsSync(buildDir)) {
-    console.log('Building application before running tests...');
-    const buildProc = spawn('npx', ['next', 'build'], { stdio: 'inherit' });
-    const code = await new Promise((resolve) => buildProc.on('exit', resolve));
-    if (code !== 0) {
-      process.exit(code || 1);
-    }
+  // Always build application from current source before running tests
+  console.log("Building Content Planner application from current source...");
+  const buildProc = spawn("npx", ["next", "build"], {
+    stdio: "inherit",
+    env: { ...process.env, NODE_ENV: "production" },
+  });
+
+  const buildCode = await new Promise((resolve) => buildProc.on("exit", resolve));
+  if (buildCode !== 0) {
+    console.error(`Build failed with exit code ${buildCode}`);
+    process.exit(buildCode || 1);
   }
 
-  // Check if a server is already active on port 3000
-  let isAlreadyRunning = false;
-  try {
-    const probe = await fetch('http://localhost:3000/', { redirect: 'manual' });
-    isAlreadyRunning = probe.status < 500;
-  } catch {
-    isAlreadyRunning = false;
-  }
+  // Get dedicated test port - NEVER reuse port 3000 or arbitrary processes
+  const testPort = await getFreePort();
+  const baseUrl = `http://127.0.0.1:${testPort}`;
+  console.log(`Starting isolated Content Planner test server on ${baseUrl}...`);
 
   let serverProc = null;
-  if (!isAlreadyRunning) {
-    serverProc = spawn('npx', ['next', 'start', '-p', '3000'], {
-      stdio: ['ignore', 'ignore', 'pipe'],
+  try {
+    serverProc = spawn("npx", ["next", "start", "-p", String(testPort), "-H", "127.0.0.1"], {
+      stdio: ["ignore", "ignore", "pipe"],
       detached: false,
     });
 
-    const isReady = await waitForServer('http://localhost:3000/');
+    const isReady = await waitForServer(baseUrl, 20000);
     if (!isReady) {
-      console.error('Failed to start Next.js test server on port 3000');
-      if (serverProc) serverProc.kill();
-      process.exit(1);
+      throw new Error(`Test server failed to start or respond on ${baseUrl}`);
+    }
+
+    console.log(`Running tests against isolated server (${baseUrl})...`);
+    const testProc = spawn(
+      process.execPath,
+      ["--test", "tests/planner.test.mjs", "tests/auth.test.mjs"],
+      {
+        stdio: "inherit",
+        env: {
+          ...process.env,
+          TEST_BASE_URL: baseUrl,
+        },
+      }
+    );
+
+    const testExitCode = await new Promise((resolve) => testProc.on("exit", resolve));
+    process.exitCode = testExitCode || 0;
+  } finally {
+    // ALWAYS terminate the spawned server in a finally block
+    if (serverProc) {
+      try {
+        serverProc.kill("SIGTERM");
+      } catch {
+        // ignore cleanup error
+      }
     }
   }
-
-  const testProc = spawn(
-    process.execPath,
-    ['--test', 'tests/planner.test.mjs', 'tests/auth.test.mjs'],
-    { stdio: 'inherit' }
-  );
-
-  const exitCode = await new Promise((resolve) => testProc.on('exit', resolve));
-
-  if (serverProc) {
-    serverProc.kill('SIGTERM');
-  }
-
-  process.exit(exitCode || 0);
 }
 
 main().catch((err) => {
-  console.error('Test runner failure:', err);
+  console.error("Test runner failure:", err);
   process.exit(1);
 });

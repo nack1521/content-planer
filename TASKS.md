@@ -103,6 +103,18 @@ Reviewer revision 2 checklist (Codex review findings):
 - [x] Deterministic tests: eliminate skips and `MODULE_TYPELESS_PACKAGE_JSON` warning in `npm test` via `"type": "module"` and `tests/run-tests.mjs`; report local database policy tests separately via `npm run test:db` (`tests/run-db-tests.mjs`).
 - [x] Update `TASKS.md` and `HANDOFF.md` truthfully with real test output (26 passing pgTAP assertions and 11 passing Node tests).
 
+Reviewer revision 3 checklist (Second Codex review findings):
+
+- [x] Replace `tests/run-db-tests.mjs`: completely eliminate arbitrary container discovery, foreign credentials, and cross-project manipulation. Use only Content Planner's isolated local Supabase stack (`npx supabase start`, `npx supabase db reset --local`, `npx supabase test db --local`).
+- [x] Remove mock database bootstrap script `supabase/tests/database/setup-local-db.sql`.
+- [x] Report mock-schema compatibility truthfully as baseline PostgreSQL syntax verification, and report the real isolated Supabase pgTAP test results (26 passed).
+- [x] Repair `tests/run-tests.mjs`: always build from current source, start isolated server on a dynamic/free test port, pass `TEST_BASE_URL` to tests, and terminate spawned server in a `finally` block.
+- [x] Repair redirect header preservation: add explicit allowlist `ALLOWED_REDIRECT_HEADERS` in `src/utils/supabase/redirect.ts`, strictly omitting Next.js internal middleware headers (`x-middleware-next`, etc.). Add test proving internal middleware headers are absent from the redirect.
+- [x] Strengthen `getAppOrigin()`: parse configured values with `new URL()`, allow only `http:` and `https:`, return URL origin without credentials/paths/queries/fragments, permit localhost fallback strictly in development, fail closed in production when unconfigured or invalid, and add unit tests covering production, preview, invalid URLs, paths, and localhost fallback.
+- [x] Correct Settings persistence feedback: separate `isSavingPlatforms` and `isSigningOut` pending states, disable/serialize platform updates while saving, revert optimistic state and display bilingual error notice (`settings.saveError`) when persistence fails, and never show "Signing out" while saving platforms.
+- [x] Preserve valid migration fixes: composite foreign key `ON DELETE SET NULL (content_pillar_id)`, handle_new_user execution revocation, and trusted magic-link origin.
+- [x] Run safe verification checks: `git diff --check`, `npm run lint`, `npm test` (12 passed, 0 failed, 0 skipped), `npm run test:db` (26 passed, 0 failed), and `npm run build`.
+
 Review checkpoint: Stop and request database/security review before Milestone 3.
 
 ## Milestone 3 — Planner persistence and record management

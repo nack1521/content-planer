@@ -91,13 +91,14 @@ test('Pre-rendered English planner HTML exists and contains localized content', 
 
 // 4. Validate live server if running
 test('Live server responses and invalid locale rejection', async () => {
-  const probe = await fetch('http://localhost:3000/', { redirect: 'manual' });
-  assert.ok(probe.status < 500, 'Local test server must be reachable on port 3000');
+  const baseUrl = process.env.TEST_BASE_URL || 'http://localhost:3000';
+  const probe = await fetch(`${baseUrl}/`, { redirect: 'manual' });
+  assert.ok(probe.status < 500, `Local test server must be reachable on ${baseUrl}`);
 
-  const rootRes = await fetch('http://localhost:3000/', { redirect: 'manual' });
+  const rootRes = await fetch(`${baseUrl}/`, { redirect: 'manual' });
   assert.equal(rootRes.status, 307);
   assert.equal(rootRes.headers.get('location'), '/th/planner');
 
-  const invalidRes = await fetch('http://localhost:3000/fr/planner');
+  const invalidRes = await fetch(`${baseUrl}/fr/planner`);
   assert.equal(invalidRes.status, 404, 'Unsupported locale /fr/planner must return 404');
 });

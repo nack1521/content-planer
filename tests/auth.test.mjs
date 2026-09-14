@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { normalizeEmail, isAllowedEmail } from '../src/utils/auth/allowedEmail.ts';
+import { getAppOrigin } from '../src/utils/url/getOrigin.ts';
 import { NextResponse } from 'next/server.js';
 
 import { createRedirectResponse } from '../src/utils/supabase/redirect.ts';
@@ -194,8 +195,21 @@ test('Proxy contract adheres to Next.js 16 conventions and preserves cookies on 
   const sourceResponse = NextResponse.next();
   sourceResponse.cookies.set('sb-access-token', 'test-token', { path: '/', httpOnly: true });
   sourceResponse.cookies.set('sb-refresh-token', 'test-refresh', { path: '/', httpOnly: true });
-  sourceResponse.headers.set('x-source-trace', 'trace-id-abc-123');
+
+  // Add internal Next.js middleware control headers
+  sourceResponse.headers.set('x-middleware-next', '1');
+  sourceResponse.headers.set('x-middleware-rewrite', 'http://localhost/internal');
+  sourceResponse.headers.set('x-middleware-override-headers', 'x-custom');
+
+  // Add un-allowlisted header
+  sourceResponse.headers.set('x-untrusted-debug', 'debug-val');
+
+  // Add allowed safe application headers
   sourceResponse.headers.set('x-correlation-id', 'corr-456');
+  sourceResponse.headers.set('x-request-id', 'req-789');
+  sourceResponse.headers.set('cache-control', 'no-store');
+
+  // Add redirect-specific header to source
   sourceResponse.headers.set('location', 'http://localhost:3000/stale-destination');
 
   const redirectResponse = createRedirectResponse('http://localhost:3000/th/login', sourceResponse);
@@ -203,9 +217,17 @@ test('Proxy contract adheres to Next.js 16 conventions and preserves cookies on 
   assert.equal(redirectResponse.status, 307);
   // Preserves redirect location without being overwritten by source
   assert.equal(redirectResponse.headers.get('location'), 'http://localhost:3000/th/login');
-  // Preserves source non-redirect headers
-  assert.equal(redirectResponse.headers.get('x-source-trace'), 'trace-id-abc-123');
+
+  // Prove Next.js internal middleware headers are absent from the redirect
+  assert.equal(redirectResponse.headers.get('x-middleware-next'), null, 'Internal x-middleware-next must not be copied onto redirect');
+  assert.equal(redirectResponse.headers.get('x-middleware-rewrite'), null, 'Internal x-middleware-rewrite must not be copied onto redirect');
+  assert.equal(redirectResponse.headers.get('x-middleware-override-headers'), null, 'Internal x-middleware-override-headers must not be copied onto redirect');
+  assert.equal(redirectResponse.headers.get('x-untrusted-debug'), null, 'Un-allowlisted header must not be copied onto redirect');
+
+  // Prove explicit allowlist of safe application headers is preserved
   assert.equal(redirectResponse.headers.get('x-correlation-id'), 'corr-456');
+  assert.equal(redirectResponse.headers.get('x-request-id'), 'req-789');
+  assert.equal(redirectResponse.headers.get('cache-control'), 'no-store');
 
   const accessTokenCookie = redirectResponse.cookies.get('sb-access-token');
   const refreshTokenCookie = redirectResponse.cookies.get('sb-refresh-token');
@@ -282,8 +304,9 @@ test('Pre-rendered Thai and English login HTML exist and contain localized conte
 
 // 6. Live Server Route Protection and Auth Endpoints
 test('Live server route protection and auth endpoints', async () => {
-  const probe = await fetch('http://localhost:3000/', { redirect: 'manual' });
-  assert.ok(probe.status < 500, 'Local test server must be reachable on port 3000');
+  const baseUrl = process.env.TEST_BASE_URL || 'http://localhost:3000';
+  const probe = await fetch(`${baseUrl}/`, { redirect: 'manual' });
+  assert.ok(probe.status < 500, `Local test server must be reachable on ${baseUrl}`);
 
   // Unauthenticated requests to protected routes must redirect to localized login
   const protectedRoutes = [
@@ -295,7 +318,7 @@ test('Live server route protection and auth endpoints', async () => {
   ];
 
   for (const { path, expectedRedirect } of protectedRoutes) {
-    const res = await fetch(`http://localhost:3000${path}`, { redirect: 'manual' });
+    const res = await fetch(`${baseUrl}${path}`, { redirect: 'manual' });
     assert.equal(
       res.status,
       307,
@@ -309,18 +332,18 @@ test('Live server route protection and auth endpoints', async () => {
   }
 
   // Public login routes return 200 OK
-  const thLogin = await fetch('http://localhost:3000/th/login');
+  const thLogin = await fetch(`${baseUrl}/th/login`);
   assert.equal(thLogin.status, 200);
 
-  const enLogin = await fetch('http://localhost:3000/en/login');
+  const enLogin = await fetch(`${baseUrl}/en/login`);
   assert.equal(enLogin.status, 200);
 
   // Invalid locales return 404
-  const invalidLogin = await fetch('http://localhost:3000/fr/login');
+  const invalidLogin = await fetch(`${baseUrl}/fr/login`);
   assert.equal(invalidLogin.status, 404, 'Invalid locale /fr/login must return 404');
 
   // Callback without code redirects to login
-  const callbackRes = await fetch('http://localhost:3000/th/auth/callback', {
+  const callbackRes = await fetch(`${baseUrl}/th/auth/callback`, {
     redirect: 'manual',
   });
   assert.equal(callbackRes.status, 307);
@@ -328,4 +351,58 @@ test('Live server route protection and auth endpoints', async () => {
     callbackRes.headers.get('location')?.includes('/th/login'),
     'Callback without code must redirect to /th/login'
   );
+});
+
+// 7. Validated getAppOrigin() and origin resolution
+test('Validated getAppOrigin origin resolution and fail-closed security', () => {
+  const origEnv = { ...process.env };
+
+  try {
+    // 1. Local development fallback to localhost:3000
+    process.env.NODE_ENV = 'development';
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_VERCEL_URL;
+    delete process.env.VERCEL_URL;
+    assert.equal(getAppOrigin(), 'http://localhost:3000');
+
+    // 2. Production fail-closed when site URL is absent
+    process.env.NODE_ENV = 'production';
+    assert.throws(
+      () => getAppOrigin(),
+      /Application origin is unconfigured or invalid in production/
+    );
+
+    // 3. Production fail-closed when URL scheme is invalid (ftp, javascript)
+    process.env.NEXT_PUBLIC_SITE_URL = 'ftp://files.example.com';
+    assert.throws(
+      () => getAppOrigin(),
+      /Application origin is unconfigured or invalid in production/
+    );
+
+    process.env.NEXT_PUBLIC_SITE_URL = 'javascript:alert(1)';
+    assert.throws(
+      () => getAppOrigin(),
+      /Application origin is unconfigured or invalid in production/
+    );
+
+    // 4. Production valid site URL strips paths, credentials, query strings, and fragments
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://admin:secret@studio.contentplanner.app:8443/auth/v1?token=123#frag';
+    assert.equal(getAppOrigin(), 'https://studio.contentplanner.app:8443');
+
+    // 5. Handles preview deployments via NEXT_PUBLIC_VERCEL_URL
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    process.env.NEXT_PUBLIC_VERCEL_URL = 'preview-branch.vercel.app/test-path?param=1';
+    assert.equal(getAppOrigin(), 'https://preview-branch.vercel.app');
+
+    // 6. Handles fallback VERCEL_URL
+    delete process.env.NEXT_PUBLIC_VERCEL_URL;
+    process.env.VERCEL_URL = 'https://pr-42.vercel.app';
+    assert.equal(getAppOrigin(), 'https://pr-42.vercel.app');
+
+    // 7. Allows http: URL for local/testing
+    process.env.NEXT_PUBLIC_SITE_URL = 'http://127.0.0.1:4567/app';
+    assert.equal(getAppOrigin(), 'http://127.0.0.1:4567');
+  } finally {
+    process.env = origEnv;
+  }
 });

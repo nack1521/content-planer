@@ -172,7 +172,8 @@
     "backToPlanner": "Back to Planner",
     "defaultPlatformsLabel": "Default Platforms",
     "defaultPlatformsDesc": "Platforms selected by default for new content",
-    "saved": "Saved"
+    "saved": "Saved",
+    "saveError": "Failed to save settings. Please try again."
   },
   "auth": {
     "loginTitle": "Sign In",

@@ -40,7 +40,13 @@ export async function sendMagicLinkAction(
     return { success: true };
   }
 
-  const origin = getAppOrigin();
+  let origin: string;
+  try {
+    origin = getAppOrigin();
+  } catch {
+    // Fail-closed if origin is unconfigured or invalid in production
+    return { success: true };
+  }
 
   try {
     const supabase = await createClient();
