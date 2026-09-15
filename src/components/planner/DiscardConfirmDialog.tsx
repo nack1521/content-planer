@@ -26,6 +26,7 @@ export function DiscardConfirmDialog({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
+        e.preventDefault();
         onCancel();
         return;
       }

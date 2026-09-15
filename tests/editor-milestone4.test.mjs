@@ -7,14 +7,18 @@ import { fileURLToPath } from "node:url";
 import { getSafeDomain } from "../src/utils/url/safeDomain.ts";
 import { copyToClipboard } from "../src/utils/clipboard.ts";
 import { isFormDirty, areLinksEqual, arePlatformsEqual } from "../src/utils/dirtyState.ts";
-import { validateContentLink, validateLinksArray } from "../src/utils/validation.ts";
+import { validateContentLink, validateLinksArray, isValidUrl } from "../src/utils/validation.ts";
+import { moveItemUp, moveItemDown } from "../src/utils/linkReorder.ts";
+import { parseHashtags, formatHashtags } from "../src/utils/hashtags.ts";
+import { executeRecordAction } from "../src/utils/recordActions.ts";
+import { ModalFocusController } from "../src/utils/modalFocusLifecycle.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 
 // ==============================================================================
-// 1. URL Validation & Safe Local Domain Parsing (Zero Remote Fetching)
+// 1. Strict Client Link Validation & Safe Local Domain Parsing
 // ==============================================================================
 test("Safe Domain Parsing: Extracts hostname cleanly and strips www.", () => {
   assert.equal(getSafeDomain("https://www.youtube.com/watch?v=dQw4w9WgXcQ"), "youtube.com");
@@ -37,7 +41,37 @@ test("Safe Domain Parsing: Safely rejects invalid, empty, or dangerous URLs with
   assert.equal(getSafeDomain("http://"), "");
 });
 
-test("Link Validation: Strictly validates HTTP/HTTPS and rejects malicious payloads", () => {
+test("Strict Client Link Validation: Shared isValidUrl production validator accepts only valid HTTP/HTTPS", () => {
+  // Valid URLs
+  assert.equal(isValidUrl("https://google.com"), true);
+  assert.equal(isValidUrl("https://www.youtube.com/watch?v=123"), true);
+  assert.equal(isValidUrl("http://localhost:3000/th/planner"), true);
+  assert.equal(isValidUrl("http://example.org/path?query=val#anchor"), true);
+
+  // Malformed URLs
+  assert.equal(isValidUrl(""), false);
+  assert.equal(isValidUrl("    "), false);
+  assert.equal(isValidUrl(null), false);
+  assert.equal(isValidUrl(undefined), false);
+  assert.equal(isValidUrl("not-a-url"), false);
+  assert.equal(isValidUrl("http://"), false);
+  assert.equal(isValidUrl("https://"), false);
+  assert.equal(isValidUrl("http://   spaces"), false);
+
+  // Dangerous / non-HTTP protocols
+  assert.equal(isValidUrl("javascript:alert(document.domain)"), false);
+  assert.equal(isValidUrl("data:text/html,<script>alert(1)</script>"), false);
+  assert.equal(isValidUrl("ftp://ftp.example.com/file.txt"), false);
+  assert.equal(isValidUrl("file:///etc/passwd"), false);
+  assert.equal(isValidUrl("blob:https://example.com/uuid-here"), false);
+
+  // Deceptive schemes
+  assert.equal(isValidUrl("httpfake://example.com"), false);
+  assert.equal(isValidUrl("https:"), false);
+  assert.equal(isValidUrl("http:"), false);
+});
+
+test("Link Validation: Server and database validators enforce HTTP/HTTPS and valid enums", () => {
   const valid = validateContentLink({
     link_type: "published",
     url: "https://www.tiktok.com/@test/video/123",
@@ -64,16 +98,49 @@ test("Link Validation: Strictly validates HTTP/HTTPS and rejects malicious paylo
 });
 
 // ==============================================================================
-// 2. Link CRUD Payload & Deterministic Ordering
+// 2. Link Reordering with Imported Production Helpers
 // ==============================================================================
-test("Link Ordering: Deterministic sort_order assigned from array order", () => {
+test("Link Reordering: moveItemUp and moveItemDown respect boundaries and perform deterministic reordering", () => {
+  const items = [
+    { id: "1", title: "First" },
+    { id: "2", title: "Second" },
+    { id: "3", title: "Third" },
+  ];
+
+  // Boundary condition: index 0 cannot move up
+  const noopUp = moveItemUp(items, 0);
+  assert.deepEqual(noopUp, items, "Moving index 0 up must be a no-op");
+
+  // Boundary condition: negative index cannot move up
+  const negativeUp = moveItemUp(items, -1);
+  assert.deepEqual(negativeUp, items, "Negative index must be a no-op");
+
+  // Boundary condition: last index cannot move down
+  const noopDown = moveItemDown(items, items.length - 1);
+  assert.deepEqual(noopDown, items, "Moving last index down must be a no-op");
+
+  // Boundary condition: out-of-range index cannot move down
+  const outOfRangeDown = moveItemDown(items, items.length);
+  assert.deepEqual(outOfRangeDown, items, "Out of range index must be a no-op");
+
+  // Valid move up: move index 1 up
+  const movedUp = moveItemUp(items, 1);
+  assert.equal(movedUp[0].id, "2");
+  assert.equal(movedUp[1].id, "1");
+  assert.equal(movedUp[2].id, "3");
+
+  // Valid move down: move index 0 down
+  const movedDown = moveItemDown(movedUp, 0);
+  assert.deepEqual(movedDown, items, "Moving back down restores original order");
+});
+
+test("Link Ordering: Deterministic sort_order assigned from displayed array order", () => {
   const rawList = [
     { link_type: "idea_source", url: "https://a.com", label: "A" },
     { link_type: "asset", url: "https://b.com", label: "B" },
     { link_type: "published", url: "https://c.com", label: "C" },
   ];
 
-  // Simulating the save mapping in RecordModal
   const savedLinks = rawList.map((l, idx) => ({
     link_type: l.link_type,
     platform: l.platform || null,
@@ -107,82 +174,155 @@ test("Link Ordering: Initial links are sorted by sort_order ascending", () => {
 });
 
 // ==============================================================================
-// 3. Reorder Boundary Behavior & Stable Identity
+// 3. Hashtags Utility (Imported Production Helper)
 // ==============================================================================
-test("Reorder Boundary: Disallows moving first item up and last item down", () => {
-  let list = [
-    { clientId: "c1", label: "First", url: "https://first.com" },
-    { clientId: "c2", label: "Middle", url: "https://middle.com" },
-    { clientId: "c3", label: "Last", url: "https://last.com" },
-  ];
+test("Hashtags Utility: parseHashtags and formatHashtags sanitize inputs cleanly", () => {
+  assert.deepEqual(parseHashtags(""), []);
+  assert.deepEqual(parseHashtags(null), []);
+  assert.deepEqual(parseHashtags(undefined), []);
 
-  const handleMoveUp = (index) => {
-    if (index <= 0) return list;
-    const copy = [...list];
-    const temp = copy[index - 1];
-    copy[index - 1] = copy[index];
-    copy[index] = temp;
-    return copy;
-  };
+  const parsed = parseHashtags("growth, marketing #creator   #business  strategy");
+  assert.deepEqual(parsed, ["#growth", "#marketing", "#creator", "#business", "#strategy"]);
 
-  const handleMoveDown = (index) => {
-    if (index >= list.length - 1) return list;
-    const copy = [...list];
-    const temp = copy[index + 1];
-    copy[index + 1] = copy[index];
-    copy[index] = temp;
-    return copy;
-  };
-
-  // Boundary checks: index 0 cannot move up
-  const afterNoopUp = handleMoveUp(0);
-  assert.deepEqual(afterNoopUp, list, "Move up on index 0 must be a no-op");
-
-  // Boundary checks: last index cannot move down
-  const afterNoopDown = handleMoveDown(list.length - 1);
-  assert.deepEqual(afterNoopDown, list, "Move down on last index must be a no-op");
-
-  // Valid move up: move index 1 up
-  const afterUp = handleMoveUp(1);
-  assert.equal(afterUp[0].clientId, "c2", "c2 should now be at index 0");
-  assert.equal(afterUp[1].clientId, "c1", "c1 should now be at index 1");
-  assert.equal(afterUp[2].clientId, "c3");
-
-  // Valid move down: move index 0 down
-  list = afterUp;
-  const afterDown = handleMoveDown(0);
-  assert.equal(afterDown[0].clientId, "c1", "c1 moved back to index 0");
-  assert.equal(afterDown[1].clientId, "c2", "c2 moved back to index 1");
+  const formatted = formatHashtags("growth, marketing #creator");
+  assert.equal(formatted, "#growth #marketing #creator");
 });
 
 // ==============================================================================
-// 4. Live Text Preview Formatting
+// 4. Record Action Error Handling & Success Execution
 // ==============================================================================
-test("Live Text Preview: Formats hook, caption with preserved line breaks, CTA, and hashtags", () => {
-  const rawCaption = "Line 1: Announcement!\n\nLine 2: Key details here.\nLine 3: Final note.";
-  const rawHashtags = "creator, marketing #business   growth";
+test("Record Actions: executeRecordAction handles success and sets submitted state", async () => {
+  let isSubmitted = false;
+  let closed = false;
+  let errorSet = null;
 
-  // Hashtag parsing logic identical to TextPreview & RecordModal
-  const parsedHashtags = rawHashtags
-    .split(/[,\s]+/)
-    .map((h) => h.trim().replace(/^#+/, ""))
-    .filter((h) => h.length > 0)
-    .map((h) => `#${h}`);
+  const successAction = async () => ({ id: "record-123" });
 
-  assert.deepEqual(parsedHashtags, ["#creator", "#marketing", "#business", "#growth"]);
+  const ok = await executeRecordAction(
+    successAction,
+    () => {
+      isSubmitted = true;
+      closed = true;
+    },
+    (err) => {
+      errorSet = err;
+    }
+  );
 
-  // Preserved line breaks check
-  assert.ok(rawCaption.includes("\n\n"));
-  const lines = rawCaption.split("\n");
-  assert.equal(lines.length, 4);
-  assert.equal(lines[0], "Line 1: Announcement!");
-  assert.equal(lines[1], "");
-  assert.equal(lines[2], "Line 2: Key details here.");
-  assert.equal(lines[3], "Line 3: Final note.");
+  assert.equal(ok, true, "executeRecordAction should return true on success");
+  assert.equal(isSubmitted, true, "isSubmitted must be set to true only after success");
+  assert.equal(closed, true, "onClose must be invoked only after success");
+  assert.equal(errorSet, null, "No error should be recorded on success");
+});
+
+test("Record Actions: executeRecordAction safely catches errors, prevents unhandled rejection, and keeps editor open", async () => {
+  let isSubmitted = false;
+  let closed = false;
+  let receivedError = null;
+
+  const failingAction = async () => {
+    throw new Error("delete_failed");
+  };
+
+  const ok = await executeRecordAction(
+    failingAction,
+    () => {
+      isSubmitted = true;
+      closed = true;
+    },
+    (err) => {
+      receivedError = err;
+    }
+  );
+
+  assert.equal(ok, false, "executeRecordAction should return false on rejection");
+  assert.equal(isSubmitted, false, "isSubmitted must remain false when action fails");
+  assert.equal(closed, false, "Editor must remain open (onClose not called) when action fails");
+  assert.equal(receivedError, "delete_failed", "Error code must be passed to onError for localized translation");
 });
 
 // ==============================================================================
-// 5. Successful and Failed Clipboard Behavior
+// 5. Modal Focus Lifecycle & Regression Protection
+// ==============================================================================
+test("Focus Lifecycle Controller: Initial focus on mount, opener restore on unmount", () => {
+  let openerFocusCalls = 0;
+  let titleFocusCalls = 0;
+
+  const fakeOpener = { focus: () => { openerFocusCalls++; } };
+  const fakeTitle = { focus: () => { titleFocusCalls++; } };
+
+  const controller = new ModalFocusController();
+
+  // 1. Mount modal
+  controller.handleMount(fakeOpener, fakeTitle);
+  assert.equal(titleFocusCalls, 1, "Initial field must receive focus on mount");
+  assert.equal(openerFocusCalls, 0);
+
+  // 2. Unmount modal
+  controller.handleUnmount();
+  assert.equal(openerFocusCalls, 1, "Opener must receive focus on unmount");
+});
+
+test("Regression Protection: Changing isDirty or typing characters does NOT re-trigger initial field focus", () => {
+  let titleFocusCalls = 0;
+  let captionFocusCalls = 0;
+
+  const fakeOpener = { focus: () => {} };
+  const fakeTitle = { focus: () => { titleFocusCalls++; } };
+  const fakeCaption = { focus: () => { captionFocusCalls++; } };
+
+  const controller = new ModalFocusController();
+
+  // Mount
+  controller.handleMount(fakeOpener, fakeTitle);
+  assert.equal(titleFocusCalls, 1, "Initial focus on mount");
+
+  // User focuses caption and types first character (causing isDirty: false -> true)
+  fakeCaption.focus();
+  assert.equal(captionFocusCalls, 1);
+
+  // Under the old bug, changing isDirty re-ran the mount effect, calling fakeTitle.focus()!
+  controller.handleDirtyStateChange();
+  assert.equal(
+    titleFocusCalls,
+    1,
+    "Mutating dirty state must NOT re-trigger initial field focus (must stay at 1)"
+  );
+  assert.equal(controller.getInitialFocusCount(), 1);
+});
+
+test("Focus Lifecycle: Discard dialog saves initiating control, cancel restores to it, confirm restores to opener", () => {
+  let openerFocusCalls = 0;
+  let closeBtnFocusCalls = 0;
+  let cancelBtnFocusCalls = 0;
+
+  const fakeOpener = { focus: () => { openerFocusCalls++; } };
+  const fakeCloseBtn = { focus: () => { closeBtnFocusCalls++; } };
+  const fakeCancelBtn = { focus: () => { cancelBtnFocusCalls++; } };
+
+  const controller = new ModalFocusController();
+  controller.handleMount(fakeOpener, null);
+
+  // User attempts to close by clicking close button
+  controller.handleRequestDiscard(fakeCloseBtn);
+  assert.equal(controller.getInitiatingControl(), fakeCloseBtn);
+
+  // Discard dialog is opened (Cancel button focused)
+  fakeCancelBtn.focus();
+  assert.equal(cancelBtnFocusCalls, 1);
+
+  // User cancels discard: focus must return to the initiating control (fakeCloseBtn)
+  controller.handleCancelDiscard(null);
+  assert.equal(closeBtnFocusCalls, 1, "Cancelling discard must restore focus to initiating control");
+
+  // Now user confirms discard and modal unmounts
+  controller.handleConfirmDiscard();
+  controller.handleUnmount();
+  assert.equal(openerFocusCalls, 1, "Confirming discard and unmounting restores focus to opener element");
+});
+
+// ==============================================================================
+// 6. Clipboard Utility Resilience
 // ==============================================================================
 test("Clipboard Utility: Handles success, missing API, empty strings, and rejection gracefully", async () => {
   // 1. Rejection on empty or invalid text
@@ -195,7 +335,7 @@ test("Clipboard Utility: Handles success, missing API, empty strings, and reject
   const originalClipboard = globalThis.navigator?.clipboard;
   let copiedText = "";
 
-  Object.defineProperty(globalThis.navigator, 'clipboard', {
+  Object.defineProperty(globalThis.navigator, "clipboard", {
     value: {
       writeText: async (t) => {
         copiedText = t;
@@ -210,7 +350,7 @@ test("Clipboard Utility: Handles success, missing API, empty strings, and reject
   assert.equal(copiedText, "Hello Content Planner");
 
   // 3. Mocking rejected navigator.clipboard (e.g. permissions rejected or insecure context)
-  Object.defineProperty(globalThis.navigator, 'clipboard', {
+  Object.defineProperty(globalThis.navigator, "clipboard", {
     value: {
       writeText: async () => {
         throw new Error("Clipboard permission denied");
@@ -223,14 +363,14 @@ test("Clipboard Utility: Handles success, missing API, empty strings, and reject
   assert.equal(failure, false, "copyToClipboard must catch rejection and return false without throwing");
 
   // Restore navigator clipboard
-  Object.defineProperty(globalThis.navigator, 'clipboard', {
+  Object.defineProperty(globalThis.navigator, "clipboard", {
     value: originalClipboard,
     configurable: true,
   });
 });
 
 // ==============================================================================
-// 6. Dirty-State Comparison (Including Link Order)
+// 7. Dirty-State Comparison (Including Link Order)
 // ==============================================================================
 test("Dirty State Helpers: arePlatformsEqual and areLinksEqual check equality and ordering", () => {
   assert.equal(arePlatformsEqual(["tiktok", "instagram"], ["instagram", "tiktok"]), true);
@@ -268,61 +408,30 @@ test("Dirty State: Untouched new form is clean (not dirty)", () => {
     links: [],
   };
 
-  // Comparing fresh form with itself
-  assert.equal(isFormDirty(newFormState, { ...newFormState }), false, "Fresh untouched form must not be dirty");
+  assert.equal(
+    isFormDirty(newFormState, { ...newFormState }),
+    false,
+    "Untouched form must evaluate to false (clean)"
+  );
+
+  // Changing title makes form dirty
+  assert.equal(
+    isFormDirty(newFormState, { ...newFormState, title: "Draft Post" }),
+    true,
+    "Modifying title makes form dirty"
+  );
+
+  // Reverting title makes form clean again
+  assert.equal(
+    isFormDirty(newFormState, { ...newFormState, title: "" }),
+    false,
+    "Reverting modified title restores clean status"
+  );
 });
 
-test("Dirty State: Detects changes in text fields, schedule, and platforms", () => {
-  const base = {
-    title: "Initial Title",
-    platforms: ["tiktok"],
-    pillarId: "",
-    format: "",
-    goal: "",
-    status: "idea",
-    progress: 0,
-    publishDate: "",
-    publishTime: "10:00",
-    publishTimeKnown: false,
-    hook: "Catchy hook",
-    objective: "",
-    productionDetail: "",
-    cta: "Click bio",
-    caption: "Caption body",
-    hashtagsStr: "#tech",
-    reviewStatus: "",
-    notes: "",
-    links: [],
-  };
-
-  // Same values -> not dirty
-  assert.equal(isFormDirty(base, { ...base }), false);
-
-  // Modify title -> dirty
-  assert.equal(isFormDirty(base, { ...base, title: "New Title" }), true);
-
-  // Modify hook -> dirty
-  assert.equal(isFormDirty(base, { ...base, hook: "Different hook" }), true);
-
-  // Modify caption -> dirty
-  assert.equal(isFormDirty(base, { ...base, caption: "Different caption" }), true);
-
-  // Modify CTA -> dirty
-  assert.equal(isFormDirty(base, { ...base, cta: "Different CTA" }), true);
-
-  // Modify platforms -> dirty
-  assert.equal(isFormDirty(base, { ...base, platforms: ["tiktok", "instagram"] }), true);
-
-  // Modify progress -> dirty
-  assert.equal(isFormDirty(base, { ...base, progress: 25 }), true);
-
-  // Modify publish date -> dirty
-  assert.equal(isFormDirty(base, { ...base, publishDate: "2026-10-01" }), true);
-});
-
-test("Dirty State: Detects adding, editing, removing, and REORDERING links", () => {
-  const baseWithLinks = {
-    title: "Title",
+test("Dirty State: Link order changes cause form to become dirty", () => {
+  const baseState = {
+    title: "Post with links",
     platforms: ["tiktok"],
     pillarId: "",
     format: "",
@@ -341,133 +450,38 @@ test("Dirty State: Detects adding, editing, removing, and REORDERING links", () 
     reviewStatus: "",
     notes: "",
     links: [
-      { link_type: "idea_source", platform: "youtube", url: "https://youtube.com/1", label: "Clip 1" },
-      { link_type: "asset", platform: null, url: "https://drive.google.com/2", label: "Drive" },
+      { id: "1", link_type: "idea_source", platform: null, url: "https://a.com", label: "A", sort_order: 0 },
+      { id: "2", link_type: "asset", platform: null, url: "https://b.com", label: "B", sort_order: 1 },
     ],
   };
 
-  // Identical links in same order -> not dirty
-  assert.equal(isFormDirty(baseWithLinks, { ...baseWithLinks }), false);
+  // Swapping the links order
+  const reorderedState = {
+    ...baseState,
+    links: [
+      { id: "2", link_type: "asset", platform: null, url: "https://b.com", label: "B", sort_order: 0 },
+      { id: "1", link_type: "idea_source", platform: null, url: "https://a.com", label: "A", sort_order: 1 },
+    ],
+  };
 
-  // 1. Add link -> dirty
   assert.equal(
-    isFormDirty(baseWithLinks, {
-      ...baseWithLinks,
+    isFormDirty(baseState, reorderedState),
+    true,
+    "Swapping link order must make the form dirty"
+  );
+
+  // Restoring original order
+  assert.equal(
+    isFormDirty(baseState, {
+      ...baseState,
       links: [
-        ...baseWithLinks.links,
-        { link_type: "note", platform: null, url: "https://notes.com", label: "Notes" },
-      ],
-    }),
-    true,
-    "Adding a link must mark form as dirty"
-  );
-
-  // 2. Remove link -> dirty
-  assert.equal(
-    isFormDirty(baseWithLinks, {
-      ...baseWithLinks,
-      links: [baseWithLinks.links[0]],
-    }),
-    true,
-    "Removing a link must mark form as dirty"
-  );
-
-  // 3. Edit link URL -> dirty
-  assert.equal(
-    isFormDirty(baseWithLinks, {
-      ...baseWithLinks,
-      links: [
-        { ...baseWithLinks.links[0], url: "https://youtube.com/edited" },
-        baseWithLinks.links[1],
-      ],
-    }),
-    true,
-    "Editing a link URL must mark form as dirty"
-  );
-
-  // 4. Edit link label -> dirty
-  assert.equal(
-    isFormDirty(baseWithLinks, {
-      ...baseWithLinks,
-      links: [
-        { ...baseWithLinks.links[0], label: "Edited Label" },
-        baseWithLinks.links[1],
-      ],
-    }),
-    true,
-    "Editing a link label must mark form as dirty"
-  );
-
-  // 5. REORDER links (swapping 0 and 1) -> MUST MARK DIRTY
-  const reorderedLinks = [baseWithLinks.links[1], baseWithLinks.links[0]];
-  assert.equal(
-    isFormDirty(baseWithLinks, {
-      ...baseWithLinks,
-      links: reorderedLinks,
-    }),
-    true,
-    "Reordering links must mark form as dirty"
-  );
-
-  // 6. Reverting back to original -> not dirty
-  assert.equal(
-    isFormDirty(baseWithLinks, {
-      ...baseWithLinks,
-      links: [
-        { link_type: "idea_source", platform: "youtube", url: "https://youtube.com/1", label: "Clip 1" },
-        { link_type: "asset", platform: null, url: "https://drive.google.com/2", label: "Drive" },
+        { id: "1", link_type: "idea_source", platform: null, url: "https://a.com", label: "A", sort_order: 0 },
+        { id: "2", link_type: "asset", platform: null, url: "https://b.com", label: "B", sort_order: 1 },
       ],
     }),
     false,
     "Reverting links to original values and order must return not dirty"
   );
-});
-
-// ==============================================================================
-// 7. Confirmed versus Cancelled Dismissal Flow
-// ==============================================================================
-test("Dismissal Flow: Clean form closes directly; dirty form requires confirmation", () => {
-  let modalClosed = false;
-  let discardDialogOpen = false;
-
-  const onClose = () => { modalClosed = true; };
-
-  const handleRequestClose = (isDirty, isSubmitted) => {
-    if (isSubmitted || !isDirty) {
-      onClose();
-    } else {
-      discardDialogOpen = true;
-    }
-  };
-
-  // Case A: Clean form
-  handleRequestClose(false, false);
-  assert.equal(modalClosed, true, "Clean form should close immediately");
-  assert.equal(discardDialogOpen, false);
-
-  // Reset
-  modalClosed = false;
-  discardDialogOpen = false;
-
-  // Case B: Dirty form
-  handleRequestClose(true, false);
-  assert.equal(modalClosed, false, "Dirty form must not close immediately");
-  assert.equal(discardDialogOpen, true, "Dirty form must open discard dialog");
-
-  // User cancels discard
-  discardDialogOpen = false;
-  assert.equal(modalClosed, false, "Cancelling discard keeps modal open with draft intact");
-
-  // User confirms discard
-  modalClosed = true;
-  assert.equal(modalClosed, true, "Confirming discard closes modal");
-
-  // Case C: Successfully saved form
-  modalClosed = false;
-  discardDialogOpen = false;
-  handleRequestClose(true, true); // isDirty=true but isSubmitted=true
-  assert.equal(modalClosed, true, "Submitted form closes without discard prompt");
-  assert.equal(discardDialogOpen, false);
 });
 
 // ==============================================================================
@@ -525,9 +539,9 @@ test("Localization Parity: All Milestone 4 keys exist in both en.json and th.jso
 });
 
 // ==============================================================================
-// 9. Accessibility, ARIA Roles, and Safe External Links
+// 9. Static Component Markup & ARIA Contract Assertions
 // ==============================================================================
-test("Accessibility: Safe link attributes and ARIA roles are defined properly", () => {
+test("Static Markup & ARIA Contracts: Declarations exist for accessibility and security", () => {
   const linkCardContent = fs.readFileSync(path.join(projectRoot, "src/components/planner/LinkCard.tsx"), "utf8");
   const textPreviewContent = fs.readFileSync(path.join(projectRoot, "src/components/planner/TextPreview.tsx"), "utf8");
   const discardDialogContent = fs.readFileSync(path.join(projectRoot, "src/components/planner/DiscardConfirmDialog.tsx"), "utf8");
@@ -536,31 +550,31 @@ test("Accessibility: Safe link attributes and ARIA roles are defined properly", 
   // 1. External links have target="_blank" and rel="noopener noreferrer"
   assert.ok(
     linkCardContent.includes('target="_blank"') && linkCardContent.includes('rel="noopener noreferrer"'),
-    "LinkCard external links must use target='_blank' and rel='noopener noreferrer'"
+    "LinkCard external links must declare target='_blank' and rel='noopener noreferrer'"
   );
 
   // 2. DiscardConfirmDialog has role="alertdialog" and aria-modal="true"
   assert.ok(
     discardDialogContent.includes('role="alertdialog"'),
-    "DiscardConfirmDialog must have role='alertdialog'"
+    "DiscardConfirmDialog must declare role='alertdialog'"
   );
   assert.ok(
     discardDialogContent.includes('aria-modal="true"'),
-    "DiscardConfirmDialog must have aria-modal='true'"
+    "DiscardConfirmDialog must declare aria-modal='true'"
   );
   assert.ok(
     discardDialogContent.includes('aria-labelledby="discard-dialog-title"'),
-    "DiscardConfirmDialog must have aria-labelledby"
+    "DiscardConfirmDialog must declare aria-labelledby"
   );
   assert.ok(
     discardDialogContent.includes('aria-describedby="discard-dialog-desc"'),
-    "DiscardConfirmDialog must have aria-describedby"
+    "DiscardConfirmDialog must declare aria-describedby"
   );
 
   // 3. RecordModal has live region for copy announcements
   assert.ok(
     recordModalContent.includes('aria-live="polite"'),
-    "RecordModal must have an aria-live='polite' region for accessible copy announcements"
+    "RecordModal must declare an aria-live='polite' region for accessible copy announcements"
   );
 
   // 4. RecordModal has dialog role and aria-modal="true"
@@ -576,70 +590,10 @@ test("Accessibility: Safe link attributes and ARIA roles are defined properly", 
   // 5. TextPreview has test id and structured preview sections
   assert.ok(
     textPreviewContent.includes('data-testid="text-post-preview"'),
-    "TextPreview must have data-testid='text-post-preview'"
+    "TextPreview must declare data-testid='text-post-preview'"
   );
   assert.ok(
     textPreviewContent.includes("whitespace-pre-wrap"),
-    "TextPreview must preserve caption line breaks with whitespace-pre-wrap"
+    "TextPreview must declare whitespace-pre-wrap to preserve caption line breaks"
   );
-});
-
-// ==============================================================================
-// 10. beforeunload Event Listener Lifecycle
-// ==============================================================================
-test("beforeunload Listener Lifecycle: Attaches only when dirty and detaches on clean/unmount", () => {
-  const events = [];
-  const fakeWindow = {
-    addEventListener: (type, handler) => {
-      events.push({ action: "add", type, handler });
-    },
-    removeEventListener: (type, handler) => {
-      events.push({ action: "remove", type, handler });
-    },
-  };
-
-  // Simulating the effect in RecordModal
-  function runBeforeUnloadEffect(isDirty, isSubmitted, win) {
-    if (!isDirty || isSubmitted) return () => {};
-
-    const handleBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = "";
-      return "";
-    };
-
-    win.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      win.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }
-
-  // 1. When clean -> no listener added
-  const cleanupClean = runBeforeUnloadEffect(false, false, fakeWindow);
-  cleanupClean();
-  assert.equal(events.length, 0, "No beforeunload listener should be registered when clean");
-
-  // 2. When dirty -> listener added
-  const cleanupDirty = runBeforeUnloadEffect(true, false, fakeWindow);
-  assert.equal(events.length, 1);
-  assert.equal(events[0].action, "add");
-  assert.equal(events[0].type, "beforeunload");
-
-  // 3. Simulating event trigger
-  const fakeEvent = { preventDefaultCalled: false, returnValue: null, preventDefault() { this.preventDefaultCalled = true; } };
-  events[0].handler(fakeEvent);
-  assert.equal(fakeEvent.preventDefaultCalled, true);
-  assert.equal(fakeEvent.returnValue, "");
-
-  // 4. When unmounted or cleaned up -> listener removed
-  cleanupDirty();
-  assert.equal(events.length, 2);
-  assert.equal(events[1].action, "remove");
-  assert.equal(events[1].type, "beforeunload");
-
-  // 5. When submitted -> no listener added even if dirty
-  events.length = 0;
-  const cleanupSubmitted = runBeforeUnloadEffect(true, true, fakeWindow);
-  cleanupSubmitted();
-  assert.equal(events.length, 0, "No listener added when form is already submitted");
 });

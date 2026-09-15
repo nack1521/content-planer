@@ -14,9 +14,13 @@ import { ContentItemInput } from '@/app/actions/content';
 import { useLocale } from '@/context/LocaleContext';
 import { bangkokToUtc, utcToBangkokParts } from '@/utils/timezone';
 import { getLocalizedErrorMessage } from '@/utils/errors';
+import { isValidUrl } from '@/utils/validation';
 import { IconPlus, IconX } from '@/components/common/Icons';
 import { copyToClipboard } from '@/utils/clipboard';
 import { isFormDirty, RecordFormState } from '@/utils/dirtyState';
+import { moveItemUp, moveItemDown } from '@/utils/linkReorder';
+import { parseHashtags } from '@/utils/hashtags';
+import { executeRecordAction } from '@/utils/recordActions';
 import { LinkCard, EditableLinkItem } from '@/components/planner/LinkCard';
 import { TextPreview } from '@/components/planner/TextPreview';
 import { DiscardConfirmDialog } from '@/components/planner/DiscardConfirmDialog';
@@ -205,15 +209,16 @@ function RecordModalForm({
   }, [isDirty, onClose]);
 
   const handleCancelDiscard = useCallback(() => {
+    const target = lastFocusedBeforeDiscardRef.current;
     setShowDiscardConfirm(false);
-    // Restore focus to editor element
-    setTimeout(() => {
-      if (lastFocusedBeforeDiscardRef.current) {
-        lastFocusedBeforeDiscardRef.current.focus();
+    // Restore focus to editor element that initiated the close attempt
+    requestAnimationFrame(() => {
+      if (target && typeof target.focus === 'function' && document.body.contains(target)) {
+        target.focus();
       } else if (titleInputRef.current) {
         titleInputRef.current.focus();
       }
-    }, 50);
+    });
   }, []);
 
   const handleConfirmDiscard = useCallback(() => {
@@ -237,17 +242,34 @@ function RecordModalForm({
     };
   }, [isDirty]);
 
-  // Focus trap & Escape key handling
+  // Initial title focus on mount & opener focus restore on unmount (strictly once)
   useEffect(() => {
     previousFocusRef.current = document.activeElement as HTMLElement;
     titleInputRef.current?.focus();
 
+    return () => {
+      previousFocusRef.current?.focus();
+    };
+  }, []);
+
+  // Stable references for keydown listener to avoid re-binding and focus stealing
+  const isDiscardOpenRef = useRef(showDiscardConfirm);
+  const handleRequestCloseRef = useRef(handleRequestClose);
+
+  useEffect(() => {
+    isDiscardOpenRef.current = showDiscardConfirm;
+    handleRequestCloseRef.current = handleRequestClose;
+  }, [showDiscardConfirm, handleRequestClose]);
+
+  // Modal keyboard listener & focus trap (registered once on mount)
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // If nested discard dialog is open, let it handle Escape and Tab exclusively
-      if (showDiscardConfirm) return;
+      if (isDiscardOpenRef.current) return;
 
       if (e.key === 'Escape') {
-        handleRequestClose();
+        e.preventDefault();
+        handleRequestCloseRef.current();
         return;
       }
 
@@ -278,9 +300,8 @@ function RecordModalForm({
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      previousFocusRef.current?.focus();
     };
-  }, [handleRequestClose, showDiscardConfirm]);
+  }, []);
 
   const togglePlatform = (p: Platform) => {
     setPlatforms((prev) =>
@@ -314,25 +335,11 @@ function RecordModalForm({
   };
 
   const handleMoveUp = (index: number) => {
-    if (index <= 0) return;
-    setLinks((prev) => {
-      const copy = [...prev];
-      const temp = copy[index - 1];
-      copy[index - 1] = copy[index];
-      copy[index] = temp;
-      return copy;
-    });
+    setLinks((prev) => moveItemUp(prev, index));
   };
 
   const handleMoveDown = (index: number) => {
-    if (index >= links.length - 1) return;
-    setLinks((prev) => {
-      const copy = [...prev];
-      const temp = copy[index + 1];
-      copy[index + 1] = copy[index];
-      copy[index] = temp;
-      return copy;
-    });
+    setLinks((prev) => moveItemDown(prev, index));
   };
 
   // Safe clipboard copy handler with feedback and live region
@@ -353,6 +360,65 @@ function RecordModalForm({
     }
   };
 
+  // Delete Action Handler with safe error catching
+  const handleDelete = () => {
+    if (!onDelete || !item) return;
+    if (!window.confirm(t('recordModal.confirmDelete'))) return;
+
+    setError(null);
+    startTransition(async () => {
+      await executeRecordAction(
+        () => onDelete(item.id),
+        () => {
+          isSubmittedRef.current = true;
+          onClose();
+        },
+        (rawMsg) => {
+          setError(getLocalizedErrorMessage(t, rawMsg));
+        }
+      );
+    });
+  };
+
+  // Duplicate Action Handler with safe error catching
+  const handleDuplicate = () => {
+    if (!onDuplicate || !item) return;
+
+    setError(null);
+    startTransition(async () => {
+      await executeRecordAction(
+        () => onDuplicate(item.id),
+        () => {
+          isSubmittedRef.current = true;
+          onClose();
+        },
+        (rawMsg) => {
+          setError(getLocalizedErrorMessage(t, rawMsg));
+        }
+      );
+    });
+  };
+
+  // Archive / Restore Action Handler with safe error catching
+  const handleToggleArchive = () => {
+    if (!onToggleArchive || !item) return;
+
+    setError(null);
+    startTransition(async () => {
+      await executeRecordAction(
+        () => onToggleArchive(item.id, !item.archived_at),
+        () => {
+          isSubmittedRef.current = true;
+          onClose();
+        },
+        (rawMsg) => {
+          setError(getLocalizedErrorMessage(t, rawMsg));
+        }
+      );
+    });
+  };
+
+  // Form Submit (Save) Handler
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -360,20 +426,16 @@ function RecordModalForm({
       return;
     }
 
-    // Validate link URLs if any
+    // Validate link URLs strictly using shared production validator
     for (const link of links) {
-      if (!link.url || !link.url.trim().startsWith('http')) {
+      if (!isValidUrl(link.url)) {
         setError(t('recordModal.errors.urlInvalid'));
         return;
       }
     }
 
-    // Parse hashtags
-    const parsedHashtags = hashtagsStr
-      .split(/[,\s]+/)
-      .map((h) => h.trim().replace(/^#+/, ''))
-      .filter((h) => h.length > 0)
-      .map((h) => `#${h}`);
+    // Parse hashtags cleanly
+    const parsedHashtags = parseHashtags(hashtagsStr);
 
     // Compute UTC publish_at
     let finalPublishAt: string | null = null;
@@ -386,40 +448,44 @@ function RecordModalForm({
       }
     }
 
+    setError(null);
     startTransition(async () => {
-      try {
-        await onSave({
-          title: title.trim(),
-          platforms,
-          content_pillar_id: pillarId || null,
-          format: format || null,
-          goal: goal || null,
-          status,
-          progress,
-          publish_at: finalPublishAt,
-          publish_time_known: publishDate.trim() ? publishTimeKnown : false,
-          hook: hook.trim() || null,
-          objective: objective.trim() || null,
-          production_detail: productionDetail.trim() || null,
-          cta: cta.trim() || null,
-          caption: caption.trim() || null,
-          hashtags: parsedHashtags,
-          review_status: reviewStatus || null,
-          notes: notes.trim() || null,
-          links: links.map((l, idx) => ({
-            link_type: l.link_type,
-            platform: l.platform || null,
-            url: l.url.trim(),
-            label: l.label ? l.label.trim() : null,
-            sort_order: idx,
-          })),
-        });
-        isSubmittedRef.current = true;
-        onClose();
-      } catch (err: unknown) {
-        const rawMsg = err instanceof Error ? err.message : 'saveFailed';
-        setError(getLocalizedErrorMessage(t, rawMsg));
-      }
+      await executeRecordAction(
+        () =>
+          onSave({
+            title: title.trim(),
+            platforms,
+            content_pillar_id: pillarId || null,
+            format: format || null,
+            goal: goal || null,
+            status,
+            progress,
+            publish_at: finalPublishAt,
+            publish_time_known: publishDate.trim() ? publishTimeKnown : false,
+            hook: hook.trim() || null,
+            objective: objective.trim() || null,
+            production_detail: productionDetail.trim() || null,
+            cta: cta.trim() || null,
+            caption: caption.trim() || null,
+            hashtags: parsedHashtags,
+            review_status: reviewStatus || null,
+            notes: notes.trim() || null,
+            links: links.map((l, idx) => ({
+              link_type: l.link_type,
+              platform: l.platform || null,
+              url: l.url.trim(),
+              label: l.label ? l.label.trim() : null,
+              sort_order: idx,
+            })),
+          }),
+        () => {
+          isSubmittedRef.current = true;
+          onClose();
+        },
+        (rawMsg) => {
+          setError(getLocalizedErrorMessage(t, rawMsg));
+        }
+      );
     });
   };
 
@@ -448,22 +514,22 @@ function RecordModalForm({
           <h2 id="modal-title" className="text-base font-bold text-slate-900">
             {item ? (
               <span>
-                {t('recordModal.editTitle')}
+                {t('recordModal.editTitle')}{' '}
                 {item.source_number ? (
-                  <span className="ml-2 font-mono text-xs font-normal text-slate-400">
+                  <span className="text-xs font-mono text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200 ml-1.5 font-normal">
                     #{item.source_number}
                   </span>
                 ) : null}
               </span>
             ) : (
-              t('recordModal.createTitle')
+              t('recordModal.newTitle')
             )}
           </h2>
           <button
             type="button"
             onClick={handleRequestClose}
-            aria-label={t('recordModal.close')}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 cursor-pointer"
+            aria-label={t('recordModal.closeAria')}
+            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <IconX className="w-5 h-5" size={20} />
           </button>
@@ -479,7 +545,7 @@ function RecordModalForm({
           {/* Title */}
           <div className="space-y-1">
             <label htmlFor="modal-title-input" className="text-xs font-semibold text-slate-700">
-              {t('recordModal.title')} <span className="text-rose-500">*</span>
+              {t('recordModal.titleField')} <span className="text-rose-500">*</span>
             </label>
             <input
               ref={titleInputRef}
@@ -489,15 +555,15 @@ function RecordModalForm({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('recordModal.titlePlaceholder')}
-              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all"
+              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium"
             />
           </div>
 
-          {/* Platforms Selector */}
+          {/* Platforms Selection */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 block">
-              {t('recordModal.platforms')}
-            </label>
+            <span className="text-xs font-semibold text-slate-700 block">
+              {t('recordModal.platforms')} <span className="text-rose-500">*</span>
+            </span>
             <div className="flex flex-wrap gap-1.5">
               {ALL_PLATFORMS.map((p) => {
                 const isSelected = platforms.includes(p);
@@ -506,10 +572,10 @@ function RecordModalForm({
                     key={p}
                     type="button"
                     onClick={() => togglePlatform(p)}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-md border transition-all cursor-pointer ${
+                    className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-purple-50 border-purple-300 text-purple-700 font-semibold'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
                     {t(`platform.${p}`)}
@@ -519,28 +585,27 @@ function RecordModalForm({
             </div>
           </div>
 
-          {/* Content Pillar */}
-          <div className="space-y-1">
-            <label htmlFor="modal-pillar-select" className="text-xs font-semibold text-slate-700">
-              {t('recordModal.pillar')}
-            </label>
-            <select
-              id="modal-pillar-select"
-              value={pillarId}
-              onChange={(e) => setPillarId(e.target.value)}
-              className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="">{t('recordModal.noPillar')}</option>
-              {pillars.map((pil) => (
-                <option key={pil.id} value={pil.id}>
-                  {pil.name_th} / {pil.name_en}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Pillar, Format, Goal */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <label htmlFor="modal-pillar-select" className="text-xs font-semibold text-slate-700">
+                {t('recordModal.pillar')}
+              </label>
+              <select
+                id="modal-pillar-select"
+                value={pillarId}
+                onChange={(e) => setPillarId(e.target.value)}
+                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">{t('recordModal.noPillar')}</option>
+                {pillars.map((pil) => (
+                  <option key={pil.id} value={pil.id}>
+                    {pil.name_th} / {pil.name_en}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Format & Goal */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <label htmlFor="modal-format-select" className="text-xs font-semibold text-slate-700">
                 {t('recordModal.format')}
@@ -571,16 +636,16 @@ function RecordModalForm({
                 className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <option value="">{t('recordModal.unassigned')}</option>
-                {ALL_GOALS.map((g) => (
-                  <option key={g} value={g}>
-                    {t(`goals.${g}`)}
+                {ALL_GOALS.map((gl) => (
+                  <option key={gl} value={gl}>
+                    {t(`goals.${gl}`)}
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* Workflow Status, Review Status, & Progress */}
+          {/* Workflow Status, Review Status, Progress */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
               <label htmlFor="modal-status-select" className="text-xs font-semibold text-slate-700">
@@ -594,7 +659,7 @@ function RecordModalForm({
               >
                 {ALL_STATUSES.map((st) => (
                   <option key={st} value={st}>
-                    {t(`workflow.${st}`)}
+                    {t(`status.${st}`)}
                   </option>
                 ))}
               </select>
@@ -613,7 +678,7 @@ function RecordModalForm({
                 <option value="">{t('recordModal.unassigned')}</option>
                 {ALL_REVIEW_STATUSES.map((rst) => (
                   <option key={rst} value={rst}>
-                    {t(`reviewStatus.${rst}`)}
+                    {t(`review_status.${rst}`)}
                   </option>
                 ))}
               </select>
@@ -878,15 +943,7 @@ function RecordModalForm({
                   <button
                     type="button"
                     disabled={isPending}
-                    onClick={() => {
-                      if (window.confirm(t('recordModal.confirmDelete'))) {
-                        startTransition(async () => {
-                          await onDelete(item.id);
-                          isSubmittedRef.current = true;
-                          onClose();
-                        });
-                      }
-                    }}
+                    onClick={handleDelete}
                     className="text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer disabled:opacity-50"
                   >
                     {t('recordModal.delete')}
@@ -897,13 +954,7 @@ function RecordModalForm({
                   <button
                     type="button"
                     disabled={isPending}
-                    onClick={() => {
-                      startTransition(async () => {
-                        await onDuplicate(item.id);
-                        isSubmittedRef.current = true;
-                        onClose();
-                      });
-                    }}
+                    onClick={handleDuplicate}
                     className="text-xs font-semibold text-slate-600 hover:text-slate-800 cursor-pointer disabled:opacity-50"
                   >
                     {t('recordModal.duplicate')}
@@ -914,13 +965,7 @@ function RecordModalForm({
                   <button
                     type="button"
                     disabled={isPending}
-                    onClick={() => {
-                      startTransition(async () => {
-                        await onToggleArchive(item.id, !item.archived_at);
-                        isSubmittedRef.current = true;
-                        onClose();
-                      });
-                    }}
+                    onClick={handleToggleArchive}
                     className="text-xs font-semibold text-slate-600 hover:text-slate-800 cursor-pointer disabled:opacity-50"
                   >
                     {item.archived_at ? t('recordModal.restore') : t('recordModal.archive')}

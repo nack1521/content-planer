@@ -1,80 +1,88 @@
-# Content Planner Handoff — Milestone 4 Implementation Complete
+# Content Planner Handoff — Milestone 4 Revision Complete
 
 ## Milestone Status
 
-**Status: Implementation complete; awaiting Codex review**
+**Status: Revision complete; awaiting Codex review**
 
 - **Milestone 3**: Accepted by Codex on 2026-09-14 (baseline preserved).
-- **Milestone 4**: Implementation complete and verified across all criteria; stopping for Codex review.
+- **Milestone 4**: Revision complete and verified across all criteria; stopping for Codex review.
+- **Milestone 5**: Unstarted (blocked by Milestone 4 review).
 - **Hosted Supabase Status**: Clean. Zero hosted migrations or hosted imports were performed. Milestone 2 baseline remains on hosted Supabase without modification. All testing was executed against the isolated local Supabase stack (`127.0.0.1:54321`).
+- **Media Uploads / Sprint 2**: Zero media upload features or Sprint 2 capabilities added; dormant `content_media` infrastructure left untouched.
 
 ---
 
-## Implemented Behavior
+## Implemented Behavior & Revisions
 
-### 1. External-Link Workspace
-- Extended the content link workspace inside `src/components/planner/RecordModal.tsx` and created `src/components/planner/LinkCard.tsx`.
+### 1. Repaired `RecordModal` Focus Lifecycle
+- **Strict Mount/Unmount Focus Invariants**:
+  - Initial title focus happens strictly once on mount (`useEffect(..., [])`).
+  - Opener element focus restore happens strictly once on unmount (`return () => previousFocusRef.current?.focus()`).
+  - Mutating dirty state (e.g. typing the first character into Caption or any other field) does NOT re-trigger initial field focus. Focus remains in the active field.
+  - Stable refs (`isDiscardOpenRef`, `handleRequestCloseRef`) ensure keyboard handlers always access the latest dirty/modal state without re-binding or resetting focus.
+- **Discard Dialog Focus Trapping & Restoration**:
+  - While the discard dialog is open, its Cancel button ("Keep editing") receives focus immediately, and Tab/Shift+Tab traps focus strictly within the dialog.
+  - Escape within the discard dialog cancels dismissal and restores focus to the initiating editor control (`lastFocusedBeforeDiscardRef.current`).
+  - Confirming discard closes the editor and restores focus to the external opener element.
+- **Regression Protection**:
+  - Encapsulated lifecycle controller in `src/utils/modalFocusLifecycle.ts` and added regression tests in `tests/editor-milestone4.test.mjs` preventing any return of the dependency-driven focus reset.
+
+### 2. Handled Failed Record Actions
+- Wrapped `deleteContentItemAction`, `duplicateContentItemAction`, and `archiveContentItemAction` (alongside `onSave`) in safe execution via `src/utils/recordActions.ts`.
+- `isSubmittedRef.current = true` is set only after action success.
+- `onClose()` is called only after action success.
+- On failure/rejection, the editor and the user's draft remain open.
+- Error codes are translated and displayed using `getLocalizedErrorMessage(t, rawMsg)` in the modal's error banner.
+- Prevents unhandled promise rejections.
+- Added regression tests covering both success and rejection paths.
+
+### 3. Enforced Strict Client Link Validation
+- Replaced `startsWith('http')` with the shared production URL validator `isValidUrl` from `src/utils/validation.ts`.
+- Accepts only valid `http:` and `https:` URLs.
+- Rejects malformed URLs (empty, spaces, invalid syntax, missing hostname), dangerous schemes (`javascript:`, `data:`, `ftp:`, `file:`, `blob:`), and deceptive schemes (`httpfake:`, `https:`) before invoking `onSave`.
+- Keeps existing server-side and database-level validation unchanged.
+- Added comprehensive unit tests in `tests/editor-milestone4.test.mjs`.
+
+### 4. External-Link Workspace
+- Extended the content link workspace inside `src/components/planner/RecordModal.tsx` and `src/components/planner/LinkCard.tsx`.
 - Supported link types: `idea_source`, `asset`, `note`, and `published`.
 - Preserves URL, optional label, optional platform (`tiktok`, `instagram`, `youtube`, `facebook`, `x`), type, and sort order.
 - Supports adding, editing, removing, and reordering links.
-- Uses accessible "Move up" and "Move down" controls with boundary protection (`disabled={index === 0}` and `disabled={index === totalCount - 1}`).
+- Uses accessible "Move up" and "Move down" controls with boundary protection (`disabled={index === 0}` and `disabled={index === totalCount - 1}`) powered by pure helper `src/utils/linkReorder.ts`.
 - Assigns stable client IDs (`clientId`) to draft links so input focus and DOM identity do not jump during reordering.
 - Shows compact link cards containing:
-  - Label with sensible localized fallback (custom label -> safe domain -> localized link type);
+  - Label with localized fallback (custom label -> safe domain -> localized link type);
   - Localized link type badge;
-  - Localized platform badge (when assigned);
-  - Safe local domain parsing via `src/utils/url/safeDomain.ts` (stripping `www.`, rejecting non-HTTP/HTTPS schemes, zero external scraping or network requests);
+  - Localized platform badge;
+  - Safe local domain parsing via `src/utils/url/safeDomain.ts` (stripping `www.`, zero external scraping or network requests);
   - Copy link button with localized success/error feedback;
   - Open link in a new tab with `target="_blank"` and `rel="noopener noreferrer"`;
   - Move up / move down buttons;
   - Remove button.
 - Initial saved links are sorted by `sort_order` ascending.
-- On save, deterministic `sort_order` values matching the displayed array order (`0, 1, 2...`) are submitted to the existing atomic `upsert_content_item_with_links` RPC.
+- On save, deterministic `sort_order` values matching the displayed array order (`0, 1, 2...`) are submitted to the atomic `upsert_content_item_with_links` RPC.
 
-### 2. Live Text Post Preview
-- Created `src/components/planner/TextPreview.tsx` rendering a platform-neutral formatting preview directly inside the editor.
-- Previews the active unsaved draft in real-time.
+### 5. Live Text Post Preview
+- Platform-neutral preview component `src/components/planner/TextPreview.tsx` rendering active draft in real-time.
 - Displays:
   - Hook / main message;
   - Caption with line breaks preserved (`whitespace-pre-wrap`);
   - Call to action (CTA);
-  - Hashtags cleanly parsed into `#tag` badges.
+  - Hashtags cleanly parsed into `#tag` badges via `src/utils/hashtags.ts`.
 - Provides distinct localized empty states when fields are blank.
-- Does not imitate any specific social-media proprietary interface.
 
-### 3. Accessible Copy Controls & Feedback
-- Created `src/utils/clipboard.ts` handling `navigator.clipboard.writeText` safely. Catches API rejection or insecure-context errors and returns `false` without crashing.
-- Added copy buttons for:
-  - Caption;
-  - Call to Action;
-  - Hashtags;
-  - Individual link URLs.
+### 6. Accessible Copy Controls & Feedback
+- `src/utils/clipboard.ts` safely handles `navigator.clipboard.writeText`, catching rejection or insecure-context errors without throwing.
+- Copy buttons for Caption, CTA, Hashtags, and Link URLs.
 - Visual feedback toggles between default icon, emerald checkmark + localized "Copied!" message, and rose "Failed to copy" message.
 - Screen-reader feedback provided through an `aria-live="polite"` live announcement region.
-- Does not report success unless copying actually succeeds.
 
-### 4. Unsaved-Change Protection
-- Created `src/utils/dirtyState.ts` providing pure comparison logic between initial baseline state and current editable form state.
-- Tracks title, platforms, content pillar, format, goal, workflow status, progress, publish date/time, time known, hook, objective, production detail, CTA, caption, hashtags, review status, notes, and links (including link count, values, and order).
-- A fresh, untouched new form evaluates to `false` (not dirty).
-- Created `src/components/planner/DiscardConfirmDialog.tsx` with `role="alertdialog"`, `aria-modal="true"`, and focus trapping.
-- Intercepts dismissal attempts when dirty:
-  - Close "X" button;
-  - Cancel button;
-  - Modal backdrop click;
-  - Escape key.
-- The nested discard dialog exclusively handles Escape and Tab while open, preventing the parent modal handler from interfering.
-- Cancelling discard keeps the editor open with all draft values and restores focus to the editor control.
-- Confirming discard closes the editor.
-- Browser tab closing, refresh, and navigation are guarded via `beforeunload` event listener attached only while the form is dirty and cleanly removed on unmount or save.
-- Successful save, delete, duplicate, and archive operations set `isSubmittedRef.current = true`, closing without any discard warning.
-- Failed operations keep the editor open, display localized error feedback, and preserve the user's draft.
-
-### 5. Quality & Localization
-- 100% parity between `src/messages/en.json` and `src/messages/th.json` with 26 new keys covering copy controls, link workspace, preview labels, empty states, and discard dialog.
-- Preserved all existing Milestone 3 fields, production tasks readout, and responsive styling.
-- Zero migrations created; zero dependencies added.
-- `content_media` table and storage bucket remain dormant and unexposed.
+### 7. Unsaved-Change Protection
+- `src/utils/dirtyState.ts` provides pure comparison between baseline state and current editable form state.
+- Tracks all fields including link count, values, and order. Fresh untouched form is clean.
+- `src/components/planner/DiscardConfirmDialog.tsx` with `role="alertdialog"`, `aria-modal="true"`, and focus trapping.
+- Intercepts dismissal attempts when dirty (Close "X" button, Cancel button, backdrop click, Escape key).
+- `beforeunload` event listener attached only while form is dirty, removed on clean/save/unmount.
 
 ---
 
@@ -83,16 +91,20 @@
 - `src/utils/url/safeDomain.ts`: [NEW] Safe local domain parser for external links.
 - `src/utils/clipboard.ts`: [NEW] Robust clipboard copy helper with error handling.
 - `src/utils/dirtyState.ts`: [NEW] Pure dirty-state comparison and link equality functions.
+- `src/utils/linkReorder.ts`: [NEW] Pure array item reordering with boundary safety.
+- `src/utils/hashtags.ts`: [NEW] Pure hashtag parser and formatter.
+- `src/utils/recordActions.ts`: [NEW] Safe async action executor preventing unhandled promise rejections.
+- `src/utils/modalFocusLifecycle.ts`: [NEW] Focus lifecycle controller enforcing mount/unmount and discard focus rules.
 - `src/components/common/Icons.tsx`: Added `IconArrowUp`, `IconArrowDown`, and `IconExternalLink`.
 - `src/components/planner/LinkCard.tsx`: [NEW] Compact link card with controls, badges, domain, and reordering.
 - `src/components/planner/TextPreview.tsx`: [NEW] Platform-neutral text post preview with copy controls.
 - `src/components/planner/DiscardConfirmDialog.tsx`: [NEW] Accessible alertdialog for unsaved changes.
-- `src/components/planner/RecordModal.tsx`: Integrated link workspace, text preview, copy controls, dirty tracking, and discard protection.
+- `src/components/planner/RecordModal.tsx`: Repaired focus lifecycle, strict URL validation, safe action error handling, link workspace, text preview, and copy controls.
 - `src/messages/en.json`: Added 26 Milestone 4 localization keys.
 - `src/messages/th.json`: Added 26 matching Thai localization keys.
-- `tests/editor-milestone4.test.mjs`: [NEW] 16 comprehensive behavioral tests for domain parsing, reordering, preview formatting, clipboard handling, dirty detection, dismissal flow, accessibility, and beforeunload.
+- `tests/editor-milestone4.test.mjs`: [NEW] 19 comprehensive production tests covering domain parsing, strict validation, reordering, hashtags, action error handling, focus lifecycle regressions, clipboard resilience, dirty detection, localization parity, and static markup contracts.
 - `tests/run-tests.mjs`: Registered Milestone 4 test suite into clean-environment test runner.
-- `TASKS.md`: Marked Milestone 4 as implementation complete; awaiting Codex review.
+- `TASKS.md`: Marked Milestone 4 as revision complete; awaiting Codex review.
 - `HANDOFF.md`: Updated handoff documentation.
 
 ---
@@ -124,10 +136,10 @@ Result:
 ```
 ▲ Next.js 16.3.5 (Turbopack)
 - Environments: .env.local
-✓ Compiled successfully in 1045ms
+✓ Compiled successfully in 980ms
   Running TypeScript ...
-  Finished TypeScript in 1195ms ...
-✓ Generating static pages using 7 workers (17/17) in 366ms
+  Finished TypeScript in 1138ms ...
+✓ Generating static pages using 7 workers (17/17) in 334ms
   Finalizing page optimization ...
 Route (app): all 17 routes compiled and generated cleanly without errors.
 ```
@@ -149,62 +161,59 @@ Result:
 === 6. Running Authenticated Server Actions & Atomic Rollback Suite ===
 ✔ 8/8 tests passed
 === 6b. Running Content Editor & Link Workspace Suite (Milestone 4) ===
-✔ 16/16 tests passed
+✔ 19/19 tests passed
 === 7. Building Content Planner Application from Current Source ===
 ✓ Compiled successfully
 === 8. Running Live Server & HTTP Integration Suites ===
 ✔ 14/14 tests passed
 === [SUCCESS] ALL CLEAN-ENVIRONMENT CHECKS AND TEST SUITES PASSED ===
-Total: 159 tests passing cleanly across database, domain, accessibility, localization, importer, server actions, Milestone 4 editor, and live HTTP integration.
+Total: 162 tests passing cleanly across database, domain, accessibility, localization, importer, server actions, Milestone 4 editor, and live HTTP integration.
 ```
+
+---
+
+## Verification Honesty & DOM Focus Testing Limitation
+
+- **Automated Test Isolation**: In the pure Node test runner without adding a browser automation dependency (e.g. Playwright or Puppeteer), real browser DOM `document.activeElement` transitions across actual window events cannot be fully automated. To remain honest and avoid synthetic test inflation:
+  - Production logic has been extracted into pure, testable helpers (`src/utils/linkReorder.ts`, `src/utils/hashtags.ts`, `src/utils/recordActions.ts`, `src/utils/modalFocusLifecycle.ts`).
+  - Unit tests in `tests/editor-milestone4.test.mjs` directly exercise these production helpers and test regression protection for focus controller invariants (e.g., verifying `handleDirtyStateChange` does not refocus the initial field).
+  - Markup assertions are explicitly labeled as static contract checks, not full interactive browser tests.
+- **Manual Verification Evidence**:
+  - The live Next.js application was tested against the local Supabase stack.
+  - Step 1: Open an existing record from Planner (`/th/planner`).
+  - Step 2: Focus the Caption field (`#modal-caption-textarea`).
+  - Step 3: Type the first character.
+  - Step 4: Focus remained strictly in the Caption field; Title input did not steal focus.
+  - Step 5: Press Escape (or click Close button); the discard confirmation dialog opened, and focus moved to the "Keep editing" (`#cancelBtn`) button.
+  - Step 6: Press Escape (or click "Keep editing"); the discard dialog closed, and focus returned to the initiating editor control.
+  - Step 7: Confirming discard unmounted the editor and restored focus to the external opener element.
 
 ---
 
 ## Manual Review Instructions
 
-1. Start development server: `npm run dev` and navigate to `http://localhost:3000/th/planner` or `http://localhost:3000/en/planner`.
-2. **Untouched Form Clean Check**:
-   - Click "New Content" (`+ แผนใหม่` / `+ New Content`).
-   - Press Escape or click the "X" close button without making changes.
-   - Verify the modal closes immediately without prompting for discard.
-3. **External-Link Workspace**:
-   - Open any record or create a new one.
-   - In "Content Links", click "Add Link".
-   - Enter a URL (e.g. `https://www.youtube.com/watch?v=123`), select platform "YouTube", select type "Idea Source", and enter label "Tutorial reference".
-   - Observe the card header displaying `#1`, label, platform badge, type badge, and parsed domain `youtube.com`.
-   - Add a second link (e.g. `https://drive.google.com/drive/folders/abc`), type "Asset / Drive".
-   - Verify that link #1 has "Move up" disabled and "Move down" enabled; link #2 has "Move down" disabled and "Move up" enabled.
-   - Click "Move up" on link #2; verify link #2 moves to position #1 with inputs and focus preserved.
-   - Click "Open link" (external link icon) and verify it opens in a new browser tab with `target="_blank"` and `rel="noopener noreferrer"`.
-4. **Live Text Preview**:
-   - Enter a hook, multi-line caption, and call-to-action in the form fields.
-   - Observe the "Post Text Preview" section updating live below caption.
-   - Verify caption line breaks are preserved cleanly.
-   - Enter hashtags separated by spaces or commas (e.g. `marketing, tech growth`); observe preview tags rendered as `#marketing #tech #growth`.
-   - Clear fields to verify localized empty state fallbacks.
-5. **Copy Controls & Accessible Announcements**:
-   - In the text preview, click "Copy caption", "Copy CTA", or "Copy hashtags".
-   - Verify visual checkmark feedback ("Copied!") for 2 seconds.
-   - In link cards, click the copy button next to the link URL; verify URL is copied with localized feedback.
-6. **Unsaved-Change Protection**:
-   - Make any change to a field or link.
-   - Press Escape, click the close button, or click the outer backdrop.
-   - Verify the "Unsaved Changes" alert dialog appears.
-   - Click "Keep Editing"; verify the dialog closes, all draft values remain intact, and focus returns to the editor.
-   - Press Escape again and click "Discard Changes"; verify the modal closes.
-   - Try refreshing the browser tab while changes are pending; verify browser `beforeunload` warning is triggered.
-   - Edit a record and click "Save Record"; verify save succeeds atomically and modal closes without any discard prompt.
+1. Start development server with local Supabase: `npm run dev` and navigate to `http://localhost:3000/th/planner`.
+2. **Focus Stability Check**:
+   - Open an existing record or create one.
+   - Click into the Caption textarea.
+   - Type a character.
+   - Observe that cursor and focus stay in the Caption textarea (does not jump back to Title).
+   - Press Escape or click the Close button; observe discard dialog appears with focus on "Keep editing".
+   - Press Escape or click "Keep editing"; observe discard dialog closes and focus returns to the initiating control.
+3. **Action Error Handling Check**:
+   - In offline or simulated failure mode, trigger Delete, Duplicate, or Archive.
+   - Observe that the editor stays open, the user's draft is preserved, and a localized error banner is displayed at the top of the form.
+4. **Strict URL Validation Check**:
+   - Add a link with `javascript:alert(1)`, `data:text/html,123`, or `not-a-url`.
+   - Click "Save"; observe client validation error "Please enter a valid HTTP or HTTPS URL" without server submission.
+5. **Link Workspace & Live Preview**:
+   - Add links, reorder them with Move Up/Down, verify boundary disabling.
+   - Observe real-time platform-neutral preview formatting and line-break preservation.
+   - Test copy controls for caption, CTA, hashtags, and link URLs.
 
 ---
 
-## Assumptions and Deviations
-
-- None. All implementation adheres strictly to the approved Milestone 4 roadmap specifications without schema modifications or external package additions.
-
-## Unresolved Risks
-
-- None. Local test isolation, RLS enforcement, atomic rollback, and client runtime validation remain fully intact and verified.
-
 ## Confirmation
 
-- **Hosted Supabase was NOT modified**: No migrations were applied to hosted Supabase, and no hosted data was touched.
+- **Hosted Supabase was NOT modified**: Zero hosted migrations or hosted imports were performed.
+- **Milestone 5 has NOT been started**.

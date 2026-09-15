@@ -3,6 +3,7 @@
 import React from 'react';
 import { useLocale } from '@/context/LocaleContext';
 import { IconCopy, IconCheck } from '@/components/common/Icons';
+import { parseHashtags, formatHashtags } from '@/utils/hashtags';
 
 interface TextPreviewProps {
   hook: string;
@@ -25,14 +26,8 @@ export function TextPreview({
 }: TextPreviewProps) {
   const { t } = useLocale();
 
-  // Parse hashtags into clean #tags
-  const parsedHashtags = hashtagsStr
-    .split(/[,\s]+/)
-    .map((h) => h.trim().replace(/^#+/, ''))
-    .filter((h) => h.length > 0)
-    .map((h) => `#${h}`);
-
-  const formattedHashtags = parsedHashtags.join(' ');
+  const parsedHashtags = parseHashtags(hashtagsStr);
+  const formattedHashtags = formatHashtags(hashtagsStr);
 
   const renderCopyButton = (id: string, text: string, label: string) => {
     const isCopied = copyFeedbackId === id && copyFeedbackStatus === 'success';

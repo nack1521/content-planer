@@ -206,7 +206,7 @@ Review checkpoint: Milestone 3 accepted by Codex on 2026-09-14. Ready for Milest
 
 ## Milestone 4 — Content editor, link workspace, text post preview, copy controls, and unsaved-change protection
 
-Status: Implementation complete; awaiting Codex review
+Status: Revision complete; awaiting Codex review
 
 - [x] Preserve and polish the existing content editor; do not rebuild completed fields.
 - [x] Support external link CRUD for idea sources, assets, notes, and published posts.
