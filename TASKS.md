@@ -11,7 +11,7 @@ The project roadmap is structured into two phases:
 1. Foundation and responsive design — **Accepted**.
 2. Supabase database, passwordless owner authentication, and security — **Accepted**.
 3. Planner persistence, tasks, Excel/Notion replacement workflow, and external links — **Accepted**.
-4. Content editor, link workspace, text post preview, copy controls, and unsaved-change protection — **Ready for assignment**.
+4. Content editor, link workspace, text post preview, copy controls, and unsaved-change protection — **Implementation complete; awaiting Codex review**.
 5. Calendar and idea bank.
 6. Bilingual completion, responsive QA, and release quality.
 7. Vercel release and hosted Supabase setup.
@@ -206,20 +206,20 @@ Review checkpoint: Milestone 3 accepted by Codex on 2026-09-14. Ready for Milest
 
 ## Milestone 4 — Content editor, link workspace, text post preview, copy controls, and unsaved-change protection
 
-Status: Ready for assignment
+Status: Implementation complete; awaiting Codex review
 
-- [ ] Preserve and polish the existing content editor; do not rebuild completed fields.
-- [ ] Support external link CRUD for idea sources, assets, notes, and published posts.
-- [ ] Store URL, label, link type, optional platform, and ordering.
-- [ ] Validate HTTP/HTTPS links strictly.
-- [ ] Show safe link cards with label, platform, domain, copy, open, reorder, and remove controls.
-- [ ] Open external links safely in a new tab (`target="_blank" rel="noopener noreferrer"`).
-- [ ] Do not fetch remote pages, scrape metadata, download files, generate thumbnails, or automatically embed third-party content in Sprint 1.
-- [ ] Add a platform-neutral text preview for hook, caption, CTA, and hashtags.
-- [ ] Add localized copy controls and success/error feedback.
-- [ ] Warn before closing or navigating away with unsaved changes.
-- [ ] Preserve desktop, mobile, accessibility, and Thai/English behavior.
-- [ ] Add relevant tests and stop for Codex review.
+- [x] Preserve and polish the existing content editor; do not rebuild completed fields.
+- [x] Support external link CRUD for idea sources, assets, notes, and published posts.
+- [x] Store URL, label, link type, optional platform, and ordering.
+- [x] Validate HTTP/HTTPS links strictly.
+- [x] Show safe link cards with label, platform, domain, copy, open, reorder, and remove controls.
+- [x] Open external links safely in a new tab (`target="_blank" rel="noopener noreferrer"`).
+- [x] Do not fetch remote pages, scrape metadata, download files, generate thumbnails, or automatically embed third-party content in Sprint 1.
+- [x] Add a platform-neutral text preview for hook, caption, CTA, and hashtags.
+- [x] Add localized copy controls and success/error feedback.
+- [x] Warn before closing or navigating away with unsaved changes.
+- [x] Preserve desktop, mobile, accessibility, and Thai/English behavior.
+- [x] Add relevant tests and stop for Codex review.
 
 Review checkpoint: Stop and request editor/link-workspace review before Milestone 5.
 
