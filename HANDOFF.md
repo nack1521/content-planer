@@ -1,114 +1,88 @@
-# Content Planner Handoff — Milestone 4 Revision Complete
+# Content Planner Handoff — Milestone 5 Complete
 
 ## Milestone Status
 
-**Status: Revision complete; awaiting Codex review**
+**Status: Completed; awaiting Codex review**
 
-- **Milestone 3**: Accepted by Codex on 2026-09-14 (baseline preserved).
-- **Milestone 4**: Revision complete and verified across all criteria; stopping for Codex review.
-- **Milestone 5**: Unstarted (blocked by Milestone 4 review).
-- **Hosted Supabase Status**: Clean. Zero hosted migrations or hosted imports were performed. Milestone 2 baseline remains on hosted Supabase without modification. All testing was executed against the isolated local Supabase stack (`127.0.0.1:54321`).
+- **Milestone 3**: Accepted by Codex on 2026-09-14.
+- **Milestone 4**: Accepted by Codex on 2026-09-15.
+- **Milestone 5**: Completed and verified across all criteria; stopping for Codex review.
+- **Milestone 6**: Unstarted (blocked by Milestone 5 review).
+- **Hosted Supabase Status**: Clean and untouched. Zero hosted migrations or hosted imports were performed. Milestone 2 baseline remains on hosted Supabase without modification. All automated testing was executed strictly against the isolated local Supabase stack (`127.0.0.1:54321`).
 - **Media Uploads / Sprint 2**: Zero media upload features or Sprint 2 capabilities added; dormant `content_media` infrastructure left untouched.
 
 ---
 
-## Implemented Behavior & Revisions
+## Implemented Behavior
 
-### 1. Repaired `RecordModal` Focus Lifecycle
-- **Strict Mount/Unmount Focus Invariants**:
-  - Initial title focus happens strictly once on mount (`useEffect(..., [])`).
-  - Opener element focus restore happens strictly once on unmount (`return () => previousFocusRef.current?.focus()`).
-  - Mutating dirty state (e.g. typing the first character into Caption or any other field) does NOT re-trigger initial field focus. Focus remains in the active field.
-  - Stable refs (`isDiscardOpenRef`, `handleRequestCloseRef`) ensure keyboard handlers always access the latest dirty/modal state without re-binding or resetting focus.
-- **Discard Dialog Focus Trapping & Restoration**:
-  - While the discard dialog is open, its Cancel button ("Keep editing") receives focus immediately, and Tab/Shift+Tab traps focus strictly within the dialog.
-  - Escape within the discard dialog cancels dismissal and restores focus to the initiating editor control (`lastFocusedBeforeDiscardRef.current`).
-  - Confirming discard closes the editor and restores focus to the external opener element.
-- **Verification Honesty**:
-  - Focus lifecycle behavior is verified through manual live-browser testing. Synthetic, artificial controller test abstractions (`modalFocusLifecycle.ts`) were removed to avoid claiming Node tests protect actual DOM focus transitions.
+### 1. Monthly Calendar (`src/components/calendar/CalendarView.tsx` & `src/utils/calendar.ts`)
+- **Deterministic Bangkok Calendar Utilities**:
+  - `src/utils/calendar.ts` provides pure, testable functions for Bangkok calendar operations (`Asia/Bangkok`, UTC+7).
+  - Accurate Gregorian leap-year calculation (`isLeapYear`), days in month (`getDaysInMonth` accounting for Feb 29 in leap years and Feb 28 otherwise), and 1st-of-month weekday calculation (`getFirstDayOfWeek`).
+  - `getMonthGrid` generates a complete 7-column matrix (Sun..Sat) with padding days from previous and next months to ensure complete rows (28, 35, or 42 cells).
+  - Navigation boundaries (`getPreviousMonth`, `getNextMonth`) transition correctly between December and January across year boundaries.
+  - Month and year headers are formatted in Bangkok time (`formatMonthYearHeader`) in Thai (e.g. "กันยายน 2569") and English ("September 2026").
+- **Bangkok Date Grouping & Strict Content Filtering**:
+  - `filterAndGroupCalendarContent` groups content items strictly by their Bangkok calendar date (`utcToBangkokParts(publish_at).date`), preventing timezone misgrouping where UTC month-end items belong to Bangkok's next month (e.g., UTC `2026-04-30T18:00:00Z` maps to Bangkok `2026-05-01 01:00:00`).
+  - Unscheduled ideas (`publish_at === null`) and archived records (`archived_at !== null`) are strictly excluded from the calendar.
+  - Date-only items (`publish_time_known === false`) are handled cleanly without inventing arbitrary publication times; sorted first on each calendar day.
+  - Items with known times display exact Bangkok publication times (e.g. `14:00`).
+- **Desktop 7-Column Grid Presentation (`hidden md:block`)**:
+  - Seven-column weekday headers (Sun..Sat) with localized short names.
+  - Day cells display day number, today highlight badge, and scheduled post chips.
+  - Each post chip displays primary platform badge, post title, workflow status badge, and publication time (when known).
+  - Clicking any chip opens `RecordModal` for that item. Accessible via keyboard (`Enter`/`Space`) and labeled with `aria-label`.
+- **Mobile Touch-Friendly Agenda Presentation (`block md:hidden`)**:
+  - Compact agenda presentation grouping scheduled content chronologically by Bangkok date with distinct date section headers.
+  - Full-width touch cards showing title, platform badges, workflow status, content pillar badge, and publication time.
+  - Tapping any card opens `RecordModal`.
+- **Calendar Lifecycle & Record Modal Integration**:
+  - Selecting an item opens `RecordModal`.
+  - Saving, deleting, duplicating, or archiving refreshes calendar data via `getContentItemsAction()`.
+  - Empty state with calendar icon, localized explanation, and "Create Post" action when no items are scheduled in the selected month.
+  - Loading skeleton state and localized error banner with retry control.
+  - Zero drag-and-drop scheduling (strictly omitted per specification).
 
-### 2. Action Error Propagation Contract & Single Localization Boundary
-- **Preserved Server Error Codes in Parent Handlers**:
-  - Content action handlers in `PlannerView.tsx` and linked-content handlers in `TasksView.tsx` now pass original stable server error codes (`throw new Error(res.error || 'save_failed')`) rather than prematurely translating them with `getLocalizedErrorMessage(t, res.error)`.
-  - `RecordModal.tsx` acts as the single localization boundary for save, delete, duplicate, archive, and restore errors.
-  - In `src/utils/recordActions.ts`, `extractErrorCode` safely extracts error codes from `Error` instances, strings, error objects, `null`, `undefined`, or empty values, safely defaulting to `'save_failed'`.
-- **Failure UI & State Guarantees**:
-  - `isSubmittedRef.current = true` and `onClose()` are invoked strictly after action success.
-  - On failure or rejection, the modal and draft remain open, and the specific error code is safely translated to display in the modal's error banner (e.g. `not_found` displays "The requested record was not found." / "ไม่พบข้อมูลที่ต้องการ", not generic `unknown`).
-  - Prevents unhandled promise rejections.
-- **Production Regression Test**:
-  - Added automated tests in `tests/editor-milestone4.test.mjs` verifying that stable server error codes (`not_found`, `save_failed`, `unauthorized`, `invalid_id`, `validation_failed`, `service_error`) reach the modal translation boundary unchanged, render their distinct localized strings in both English and Thai, and leave the editor open.
-
-### 3. Enforced Strict Client Link Validation
-- Replaced `startsWith('http')` with the shared production URL validator `isValidUrl` from `src/utils/validation.ts`.
-- Accepts only valid `http:` and `https:` URLs.
-- Rejects malformed URLs (empty, spaces, invalid syntax, missing hostname), dangerous schemes (`javascript:`, `data:`, `ftp:`, `file:`, `blob:`), and deceptive schemes (`httpfake:`, `https:`) before invoking `onSave`.
-- Keeps existing server-side and database-level validation unchanged.
-- Added comprehensive unit tests in `tests/editor-milestone4.test.mjs`.
-
-### 4. External-Link Workspace
-- Extended the content link workspace inside `src/components/planner/RecordModal.tsx` and `src/components/planner/LinkCard.tsx`.
-- Supported link types: `idea_source`, `asset`, `note`, and `published`.
-- Preserves URL, optional label, optional platform (`tiktok`, `instagram`, `youtube`, `facebook`, `x`), type, and sort order.
-- Supports adding, editing, removing, and reordering links.
-- Uses accessible "Move up" and "Move down" controls with boundary protection (`disabled={index === 0}` and `disabled={index === totalCount - 1}`) powered by pure helper `src/utils/linkReorder.ts`.
-- Assigns stable client IDs (`clientId`) to draft links so input focus and DOM identity do not jump during reordering.
-- Shows compact link cards containing:
-  - Label with localized fallback (custom label -> safe domain -> localized link type);
-  - Localized link type badge;
-  - Localized platform badge;
-  - Safe local domain parsing via `src/utils/url/safeDomain.ts` (stripping `www.`, zero external scraping or network requests);
-  - Copy link button with localized success/error feedback;
-  - Open link in a new tab with `target="_blank"` and `rel="noopener noreferrer"`;
-  - Move up / move down buttons;
-  - Remove button.
-- Initial saved links are sorted by `sort_order` ascending.
-- On save, deterministic `sort_order` values matching the displayed array order (`0, 1, 2...`) are submitted to the atomic `upsert_content_item_with_links` RPC.
-
-### 5. Live Text Post Preview
-- Platform-neutral preview component `src/components/planner/TextPreview.tsx` rendering active draft in real-time.
-- Displays:
-  - Hook / main message;
-  - Caption with line breaks preserved (`whitespace-pre-wrap`);
-  - Call to action (CTA);
-  - Hashtags cleanly parsed into `#tag` badges via `src/utils/hashtags.ts`.
-- Provides distinct localized empty states when fields are blank.
-
-### 6. Accessible Copy Controls & Feedback
-- `src/utils/clipboard.ts` safely handles `navigator.clipboard.writeText`, catching rejection or insecure-context errors without throwing.
-- Copy buttons for Caption, CTA, Hashtags, and Link URLs.
-- Visual feedback toggles between default icon, emerald checkmark + localized "Copied!" message, and rose "Failed to copy" message.
-- Screen-reader feedback provided through an `aria-live="polite"` live announcement region.
-
-### 7. Unsaved-Change Protection
-- `src/utils/dirtyState.ts` provides pure comparison between baseline state and current editable form state.
-- Tracks all fields including link count, values, and order. Fresh untouched form is clean.
-- `src/components/planner/DiscardConfirmDialog.tsx` with `role="alertdialog"`, `aria-modal="true"`, and focus trapping.
-- Intercepts dismissal attempts when dirty (Close "X" button, Cancel button, backdrop click, Escape key).
-- `beforeunload` event listener attached only while form is dirty, removed on clean/save/unmount.
+### 2. Idea Bank (`src/components/ideas/IdeasView.tsx`)
+- **Unscheduled Ideas Source**:
+  - Defined strictly as non-archived records with `status === "idea"` and `publish_at === null` from existing `content_items` source.
+  - Zero data duplication; ideas are regular `content_items` rows.
+- **Quick Capture Form**:
+  - Fast capture requiring only Title and optional Notes.
+  - Platform fallback: Since database constraints require at least one platform (`array_length(platforms, 1) > 0`), quick capture retrieves the owner's saved `default_platforms` from `user_preferences`. If unconfigured, falls back reversibly to `['tiktok']` without requiring a schema migration.
+  - Server-action boundary validation: validates title (rejects empty/whitespace-only) and notes through authenticated server actions.
+  - Feedback: localized validation messages, localized error banner on failure, and temporary success announcement banner on save.
+  - Duplicate prevention: submit button and inputs are disabled while `isCapturing === true`.
+- **Search for Unscheduled Ideas**:
+  - Search input filtering unscheduled ideas in real-time by title and notes with a clear button and matching count indicator.
+- **"Plan this idea" Action & In-Place Updates**:
+  - Each idea card provides a prominent "Plan this idea" action with accent styling and accessible aria-label.
+  - Opens `RecordModal` with the existing idea record (`item={idea}`).
+  - When saved with production details, schedule date, or updated status (e.g. `scripting`), `updateContentItemAction(idea.id, data)` updates the exact same record in place rather than creating a duplicate.
+  - On modal save, the view re-queries and the planned record automatically leaves the unscheduled ideas list.
+- **Reference Accounts Integration**:
+  - Reference Accounts feature preserved in full as an accessible, clearly separated tab (`role="tablist"`, `role="tab"`, `role="tabpanel"`).
+  - Displays count badges for unscheduled ideas and reference accounts.
 
 ---
 
 ## Files Changed
 
-- `src/components/planner/PlannerView.tsx`: Passed raw error codes from server actions without premature translation.
-- `src/components/tasks/TasksView.tsx`: Passed raw error codes from linked content actions without premature translation.
-- `src/utils/recordActions.ts`: [NEW] Safe async action executor with `extractErrorCode` handling missing or non-Error values.
-- `src/utils/url/safeDomain.ts`: [NEW] Safe local domain parser for external links.
-- `src/utils/clipboard.ts`: [NEW] Robust clipboard copy helper with error handling.
-- `src/utils/dirtyState.ts`: [NEW] Pure dirty-state comparison and link equality functions.
-- `src/utils/linkReorder.ts`: [NEW] Pure array item reordering with boundary safety.
-- `src/utils/hashtags.ts`: [NEW] Pure hashtag parser and formatter.
-- `src/components/common/Icons.tsx`: Added `IconArrowUp`, `IconArrowDown`, and `IconExternalLink`.
-- `src/components/planner/LinkCard.tsx`: [NEW] Compact link card with controls, badges, domain, and reordering.
-- `src/components/planner/TextPreview.tsx`: [NEW] Platform-neutral text post preview with copy controls.
-- `src/components/planner/DiscardConfirmDialog.tsx`: [NEW] Accessible alertdialog for unsaved changes.
-- `src/components/planner/RecordModal.tsx`: Repaired focus lifecycle, strict URL validation, safe action error handling, link workspace, text preview, and copy controls.
-- `src/messages/en.json`: Added 26 Milestone 4 localization keys.
-- `src/messages/th.json`: Added 26 matching Thai localization keys.
-- `tests/editor-milestone4.test.mjs`: [NEW] 17 comprehensive production tests covering domain parsing, strict validation, reordering, hashtags, action error propagation regression, non-Error safety, clipboard resilience, dirty detection, localization parity, and static markup contracts.
-- `tests/run-tests.mjs`: Registered Milestone 4 test suite into clean-environment test runner.
-- `TASKS.md`: Marked Milestone 4 as revision complete; awaiting Codex review.
+- `src/utils/calendar.ts`: [NEW] Pure Bangkok calendar math, leap-year calculations, month grid generation, and date grouping.
+- `src/components/calendar/CalendarView.tsx`: [NEW] Monthly calendar view with desktop 7-column grid, mobile touch-friendly agenda, and `RecordModal` integration.
+- `src/components/ideas/IdeasView.tsx`: [NEW] Idea bank workspace with tab navigation, quick capture, search, idea cards, "Plan this idea" action, and Reference Accounts tab.
+- `src/app/[locale]/calendar/page.tsx`: Server component fetching initial items/pillars and rendering `CalendarView`.
+- `src/app/[locale]/ideas/page.tsx`: Server component fetching initial items/accounts/pillars and rendering `IdeasView`.
+- `src/app/actions/content.ts`: Added platform fallback to owner default platforms or `['tiktok']` in `createContentItemAction`; added multi-route cache revalidation (`revalidateContentPages`); exported `quickCaptureIdeaAction`.
+- `src/app/actions/preferences.ts`: Fixed TypeScript type imports (`import type`).
+- `src/utils/supabase/preferences.ts`: Fixed TypeScript type imports (`import type`).
+- `src/components/common/Icons.tsx`: Added `IconChevronLeft` and `IconChevronRight`.
+- `src/messages/en.json`: Added complete Milestone 5 keys for `calendar` and `ideas`.
+- `src/messages/th.json`: Added matching Thai localization keys with 100% parity.
+- `tests/calendar-ideas-milestone5.test.mjs`: [NEW] 12 comprehensive unit and integration tests covering Bangkok calendar math, boundaries, leap years, timezone grouping, unscheduled idea definition, quick capture, in-place planning, owner isolation RLS, and accessibility.
+- `tests/auth.test.mjs`: Added `/en/calendar` and `/en/ideas` to live server route protection assertions.
+- `tests/run-tests.mjs`: Registered Milestone 5 test suite into isolated test runner.
+- `TASKS.md`: Marked Milestone 4 as accepted by Codex on 2026-09-15 and Milestone 5 as completed.
 - `HANDOFF.md`: Updated handoff documentation.
 
 ---
@@ -140,20 +114,20 @@ Result:
 ```
 ▲ Next.js 16.3.5 (Turbopack)
 - Environments: .env.local
-✓ Compiled successfully in 1084ms
+✓ Compiled successfully in 1287ms
   Running TypeScript ...
-  Finished TypeScript in 1225ms ...
-✓ Generating static pages using 7 workers (17/17) in 352ms
+  Finished TypeScript in 1204ms ...
+✓ Generating static pages using 7 workers (17/17) in 406ms
   Finalizing page optimization ...
 Route (app): all 17 routes compiled and generated cleanly without errors.
 ```
 
-### 5. Complete Test Runner (`npm test`)
+### 5. Complete Test Suite (`npm test`)
 Command: `npm test`
 Result:
 ```
 === 1. Verifying and Preparing Isolated Local Supabase Environment ===
-85/85 pgTAP tests passed.
+85/85 pgTAP database tests passed.
 === 2. Running Production Domain & Validation Suites ===
 ✔ 15/15 tests passed
 === 3. Running Accessibility & Keyboard Navigation Suite ===
@@ -166,55 +140,51 @@ Result:
 ✔ 8/8 tests passed
 === 6b. Running Content Editor & Link Workspace Suite (Milestone 4) ===
 ✔ 17/17 tests passed
+=== 6c. Running Calendar and Idea Bank Suite (Milestone 5) ===
+✔ 12/12 tests passed
 === 7. Building Content Planner Application from Current Source ===
 ✓ Compiled successfully
 === 8. Running Live Server & HTTP Integration Suites ===
 ✔ 14/14 tests passed
 === [SUCCESS] ALL CLEAN-ENVIRONMENT CHECKS AND TEST SUITES PASSED ===
-Total: 160 tests passing cleanly across database, domain, accessibility, localization, importer, server actions, Milestone 4 editor, and live HTTP integration.
+Total: 172 tests passing cleanly across database, domain, accessibility, localization, importer, server actions, Milestone 4 editor, Milestone 5 calendar & ideas, and live HTTP integration.
 ```
-
----
-
-## Verification Honesty & DOM Focus Testing Limitation
-
-- **Automated Test Scope**: The automated test suite executes directly against production helper logic (`src/utils/linkReorder.ts`, `src/utils/hashtags.ts`, `src/utils/recordActions.ts`, `src/utils/validation.ts`, `src/utils/dirtyState.ts`, `src/utils/clipboard.ts`). Synthetic focus test controller mocks have been removed.
-- **Limitation**: The Node test runner does not run a browser layout or interactive window event engine, so automated tests cannot directly verify real `document.activeElement` transitions across actual browser focus events without adding heavy browser dependencies.
-- **Manual Verification Evidence**:
-  - Manual live-browser testing was conducted against the local Next.js server connected to the local Supabase stack.
-  - Step 1: Opened existing content record from `/th/planner`. Title input initially received focus on modal mount.
-  - Step 2: Clicked into `#modal-caption-textarea`. Focus moved to Caption textarea.
-  - Step 3: Typed first character `"Z"`. Form transitioned from clean to dirty (`isDirty: true`).
-  - Step 4: Focus remained strictly in the Caption textarea; Title input did not steal focus.
-  - Step 5: Pressed Escape / clicked Close button. Discard confirmation dialog opened, and focus moved to the "Keep editing" (`#cancelBtn`) button.
-  - Step 6: Pressed Escape / clicked "Keep editing". Discard dialog closed, modal and draft remained intact, and focus returned directly to the initiating editor control.
-  - Step 7: Confirmed discard; modal unmounted and restored focus to the external opener element.
 
 ---
 
 ## Manual Review Instructions
 
-1. Start development server with local Supabase: `npm run dev` and navigate to `http://localhost:3000/th/planner`.
-2. **Action Error Propagation Check**:
-   - In simulated failure/offline mode (e.g. invalid UUID or intercepted network error), trigger Delete, Duplicate, or Archive.
-   - Observe that the editor stays open, draft is preserved, and a specific localized error message is displayed (e.g. "ไม่พบข้อมูลที่ต้องการ" or "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง"), NOT the generic "เกิดข้อผิดพลาดที่ไม่คาดคิด".
-3. **Focus Stability Check**:
-   - Open an existing record or create one.
-   - Click into Caption textarea and type a character.
-   - Observe that cursor and focus stay in Caption (does not jump back to Title).
-   - Press Escape or click Close; observe discard dialog appears with focus on "Keep editing".
-   - Press Escape or click "Keep editing"; observe discard dialog closes and focus returns to the initiating control.
-4. **Strict URL Validation Check**:
-   - Add a link with `javascript:alert(1)`, `data:text/html,123`, or `not-a-url`.
-   - Click "Save"; observe client validation error "Please enter a valid HTTP or HTTPS URL" without submitting.
-5. **Link Workspace & Live Preview**:
-   - Add links, reorder them with Move Up/Down, verify boundary disabling.
-   - Observe real-time platform-neutral preview formatting and line-break preservation.
-   - Test copy controls for caption, CTA, hashtags, and link URLs.
+### Desktop Review:
+1. Start development server: `npm run dev` and navigate to `http://localhost:3000/th/calendar`.
+2. **Monthly Calendar Desktop**:
+   - Verify current month header displays in Bangkok time (e.g., "กันยายน 2569").
+   - Click "เดือนก่อนหน้า" and "เดือนถัดไป" to verify boundary transitions; click "วันนี้" to return to current month.
+   - Observe the 7-column grid (อา. ถึง ส.) with today highlighted in purple.
+   - Click any scheduled item chip; observe `RecordModal` opens with record data. Edit a field, save, and confirm calendar refreshes.
+   - Switch language to English (`/en/calendar`); verify all labels, month names, and weekdays switch cleanly.
+3. **Idea Bank Desktop**:
+   - Navigate to `http://localhost:3000/th/ideas`.
+   - Observe two tabs: "ไอเดียที่ยังไม่กำหนดเวลา" and "บัญชีอ้างอิง".
+   - In Quick Capture: enter a title and optional notes, click "บันทึกไอเดีย". Observe saving state, success banner, and immediate appearance of idea card.
+   - Try clicking submit with empty title: observe validation error "กรุณาระบุหัวข้อไอเดีย".
+   - On an idea card, click "วางแผนไอเดียนี้": observe `RecordModal` opens with that exact record.
+   - Set a scheduled date and save: observe the idea disappears from the unscheduled tab.
+   - Switch to "บัญชีอ้างอิง" tab: observe Reference Accounts workspace remains fully functional.
+
+### Mobile Review (Viewport width <= 768px):
+1. Navigate to `/th/calendar` in responsive view mode (390px width):
+   - Verify 7-column desktop grid is hidden and compact agenda card presentation is visible.
+   - Verify cards are touch-friendly with distinct date section headers.
+   - Tap any post card to open full-screen `RecordModal`.
+2. Navigate to `/th/ideas` in responsive view mode:
+   - Verify tabs fit comfortably without horizontal scroll.
+   - Test quick capture form and search bar on mobile.
 
 ---
 
-## Confirmation
+## Assumptions and Remaining Limitations
 
-- **Hosted Supabase was NOT modified**: Zero hosted migrations or hosted imports were performed.
-- **Milestone 5 has NOT been started**.
+- **Platform Fallback for Quick Capture**: Database schema check constraint requires `array_length(platforms, 1) > 0`. Quick capture does not force the user to pick platforms, so it looks up the owner's saved `default_platforms` from `user_preferences`. If unconfigured, it defaults reversibly to `['tiktok']`. This assumption avoids a premature schema migration while adhering to existing constraints.
+- **No Drag-and-Drop**: Drag-and-drop calendar scheduling is an explicit non-goal in Sprint 1; scheduling is done deterministically through `RecordModal`.
+- **Media Uploads**: No image/video uploads were introduced (deferred to Sprint 2).
+- **Hosted Supabase**: Hosted Supabase was untouched. Zero hosted migrations or hosted imports were performed.

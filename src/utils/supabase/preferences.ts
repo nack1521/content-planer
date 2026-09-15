@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Locale } from '@/types/planner';
+import type { Locale } from '@/types/planner';
 
 export interface UserPreferences {
   user_id: string;

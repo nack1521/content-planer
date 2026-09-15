@@ -206,7 +206,7 @@ Review checkpoint: Milestone 3 accepted by Codex on 2026-09-14. Ready for Milest
 
 ## Milestone 4 — Content editor, link workspace, text post preview, copy controls, and unsaved-change protection
 
-Status: Revision complete; awaiting Codex review
+Status: Accepted by Codex on 2026-09-15
 
 - [x] Preserve and polish the existing content editor; do not rebuild completed fields.
 - [x] Support external link CRUD for idea sources, assets, notes, and published posts.
@@ -223,20 +223,20 @@ Status: Revision complete; awaiting Codex review
 - [x] Action-error propagation contract: parent handlers in `PlannerView` and `TasksView` preserve raw server error codes; `RecordModal` serves as the single localization boundary; added production regression tests.
 - [x] Removed synthetic focus test controller mocks (`modalFocusLifecycle.ts`); documented manual live-browser focus verification.
 
-Review checkpoint: Stop and request editor/link-workspace review before Milestone 5.
+Review checkpoint: Milestone 4 accepted by Codex on 2026-09-15.
 
 ## Milestone 5 — Calendar and idea bank
 
-Status: Blocked by Milestone 4
+Status: Completed; awaiting Codex review
 
-- [ ] Implement a locale-aware monthly calendar.
-- [ ] Display scheduled content by platform and status.
-- [ ] Open the content editor from a calendar item.
-- [ ] Implement idea-bank quick capture.
-- [ ] Show unscheduled idea records without duplicating data.
-- [ ] Allow an idea to become planned content.
-- [ ] Provide useful empty and error states.
-- [ ] Run lint, relevant tests, and production build successfully.
+- [x] Implement a locale-aware monthly calendar.
+- [x] Display scheduled content by platform and status.
+- [x] Open the content editor from a calendar item.
+- [x] Implement idea-bank quick capture.
+- [x] Show unscheduled idea records without duplicating data.
+- [x] Allow an idea to become planned content.
+- [x] Provide useful empty and error states.
+- [x] Run lint, relevant tests, and production build successfully.
 
 Review checkpoint: Stop and request workflow review before Milestone 6.
 

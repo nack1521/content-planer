@@ -1,8 +1,8 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
-import { getUserPreferences, updateUserPreferences, UserPreferences } from '@/utils/supabase/preferences';
-import { Locale, Platform } from '@/types/planner';
+import { getUserPreferences, updateUserPreferences, type UserPreferences } from '@/utils/supabase/preferences';
+import type { Locale, Platform } from '@/types/planner';
 
 const ALLOWED_PLATFORMS: Set<string> = new Set(['tiktok', 'instagram', 'youtube', 'facebook', 'x']);
 

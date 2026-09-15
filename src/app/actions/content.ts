@@ -30,13 +30,20 @@ import {
   validateLinksArray,
 } from "@/utils/validation";
 import { revalidatePath } from "next/cache";
+import { getUserPreferences } from "@/utils/supabase/preferences";
 
-function safeRevalidatePath(path: string, type?: 'page' | 'layout') {
+function safeRevalidatePath(path: string, type?: "page" | "layout") {
   try {
     revalidatePath(path, type);
   } catch {
     // Outside Next.js request scope
   }
+}
+
+function revalidateContentPages() {
+  safeRevalidatePath("/[locale]/planner", "page");
+  safeRevalidatePath("/[locale]/calendar", "page");
+  safeRevalidatePath("/[locale]/ideas", "page");
 }
 
 interface SupabaseContentItemRow {
@@ -212,8 +219,22 @@ export async function createContentItemAction(
 
     try {
       cleanTitle = sanitizeTitle(data.title);
-      cleanPlatforms = sanitizePlatforms(data.platforms);
       cleanStatus = data.status === undefined ? "idea" : validateWorkflowStatus(data.status);
+
+      if (!data.platforms || (Array.isArray(data.platforms) && data.platforms.length === 0)) {
+        const prefs = await getUserPreferences(supabase, userId);
+        if (prefs?.default_platforms && prefs.default_platforms.length > 0) {
+          try {
+            cleanPlatforms = sanitizePlatforms(prefs.default_platforms);
+          } catch {
+            cleanPlatforms = ["tiktok"];
+          }
+        } else {
+          cleanPlatforms = ["tiktok"];
+        }
+      } else {
+        cleanPlatforms = sanitizePlatforms(data.platforms);
+      }
       cleanFormat = validateContentFormat(data.format);
       cleanGoal = validateContentGoal(data.goal);
       cleanReviewStatus = validateReviewStatus(data.review_status);
@@ -267,7 +288,7 @@ export async function createContentItemAction(
       return { success: false, error: "save_failed" };
     }
 
-    safeRevalidatePath("/[locale]/planner", "page");
+    revalidateContentPages();
     return { success: true, id: newId };
   } catch (err: unknown) {
     if (err && typeof err === "object" && "digest" in err && (err as { digest: string }).digest === "DYNAMIC_SERVER_USAGE") {
@@ -342,7 +363,7 @@ export async function updateContentItemAction(
       return { success: false, error: "save_failed" };
     }
 
-    safeRevalidatePath("/[locale]/planner", "page");
+    revalidateContentPages();
     return { success: true };
   } catch (err: unknown) {
     if (err && typeof err === "object" && "digest" in err && (err as { digest: string }).digest === "DYNAMIC_SERVER_USAGE") {
@@ -425,7 +446,7 @@ export async function duplicateContentItemAction(
       return { success: false, error: "save_failed" };
     }
 
-    safeRevalidatePath("/[locale]/planner", "page");
+    revalidateContentPages();
     return { success: true, newId };
   } catch (err: unknown) {
     if (err && typeof err === "object" && "digest" in err && (err as { digest: string }).digest === "DYNAMIC_SERVER_USAGE") {
@@ -470,7 +491,7 @@ export async function archiveContentItemAction(
       return { success: false, error: "not_found" };
     }
 
-    safeRevalidatePath("/[locale]/planner", "page");
+    revalidateContentPages();
     return { success: true };
   } catch (err: unknown) {
     if (err && typeof err === "object" && "digest" in err && (err as { digest: string }).digest === "DYNAMIC_SERVER_USAGE") {
@@ -512,7 +533,7 @@ export async function deleteContentItemAction(id: string): Promise<{ success: bo
       return { success: false, error: "not_found" };
     }
 
-    safeRevalidatePath("/[locale]/planner", "page");
+    revalidateContentPages();
     return { success: true };
   } catch (err: unknown) {
     if (err && typeof err === "object" && "digest" in err && (err as { digest: string }).digest === "DYNAMIC_SERVER_USAGE") {
@@ -521,4 +542,24 @@ export async function deleteContentItemAction(id: string): Promise<{ success: bo
     console.error("deleteContentItemAction error:", err);
     return { success: false, error: "service_error" };
   }
+}
+
+export interface QuickCaptureInput {
+  title: string;
+  notes?: string | null;
+}
+
+export async function quickCaptureIdeaAction(
+  data: QuickCaptureInput
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  if (!data || typeof data !== "object") {
+    return { success: false, error: "validation_failed" };
+  }
+  return await createContentItemAction({
+    title: data.title,
+    notes: data.notes || null,
+    status: "idea",
+    publish_at: null,
+    publish_time_known: false,
+  });
 }

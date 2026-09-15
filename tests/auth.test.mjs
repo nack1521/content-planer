@@ -313,7 +313,9 @@ test('Live server route protection and auth endpoints', async () => {
     { path: '/th/planner', expectedRedirect: '/th/login' },
     { path: '/en/planner', expectedRedirect: '/en/login' },
     { path: '/th/calendar', expectedRedirect: '/th/login' },
+    { path: '/en/calendar', expectedRedirect: '/en/login' },
     { path: '/th/ideas', expectedRedirect: '/th/login' },
+    { path: '/en/ideas', expectedRedirect: '/en/login' },
     { path: '/th/settings', expectedRedirect: '/th/login' },
   ];
 
