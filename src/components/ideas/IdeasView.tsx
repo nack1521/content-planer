@@ -5,6 +5,8 @@ import { ContentItem, ContentPillar, ReferenceAccount } from '@/types/planner';
 import { useLocale } from '@/context/LocaleContext';
 import { getLocalizedErrorMessage } from '@/utils/errors';
 import { formatBangkokDate } from '@/utils/timezone';
+import { filterUnscheduledIdeas } from '@/utils/ideas';
+import { getNextTabIndex } from '@/utils/tabs';
 import { RecordModal } from '@/components/planner/RecordModal';
 import { PlatformBadge } from '@/components/planner/PlatformBadge';
 import { PillarBadge } from '@/components/planner/PillarBadge';
@@ -48,6 +50,7 @@ export function IdeasView({
 
   // Active Tab: 'unscheduled' | 'referenceAccounts'
   const [activeTab, setActiveTab] = useState<'unscheduled' | 'referenceAccounts'>('unscheduled');
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Content Items & Pillars State
   const [items, setItems] = useState<ContentItem[]>(initialItems ?? []);
@@ -124,11 +127,9 @@ export function IdeasView({
     };
   }, []);
 
-  // Filter unscheduled ideas: non-archived, status === 'idea', publish_at === null
+  // Filter unscheduled ideas using pure production utility
   const unscheduledIdeas = useMemo(() => {
-    return items.filter(
-      (item) => !item.archived_at && item.status === 'idea' && !item.publish_at
-    );
+    return filterUnscheduledIdeas(items);
   }, [items]);
 
   // Filtered by search query
@@ -142,6 +143,17 @@ export function IdeasView({
       return matchTitle || matchNotes || matchHook;
     });
   }, [unscheduledIdeas, searchQuery]);
+
+  // Tab Keyboard Navigation (Roving tabIndex: ArrowLeft, ArrowRight, Home, End)
+  const handleTabKeyDown = (e: React.KeyboardEvent, index: number) => {
+    const nextIndex = getNextTabIndex(index, 2, e.key);
+    if (nextIndex !== null) {
+      e.preventDefault();
+      const nextTab = nextIndex === 0 ? 'unscheduled' : 'referenceAccounts';
+      setActiveTab(nextTab);
+      tabRefs.current[nextIndex]?.focus();
+    }
+  };
 
   // Handle Quick Capture Submit
   const handleQuickCapture = async (e: React.FormEvent) => {
@@ -246,19 +258,22 @@ export function IdeasView({
         </div>
       </div>
 
-      {/* Accessible Tab Navigation */}
+      {/* Accessible Tab Navigation with Roving tabIndex */}
       <div
         role="tablist"
         aria-label={t('ideas.title')}
         className="flex border-b border-slate-200 gap-6"
       >
         <button
+          ref={(el) => { tabRefs.current[0] = el; }}
           id="tab-unscheduled"
           role="tab"
           type="button"
+          tabIndex={activeTab === 'unscheduled' ? 0 : -1}
           aria-selected={activeTab === 'unscheduled'}
           aria-controls="tabpanel-unscheduled"
           onClick={() => setActiveTab('unscheduled')}
+          onKeyDown={(e) => handleTabKeyDown(e, 0)}
           className={"pb-3 text-sm font-semibold inline-flex items-center gap-2 border-b-2 transition-colors cursor-pointer " + (activeTab === "unscheduled" ? "border-purple-600 text-purple-600" : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300")}
         >
           <span>{t('ideas.tabs.unscheduled')}</span>
@@ -270,12 +285,15 @@ export function IdeasView({
         </button>
 
         <button
+          ref={(el) => { tabRefs.current[1] = el; }}
           id="tab-reference"
           role="tab"
           type="button"
+          tabIndex={activeTab === 'referenceAccounts' ? 0 : -1}
           aria-selected={activeTab === 'referenceAccounts'}
           aria-controls="tabpanel-reference"
           onClick={() => setActiveTab('referenceAccounts')}
+          onKeyDown={(e) => handleTabKeyDown(e, 1)}
           className={"pb-3 text-sm font-semibold inline-flex items-center gap-2 border-b-2 transition-colors cursor-pointer " + (activeTab === "referenceAccounts" ? "border-purple-600 text-purple-600" : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300")}
         >
           <span>{t('ideas.tabs.referenceAccounts')}</span>
@@ -302,34 +320,52 @@ export function IdeasView({
             </div>
 
             <form onSubmit={handleQuickCapture} className="space-y-3">
-              {/* Validation or Server Error */}
+              {/* Validation or Server Error (Assertive live region) */}
               {validationError && (
-                <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg">
+                <div
+                  id="quick-capture-title-error"
+                  role="alert"
+                  aria-live="assertive"
+                  className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg"
+                >
                   {validationError}
                 </div>
               )}
               {captureError && (
-                <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg">
+                <div
+                  role="alert"
+                  aria-live="assertive"
+                  className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg"
+                >
                   {getLocalizedErrorMessage(t, captureError)}
                 </div>
               )}
 
-              {/* Success Message Banner */}
+              {/* Success Message Banner (Polite status live region) */}
               {captureSuccess && (
-                <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-lg flex items-center gap-2 animate-in fade-in duration-150">
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-lg flex items-center gap-2 animate-in fade-in duration-150"
+                >
                   <IconCheck className="w-4 h-4 text-emerald-600" size={16} />
                   <span>{t('ideas.captureSuccess')}</span>
                 </div>
               )}
 
-              {/* Title Input */}
+              {/* Title Input with Explicit Accessible Label */}
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
+                  <label htmlFor="quick-capture-title-input" className="sr-only">
+                    {t('ideas.quickCaptureTitleLabel')}
+                  </label>
                   <input
                     id="quick-capture-title-input"
                     type="text"
                     value={quickTitle}
                     disabled={isCapturing}
+                    aria-invalid={Boolean(validationError)}
+                    aria-describedby={validationError ? "quick-capture-title-error" : undefined}
                     onChange={(e) => {
                       setQuickTitle(e.target.value);
                       if (validationError) setValidationError(null);
@@ -342,8 +378,9 @@ export function IdeasView({
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
+                    disabled={isCapturing}
                     onClick={() => setShowNotesField((prev) => !prev)}
-                    className="px-3 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                    className="px-3 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
                   >
                     {showNotesField ? t('ideas.hideNotes') : t('ideas.addNotes')}
                   </button>
@@ -351,7 +388,7 @@ export function IdeasView({
                   <button
                     id="quick-capture-submit-btn"
                     type="submit"
-                    disabled={isCapturing || !quickTitle.trim()}
+                    disabled={isCapturing}
                     className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
                   >
                     <IconPlus className="w-4 h-4" size={16} />
@@ -360,9 +397,12 @@ export function IdeasView({
                 </div>
               </div>
 
-              {/* Optional Notes Field */}
+              {/* Optional Notes Field with Explicit Accessible Label */}
               {showNotesField && (
                 <div className="pt-1">
+                  <label htmlFor="quick-capture-notes-textarea" className="sr-only">
+                    {t('ideas.notesLabel')}
+                  </label>
                   <textarea
                     id="quick-capture-notes-textarea"
                     rows={2}
@@ -377,9 +417,12 @@ export function IdeasView({
             </form>
           </div>
 
-          {/* Search Bar */}
+          {/* Search Bar with Explicit Accessible Label */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="relative flex-1 max-w-md">
+              <label htmlFor="ideas-search-input" className="sr-only">
+                {t('ideas.searchLabel')}
+              </label>
               <IconSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" size={16} />
               <input
                 id="ideas-search-input"
@@ -455,7 +498,6 @@ export function IdeasView({
             /* Grid of Unscheduled Ideas Cards */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredIdeas.map((idea) => {
-                const primaryPlatform = idea.platforms[0] || 'tiktok';
                 const createdDate = formatBangkokDate(idea.created_at, false, locale);
 
                 return (
@@ -467,7 +509,9 @@ export function IdeasView({
                       {/* Top Badges & Meta */}
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <PlatformBadge platform={primaryPlatform} showLabel />
+                          {idea.platforms.map((p) => (
+                            <PlatformBadge key={p} platform={p} showLabel />
+                          ))}
                           {idea.pillar && <PillarBadge pillar={idea.pillar} />}
                         </div>
                         <span className="text-[11px] text-slate-400 font-mono">

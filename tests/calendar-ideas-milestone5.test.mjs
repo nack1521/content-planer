@@ -17,8 +17,11 @@ import {
   getMonthGrid,
   filterAndGroupCalendarContent,
 } from "../src/utils/calendar.ts";
+import { isUnscheduledIdea, filterUnscheduledIdeas } from "../src/utils/ideas.ts";
+import { getNextTabIndex } from "../src/utils/tabs.ts";
 import {
   getContentItemsAction,
+  createContentItemAction,
   updateContentItemAction,
   quickCaptureIdeaAction,
   deleteContentItemAction,
@@ -196,11 +199,9 @@ test("Calendar Grouping: Groups strictly by Bangkok date and excludes unschedule
 });
 
 // ==============================================================================
-// 3. Exact Unscheduled-Idea Filter Definition
+// 3. Exact Unscheduled-Idea Filter Definition (Using Production Utility)
 // ==============================================================================
-test("Idea Bank Definition: Identifies unscheduled ideas exactly without duplicate data", () => {
-  const isUnscheduledIdea = (item) => !item.archived_at && item.status === "idea" && !item.publish_at;
-
+test("Idea Bank Definition: Production isUnscheduledIdea and filterUnscheduledIdeas identify ideas exactly", () => {
   // 1. Valid unscheduled idea
   assert.equal(
     isUnscheduledIdea({ status: "idea", publish_at: null, archived_at: null }),
@@ -228,10 +229,36 @@ test("Idea Bank Definition: Identifies unscheduled ideas exactly without duplica
     false,
     "Archived idea is excluded"
   );
+
+  // Test array filter function
+  const sampleItems = [
+    { id: "1", status: "idea", publish_at: null, archived_at: null },
+    { id: "2", status: "idea", publish_at: "2026-09-20T10:00:00Z", archived_at: null },
+    { id: "3", status: "scripting", publish_at: null, archived_at: null },
+    { id: "4", status: "idea", publish_at: null, archived_at: "2026-09-15T00:00:00Z" },
+    { id: "5", status: "idea", publish_at: null, archived_at: null },
+  ];
+  const filtered = filterUnscheduledIdeas(sampleItems);
+  assert.equal(filtered.length, 2);
+  assert.deepEqual(filtered.map((i) => i.id), ["1", "5"]);
 });
 
 // ==============================================================================
-// 4. Translation Key Parity for Milestone 5
+// 4. Tab Roving Focus Keyboard Navigation
+// ==============================================================================
+test("Tab Navigation: getNextTabIndex handles Arrow keys, Home, and End with wrap-around", () => {
+  // 2 tabs total (index 0 and 1)
+  assert.equal(getNextTabIndex(0, 2, "ArrowRight"), 1, "ArrowRight from 0 moves to 1");
+  assert.equal(getNextTabIndex(1, 2, "ArrowRight"), 0, "ArrowRight from 1 wraps to 0");
+  assert.equal(getNextTabIndex(0, 2, "ArrowLeft"), 1, "ArrowLeft from 0 wraps to 1");
+  assert.equal(getNextTabIndex(1, 2, "ArrowLeft"), 0, "ArrowLeft from 1 moves to 0");
+  assert.equal(getNextTabIndex(1, 2, "Home"), 0, "Home moves to first tab (0)");
+  assert.equal(getNextTabIndex(0, 2, "End"), 1, "End moves to last tab (1)");
+  assert.equal(getNextTabIndex(0, 2, "Enter"), null, "Other keys return null (no tab movement)");
+});
+
+// ==============================================================================
+// 5. Translation Key Parity for Milestone 5
 // ==============================================================================
 test("Localization Parity: All Milestone 5 Calendar and Ideas keys match between EN and TH", () => {
   const en = enMessages;
@@ -255,6 +282,7 @@ test("Localization Parity: All Milestone 5 Calendar and Ideas keys match between
     "morePosts",
     "viewPost",
     "createPost",
+    "morePlatforms",
   ];
 
   for (const key of requiredCalendarKeys) {
@@ -281,7 +309,10 @@ test("Localization Parity: All Milestone 5 Calendar and Ideas keys match between
     "retry",
     "quickCaptureTitle",
     "quickCapturePlaceholder",
+    "quickCaptureTitleLabel",
     "notesPlaceholder",
+    "notesLabel",
+    "searchLabel",
     "addNotes",
     "hideNotes",
     "captureButton",
@@ -317,7 +348,7 @@ test("Localization Parity: All Milestone 5 Calendar and Ideas keys match between
 });
 
 // ==============================================================================
-// 5. Authenticated Production Actions: Quick Capture, Default Platform Fallback & In-Place Planning
+// 6. Authenticated Production Actions: Strict Creation vs Quick Capture Fallback
 // ==============================================================================
 const TEST_OWNER_EMAIL = "milestone5-owner@example.com";
 const TEST_OWNER_PW = "milestone5pass123";
@@ -325,7 +356,7 @@ const TEST_OWNER_PW = "milestone5pass123";
 const TEST_OTHER_EMAIL = "milestone5-other@example.com";
 const TEST_OTHER_PW = "milestone5pass456";
 
-test("Authenticated Actions: Quick Capture validation and persistence with platform fallback", async () => {
+test("Authenticated Actions: Strict general creation rejects missing/empty platforms while quick capture resolves fallback", async () => {
   // Ensure local Supabase environment variables
   const statusProc = spawnSync("npx", ["supabase", "status", "-o", "json"], { encoding: "utf8" });
   assert.equal(statusProc.status, 0, "Supabase status query failed");
@@ -351,33 +382,50 @@ test("Authenticated Actions: Quick Capture validation and persistence with platf
   });
   assert.equal(signInErr, null, "Sign in failed for test owner");
 
-  // 1. Validation test: empty title rejected
-  const emptyRes = await quickCaptureIdeaAction({ title: "   " });
-  assert.equal(emptyRes.success, false);
-  assert.equal(emptyRes.error, "validation_failed");
+  // Ensure fresh baseline: reset default_platforms to empty
+  await updateDefaultPlatformsAction([]);
 
-  // 2. Quick capture with title and notes, no platforms passed -> uses documented fallback ['tiktok']
+  // 1. Strict Normal Creation: Rejects empty platforms array
+  const emptyPlatformsRes = await createContentItemAction({
+    title: "Post with empty platforms",
+    platforms: [],
+  });
+  assert.equal(emptyPlatformsRes.success, false, "createContentItemAction must reject empty platforms array");
+  assert.equal(emptyPlatformsRes.error, "validation_failed");
+
+  // 2. Strict Normal Creation: Rejects omitted platforms field
+  const omittedPlatformsRes = await createContentItemAction({
+    title: "Post with omitted platforms",
+  });
+  assert.equal(omittedPlatformsRes.success, false, "createContentItemAction must reject omitted platforms");
+  assert.equal(omittedPlatformsRes.error, "validation_failed");
+
+  // 3. Quick capture validation: empty/whitespace title rejected
+  const emptyTitleRes = await quickCaptureIdeaAction({ title: "   " });
+  assert.equal(emptyTitleRes.success, false);
+  assert.equal(emptyTitleRes.error, "validation_failed");
+
+  // 4. Quick capture succeeds without a platform field, falling back to ['tiktok'] when no defaults are set
   const captureRes = await quickCaptureIdeaAction({
     title: "10 AI productivity tools for solo creators",
     notes: "Focus on tools that save at least 2 hours a day.",
   });
-  assert.equal(captureRes.success, true, "Quick capture must succeed");
+  assert.equal(captureRes.success, true, "Quick capture must succeed without a platform field");
   assert.ok(captureRes.id, "Returned record ID");
 
-  // 3. Verify record in database
   const { items } = await getContentItemsAction();
   const captured = items.find((i) => i.id === captureRes.id);
-  assert.ok(captured, "Captured record must be returned in getContentItemsAction");
+  assert.ok(captured, "Captured record must exist in database");
   assert.equal(captured.title, "10 AI productivity tools for solo creators");
   assert.equal(captured.notes, "Focus on tools that save at least 2 hours a day.");
   assert.equal(captured.status, "idea");
   assert.equal(captured.publish_at, null);
-  assert.deepEqual(captured.platforms, ["tiktok"], "Fell back reversibly to ['tiktok'] when no default set");
+  assert.deepEqual(captured.platforms, ["tiktok"], "Fell back to ['tiktok'] when defaults unavailable");
 
-  // 4. Update owner preferences default_platforms to ['youtube', 'x']
+  // 5. Update owner preferences default_platforms to ['youtube', 'x']
   await updateDefaultPlatformsAction(["youtube", "x"]);
 
-  // 5. Second quick capture -> should now use owner's configured default platforms
+  // 6. Quick capture uses saved defaults when available
   const capture2Res = await quickCaptureIdeaAction({
     title: "Deep dive: Building autonomous coding agents",
     notes: "Break down architecture, sandbox, and verification.",
@@ -386,7 +434,7 @@ test("Authenticated Actions: Quick Capture validation and persistence with platf
   const { items: itemsAfterPref } = await getContentItemsAction();
   const captured2 = itemsAfterPref.find((i) => i.id === capture2Res.id);
   assert.ok(captured2);
-  assert.deepEqual(captured2.platforms.sort(), ["x", "youtube"].sort(), "Used owner's saved default platforms");
+  assert.deepEqual(captured2.platforms.sort(), ["x", "youtube"].sort(), "Quick capture used owner's saved defaults");
 
   // ============================================================================
   // Planning the Idea: Updates the exact same record in place without duplicating
@@ -405,9 +453,8 @@ test("Authenticated Actions: Quick Capture validation and persistence with platf
   assert.equal(plannedItem.status, "scripting", "Status advanced beyond idea");
   assert.ok(plannedItem.publish_at, "Received scheduled timestamp");
 
-  // Assert it no longer appears in unscheduled ideas
-  const isUnscheduled = !plannedItem.archived_at && plannedItem.status === "idea" && !plannedItem.publish_at;
-  assert.equal(isUnscheduled, false, "Planned idea must leave the unscheduled ideas bank");
+  // Assert it no longer appears in unscheduled ideas via production utility
+  assert.equal(isUnscheduledIdea(plannedItem), false, "Planned idea must leave the unscheduled ideas bank");
 
   // Clean up test records
   await deleteContentItemAction(captured.id);
@@ -415,7 +462,7 @@ test("Authenticated Actions: Quick Capture validation and persistence with platf
 });
 
 // ==============================================================================
-// 6. Owner Isolation and RLS Behavior
+// 7. Owner Isolation and RLS Behavior
 // ==============================================================================
 test("Security & RLS: Unscheduled ideas and calendar content are owner-isolated", async () => {
   const statusProc = spawnSync("npx", ["supabase", "status", "-o", "json"], { encoding: "utf8" });
@@ -462,9 +509,9 @@ test("Security & RLS: Unscheduled ideas and calendar content are owner-isolated"
 });
 
 // ==============================================================================
-// 7. Accessibility, ARIA & Static UI Contracts
+// 8. Accessibility, ARIA & Static UI Contracts
 // ==============================================================================
-test("Static Markup & ARIA Contracts: Calendar and Ideas declare accessible semantics", () => {
+test("Static Markup & ARIA Contracts: Calendar and Ideas declare accessible semantics and multi-platform display", () => {
   const calendarCode = fs.readFileSync(path.join(projectRoot, "src/components/calendar/CalendarView.tsx"), "utf8");
   const ideasCode = fs.readFileSync(path.join(projectRoot, "src/components/ideas/IdeasView.tsx"), "utf8");
 
@@ -475,15 +522,24 @@ test("Static Markup & ARIA Contracts: Calendar and Ideas declare accessible sema
     "CalendarView navigation buttons must declare accessible aria-labels"
   );
   assert.ok(
-    calendarCode.includes("aria-label={t('calendar.viewPost',"),
-    "CalendarView item chips must declare accessible aria-labels with title"
+    calendarCode.includes("aria-label={t(\"calendar.viewPost\","),
+    "CalendarView item chips must declare accessible aria-labels with title and platforms"
+  );
+  assert.ok(
+    calendarCode.includes("item.platforms.map"),
+    "CalendarView must map across all item.platforms rather than hiding platforms after the first"
+  );
+  assert.ok(
+    calendarCode.includes("totalScheduledInMonth === 0") &&
+    calendarCode.includes("t('calendar.noScheduledContent')"),
+    "CalendarView desktop must display localized empty message and create post action when month has 0 items"
   );
   assert.ok(
     calendarCode.includes("hidden md:block") && calendarCode.includes("block md:hidden"),
     "CalendarView must declare responsive desktop 7-column grid and mobile agenda contracts"
   );
 
-  // Ideas tab navigation accessibility
+  // Ideas accessibility
   assert.ok(
     ideasCode.includes('role="tablist"') &&
     ideasCode.includes('role="tab"') &&
@@ -491,20 +547,35 @@ test("Static Markup & ARIA Contracts: Calendar and Ideas declare accessible sema
     "IdeasView must declare complete ARIA tab semantics"
   );
   assert.ok(
-    ideasCode.includes("aria-selected=") &&
-    ideasCode.includes("aria-controls="),
-    "IdeasView tabs must declare aria-selected and aria-controls"
+    ideasCode.includes("tabIndex={activeTab === 'unscheduled' ? 0 : -1}") &&
+    ideasCode.includes("tabIndex={activeTab === 'referenceAccounts' ? 0 : -1}"),
+    "IdeasView must implement roving tabIndex for tab controls"
   );
   assert.ok(
-    ideasCode.includes("aria-label={t('ideas.planIdeaAria',"),
-    "Plan this idea button must declare accessible aria-label with idea title"
+    ideasCode.includes("getNextTabIndex"),
+    "IdeasView must use getNextTabIndex for ArrowLeft, ArrowRight, Home, and End keyboard tab navigation"
   );
   assert.ok(
-    ideasCode.includes('id="quick-capture-submit-btn"'),
-    "Quick capture submit button must have stable id"
+    ideasCode.includes("htmlFor=\"quick-capture-title-input\"") &&
+    ideasCode.includes("htmlFor=\"quick-capture-notes-textarea\"") &&
+    ideasCode.includes("htmlFor=\"ideas-search-input\""),
+    "IdeasView must declare explicit accessible labels for title, notes, and search fields"
   );
   assert.ok(
-    ideasCode.includes("disabled={isCapturing"),
-    "Quick capture must disable submit controls during submission to prevent duplicates"
+    ideasCode.includes("aria-invalid={Boolean(validationError)}") &&
+    ideasCode.includes('aria-describedby={validationError ? "quick-capture-title-error" : undefined}'),
+    "Quick capture title input must declare aria-invalid and aria-describedby for error state"
+  );
+  assert.ok(
+    ideasCode.includes('role="alert"') && ideasCode.includes('aria-live="assertive"'),
+    "Validation and capture errors must declare role='alert' with assertive live region"
+  );
+  assert.ok(
+    ideasCode.includes('role="status"') && ideasCode.includes('aria-live="polite"'),
+    "Success feedback must declare role='status' with polite live region"
+  );
+  assert.ok(
+    ideasCode.includes('disabled={isCapturing}'),
+    "Submit button and notes toggle must be disabled during capture to prevent duplicate submissions"
   );
 });

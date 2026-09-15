@@ -284,6 +284,33 @@ export function CalendarView({
         </div>
       ) : (
         <>
+          {/* Desktop Empty Message & Create Post Action when 0 items scheduled */}
+          {totalScheduledInMonth === 0 && (
+            <div className="hidden md:flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100 shrink-0">
+                  <IconCalendar className="w-5 h-5" size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">
+                    {t('calendar.noScheduledContent')}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {t('calendar.noScheduledContentDesc')}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenCreate}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer shrink-0"
+              >
+                <IconPlus className="w-3.5 h-3.5" size={14} />
+                <span>{t('calendar.createPost')}</span>
+              </button>
+            </div>
+          )}
+
           {/* Desktop 7-Column Month Grid */}
           <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             {/* Weekday Header Row */}
@@ -326,17 +353,21 @@ export function CalendarView({
                       {cell.isCurrentMonth &&
                         dayItems.map((item) => {
                           const { time } = utcToBangkokParts(item.publish_at);
-                          const primaryPlatform = item.platforms[0] || 'tiktok';
+                          const platformList = item.platforms.map((p) => t("platform." + p)).join(", ");
                           return (
                             <button
                               key={item.id}
                               type="button"
                               onClick={() => handleOpenEdit(item)}
-                              aria-label={t('calendar.viewPost', { title: item.title })}
+                              aria-label={t("calendar.viewPost", { title: item.title }) + (platformList ? " - " + platformList : "")}
                               className="w-full text-left p-1.5 bg-white hover:bg-purple-50/60 border border-slate-200 hover:border-purple-300 rounded-lg shadow-2xs transition-all cursor-pointer group"
                             >
                               <div className="flex items-center justify-between gap-1 mb-1">
-                                <PlatformBadge platform={primaryPlatform} showLabel={false} />
+                                <div className="flex items-center gap-0.5 flex-wrap">
+                                  {item.platforms.map((p) => (
+                                    <PlatformBadge key={p} platform={p} showLabel={false} />
+                                  ))}
+                                </div>
                                 {item.publish_time_known && time ? (
                                   <span className="text-[10px] font-mono text-slate-500 group-hover:text-purple-700">
                                     {time}
@@ -413,13 +444,13 @@ export function CalendarView({
                       <div className="divide-y divide-slate-100">
                         {dayItems.map((item) => {
                           const { time } = utcToBangkokParts(item.publish_at);
-                          const primaryPlatform = item.platforms[0] || 'tiktok';
+                          const platformList = item.platforms.map((p) => t("platform." + p)).join(", ");
                           return (
                             <button
                               key={item.id}
                               type="button"
                               onClick={() => handleOpenEdit(item)}
-                              aria-label={t('calendar.viewPost', { title: item.title })}
+                              aria-label={t("calendar.viewPost", { title: item.title }) + (platformList ? " - " + platformList : "")}
                               className="w-full text-left p-3.5 hover:bg-purple-50/40 transition-colors cursor-pointer block"
                             >
                               <div className="flex items-start justify-between gap-2">
@@ -428,7 +459,9 @@ export function CalendarView({
                                     {item.title}
                                   </h4>
                                   <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                                    <PlatformBadge platform={primaryPlatform} showLabel />
+                                    {item.platforms.map((p) => (
+                                      <PlatformBadge key={p} platform={p} showLabel />
+                                    ))}
                                     <StatusBadge status={item.status} size="sm" />
                                     {item.pillar && (
                                       <PillarBadge pillar={item.pillar} />

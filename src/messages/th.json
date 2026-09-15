@@ -179,7 +179,8 @@
       "thu": "พฤ.",
       "fri": "ศ.",
       "sat": "ส."
-    }
+    },
+    "morePlatforms": "อีก {count} แพลตฟอร์ม ({platforms})"
   },
   "ideas": {
     "title": "คลังไอเดีย",
@@ -215,7 +216,10 @@
     "emptyUnscheduledDesc": "ใช้แถบบันทึกไอเดียด้านบนเพื่อเก็บความคิดแรก ก่อนกำหนดวันเวลาหรือรายละเอียดการผลิต",
     "noSearchResults": "ไม่พบไอเดียที่ตรงกับคำค้นหา",
     "clearSearch": "ล้างคำค้นหา",
-    "totalCount": "{count} ไอเดีย"
+    "totalCount": "{count} ไอเดีย",
+    "quickCaptureTitleLabel": "หัวข้อไอเดีย",
+    "notesLabel": "บันทึกเพิ่มเติม (ไม่บังคับ)",
+    "searchLabel": "ค้นหาไอเดียที่ยังไม่กำหนดเวลา"
   },
   "settings": {
     "title": "ตั้งค่า",

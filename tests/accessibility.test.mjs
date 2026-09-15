@@ -12,7 +12,8 @@ test("1. Form controls in modals and views have explicit label htmlFor associati
   const files = [
     "src/components/planner/RecordModal.tsx",
     "src/components/tasks/TasksView.tsx",
-    "src/components/ideas/ReferenceAccountsView.tsx"
+    "src/components/ideas/ReferenceAccountsView.tsx",
+    "src/components/ideas/IdeasView.tsx"
   ];
 
   for (const relPath of files) {
@@ -42,6 +43,8 @@ test("2. All icon-only and interactive action buttons have accessible names (ari
     "src/components/planner/RecordModal.tsx",
     "src/components/tasks/TasksView.tsx",
     "src/components/ideas/ReferenceAccountsView.tsx",
+    "src/components/ideas/IdeasView.tsx",
+    "src/components/calendar/CalendarView.tsx",
     "src/components/planner/PlannerTable.tsx",
     "src/components/planner/PlannerCards.tsx"
   ];
@@ -192,4 +195,35 @@ test("6. Modal components declare dialog role and focus trap references", () => 
       `${relPath} must retain previousFocusRef to restore focus upon closing`
     );
   }
+});
+
+
+test("7. IdeasView declares accessible live regions, alert roles, and roving tabIndex attributes", () => {
+  const ideasPath = path.join(projectRoot, "src/components/ideas/IdeasView.tsx");
+  const content = fs.readFileSync(ideasPath, "utf8");
+
+  // Roving tabIndex on tabs
+  assert.ok(
+    content.includes("tabIndex={activeTab === 'unscheduled' ? 0 : -1}"),
+    "IdeasView unscheduled tab must declare roving tabIndex"
+  );
+  assert.ok(
+    content.includes("tabIndex={activeTab === 'referenceAccounts' ? 0 : -1}"),
+    "IdeasView reference accounts tab must declare roving tabIndex"
+  );
+
+  // Live regions & error associations
+  assert.ok(
+    content.includes('role="alert"') && content.includes('aria-live="assertive"'),
+    "IdeasView must declare assertive role='alert' live region for errors"
+  );
+  assert.ok(
+    content.includes('role="status"') && content.includes('aria-live="polite"'),
+    "IdeasView must declare polite role='status' live region for success feedback"
+  );
+  assert.ok(
+    content.includes('aria-invalid={Boolean(validationError)}') &&
+    content.includes('aria-describedby={validationError ? "quick-capture-title-error" : undefined}'),
+    "Quick capture title input must declare aria-invalid and aria-describedby for error state"
+  );
 });

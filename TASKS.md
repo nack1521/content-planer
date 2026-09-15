@@ -227,7 +227,7 @@ Review checkpoint: Milestone 4 accepted by Codex on 2026-09-15.
 
 ## Milestone 5 — Calendar and idea bank
 
-Status: Completed; awaiting Codex review
+Status: Revision complete; awaiting Codex review
 
 - [x] Implement a locale-aware monthly calendar.
 - [x] Display scheduled content by platform and status.
@@ -237,6 +237,10 @@ Status: Completed; awaiting Codex review
 - [x] Allow an idea to become planned content.
 - [x] Provide useful empty and error states.
 - [x] Run lint, relevant tests, and production build successfully.
+- [x] Restored strict general content creation rejecting missing/empty platforms; isolated default platform resolution strictly to quick capture.
+- [x] Added explicit accessible labels, assertive/polite live regions, aria-invalid/aria-describedby connections, and roving tabIndex to IdeasView.
+- [x] Added multi-platform badge display and localized desktop empty state with Create Post action to CalendarView.
+- [x] Extracted production unscheduled-idea predicate and roving tabIndex utilities; expanded accessibility scan coverage.
 
 Review checkpoint: Stop and request workflow review before Milestone 6.
 

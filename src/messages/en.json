@@ -179,7 +179,8 @@
       "thu": "Thu",
       "fri": "Fri",
       "sat": "Sat"
-    }
+    },
+    "morePlatforms": "+{count} more ({platforms})"
   },
   "ideas": {
     "title": "Idea Bank",
@@ -215,7 +216,10 @@
     "emptyUnscheduledDesc": "Use quick capture above to record your first content idea before planning dates or production details.",
     "noSearchResults": "No ideas matching your search",
     "clearSearch": "Clear search",
-    "totalCount": "{count} ideas"
+    "totalCount": "{count} ideas",
+    "quickCaptureTitleLabel": "Idea title",
+    "notesLabel": "Idea notes (optional)",
+    "searchLabel": "Search unscheduled ideas"
   },
   "settings": {
     "title": "Settings",

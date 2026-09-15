@@ -219,22 +219,8 @@ export async function createContentItemAction(
 
     try {
       cleanTitle = sanitizeTitle(data.title);
+      cleanPlatforms = sanitizePlatforms(data.platforms);
       cleanStatus = data.status === undefined ? "idea" : validateWorkflowStatus(data.status);
-
-      if (!data.platforms || (Array.isArray(data.platforms) && data.platforms.length === 0)) {
-        const prefs = await getUserPreferences(supabase, userId);
-        if (prefs?.default_platforms && prefs.default_platforms.length > 0) {
-          try {
-            cleanPlatforms = sanitizePlatforms(prefs.default_platforms);
-          } catch {
-            cleanPlatforms = ["tiktok"];
-          }
-        } else {
-          cleanPlatforms = ["tiktok"];
-        }
-      } else {
-        cleanPlatforms = sanitizePlatforms(data.platforms);
-      }
       cleanFormat = validateContentFormat(data.format);
       cleanGoal = validateContentGoal(data.goal);
       cleanReviewStatus = validateReviewStatus(data.review_status);
@@ -552,14 +538,43 @@ export interface QuickCaptureInput {
 export async function quickCaptureIdeaAction(
   data: QuickCaptureInput
 ): Promise<{ success: boolean; id?: string; error?: string }> {
-  if (!data || typeof data !== "object") {
-    return { success: false, error: "validation_failed" };
+  try {
+    if (!data || typeof data !== "object") {
+      return { success: false, error: "validation_failed" };
+    }
+
+    const supabase = await createClient();
+    const { data: claimsData } = await supabase.auth.getClaims();
+    const userId = claimsData?.claims?.sub;
+
+    if (!userId) {
+      return { success: false, error: "unauthorized" };
+    }
+
+    // Resolve owner's default platforms only inside quickCaptureIdeaAction
+    const prefs = await getUserPreferences(supabase, userId);
+    let resolvedPlatforms: Platform[] = ["tiktok"];
+    if (prefs?.default_platforms && prefs.default_platforms.length > 0) {
+      try {
+        resolvedPlatforms = sanitizePlatforms(prefs.default_platforms);
+      } catch {
+        resolvedPlatforms = ["tiktok"];
+      }
+    }
+
+    return await createContentItemAction({
+      title: data.title,
+      notes: data.notes || null,
+      platforms: resolvedPlatforms,
+      status: "idea",
+      publish_at: null,
+      publish_time_known: false,
+    });
+  } catch (err: unknown) {
+    if (err && typeof err === "object" && "digest" in err && (err as { digest: string }).digest === "DYNAMIC_SERVER_USAGE") {
+      throw err;
+    }
+    console.error("quickCaptureIdeaAction error:", err);
+    return { success: false, error: "service_error" };
   }
-  return await createContentItemAction({
-    title: data.title,
-    notes: data.notes || null,
-    status: "idea",
-    publish_at: null,
-    publish_time_known: false,
-  });
 }
