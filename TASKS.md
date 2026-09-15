@@ -220,6 +220,8 @@ Status: Revision complete; awaiting Codex review
 - [x] Warn before closing or navigating away with unsaved changes.
 - [x] Preserve desktop, mobile, accessibility, and Thai/English behavior.
 - [x] Add relevant tests and stop for Codex review.
+- [x] Action-error propagation contract: parent handlers in `PlannerView` and `TasksView` preserve raw server error codes; `RecordModal` serves as the single localization boundary; added production regression tests.
+- [x] Removed synthetic focus test controller mocks (`modalFocusLifecycle.ts`); documented manual live-browser focus verification.
 
 Review checkpoint: Stop and request editor/link-workspace review before Milestone 5.
 

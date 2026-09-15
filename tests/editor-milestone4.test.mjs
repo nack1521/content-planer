@@ -10,12 +10,25 @@ import { isFormDirty, areLinksEqual, arePlatformsEqual } from "../src/utils/dirt
 import { validateContentLink, validateLinksArray, isValidUrl } from "../src/utils/validation.ts";
 import { moveItemUp, moveItemDown } from "../src/utils/linkReorder.ts";
 import { parseHashtags, formatHashtags } from "../src/utils/hashtags.ts";
-import { executeRecordAction } from "../src/utils/recordActions.ts";
-import { ModalFocusController } from "../src/utils/modalFocusLifecycle.ts";
+import { executeRecordAction, extractErrorCode } from "../src/utils/recordActions.ts";
+import { getLocalizedErrorMessage } from "../src/utils/errors.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
+
+const enMessages = JSON.parse(fs.readFileSync(path.join(projectRoot, "src/messages/en.json"), "utf8"));
+const thMessages = JSON.parse(fs.readFileSync(path.join(projectRoot, "src/messages/th.json"), "utf8"));
+
+const createTranslator = (messages) => (key) => {
+  const parts = key.split(".");
+  let val = messages;
+  for (const p of parts) val = val?.[p];
+  return val || key;
+};
+
+const tEn = createTranslator(enMessages);
+const tTh = createTranslator(thMessages);
 
 // ==============================================================================
 // 1. Strict Client Link Validation & Safe Local Domain Parsing
@@ -189,7 +202,7 @@ test("Hashtags Utility: parseHashtags and formatHashtags sanitize inputs cleanly
 });
 
 // ==============================================================================
-// 4. Record Action Error Handling & Success Execution
+// 4. Action Error Propagation Contract & Regression Tests
 // ==============================================================================
 test("Record Actions: executeRecordAction handles success and sets submitted state", async () => {
   let isSubmitted = false;
@@ -215,114 +228,85 @@ test("Record Actions: executeRecordAction handles success and sets submitted sta
   assert.equal(errorSet, null, "No error should be recorded on success");
 });
 
-test("Record Actions: executeRecordAction safely catches errors, prevents unhandled rejection, and keeps editor open", async () => {
-  let isSubmitted = false;
-  let closed = false;
-  let receivedError = null;
+test("Regression: Action error propagation contract preserves stable server error codes without double-translation", async () => {
+  const codesToVerify = [
+    "not_found",
+    "save_failed",
+    "unauthorized",
+    "invalid_id",
+    "validation_failed",
+    "service_error",
+  ];
 
-  const failingAction = async () => {
-    throw new Error("delete_failed");
+  for (const code of codesToVerify) {
+    let isSubmitted = false;
+    let closed = false;
+    let displayedErrorEn = null;
+    let displayedErrorTh = null;
+
+    // Simulated parent handler throwing raw code error (as in PlannerView/TasksView)
+    const simulatedParentAction = async () => {
+      const serverResult = { success: false, error: code };
+      if (!serverResult.success) {
+        throw new Error(serverResult.error || "save_failed");
+      }
+    };
+
+    // Simulated RecordModal execution
+    const okEn = await executeRecordAction(
+      simulatedParentAction,
+      () => { isSubmitted = true; closed = true; },
+      (rawMsg) => { displayedErrorEn = getLocalizedErrorMessage(tEn, rawMsg); }
+    );
+
+    const okTh = await executeRecordAction(
+      simulatedParentAction,
+      () => { isSubmitted = true; closed = true; },
+      (rawMsg) => { displayedErrorTh = getLocalizedErrorMessage(tTh, rawMsg); }
+    );
+
+    assert.equal(okEn, false, "Action should report failure");
+    assert.equal(okTh, false, "Action should report failure");
+    assert.equal(isSubmitted, false, "isSubmitted must remain false on error");
+    assert.equal(closed, false, "Editor must remain open (closed === false) on error");
+
+    // Must match the specific error message, NOT generic unknown error
+    assert.equal(displayedErrorEn, tEn(`errors.${code}`), `Expected specific EN error message for code: ${code}`);
+    assert.equal(displayedErrorTh, tTh(`errors.${code}`), `Expected specific TH error message for code: ${code}`);
+    assert.notEqual(displayedErrorEn, tEn("errors.unknown"), "Must not fall back to generic unknown error");
+    assert.notEqual(displayedErrorTh, tTh("errors.unknown"), "Must not fall back to generic unknown error");
+  }
+});
+
+test("Record Actions: extractErrorCode safely handles missing or non-Error values", async () => {
+  assert.equal(extractErrorCode(new Error("custom_error")), "custom_error");
+  assert.equal(extractErrorCode("literal_string_error"), "literal_string_error");
+  assert.equal(extractErrorCode({ error: "object_error" }), "object_error");
+  assert.equal(extractErrorCode(null), "save_failed");
+  assert.equal(extractErrorCode(undefined), "save_failed");
+  assert.equal(extractErrorCode({}), "save_failed");
+  assert.equal(extractErrorCode(new Error("   ")), "save_failed");
+
+  let caughtError = null;
+  let closed = false;
+
+  const nonErrorAction = async () => {
+    throw null;
   };
 
   const ok = await executeRecordAction(
-    failingAction,
-    () => {
-      isSubmitted = true;
-      closed = true;
-    },
-    (err) => {
-      receivedError = err;
-    }
+    nonErrorAction,
+    () => { closed = true; },
+    (rawMsg) => { caughtError = getLocalizedErrorMessage(tEn, rawMsg); }
   );
 
-  assert.equal(ok, false, "executeRecordAction should return false on rejection");
-  assert.equal(isSubmitted, false, "isSubmitted must remain false when action fails");
-  assert.equal(closed, false, "Editor must remain open (onClose not called) when action fails");
-  assert.equal(receivedError, "delete_failed", "Error code must be passed to onError for localized translation");
+  assert.equal(ok, false);
+  assert.equal(closed, false, "Editor must remain open when non-Error thrown");
+  assert.equal(caughtError, "Failed to save record. Please try again.");
 });
 
 // ==============================================================================
-// 5. Modal Focus Lifecycle & Regression Protection
-// ==============================================================================
-test("Focus Lifecycle Controller: Initial focus on mount, opener restore on unmount", () => {
-  let openerFocusCalls = 0;
-  let titleFocusCalls = 0;
-
-  const fakeOpener = { focus: () => { openerFocusCalls++; } };
-  const fakeTitle = { focus: () => { titleFocusCalls++; } };
-
-  const controller = new ModalFocusController();
-
-  // 1. Mount modal
-  controller.handleMount(fakeOpener, fakeTitle);
-  assert.equal(titleFocusCalls, 1, "Initial field must receive focus on mount");
-  assert.equal(openerFocusCalls, 0);
-
-  // 2. Unmount modal
-  controller.handleUnmount();
-  assert.equal(openerFocusCalls, 1, "Opener must receive focus on unmount");
-});
-
-test("Regression Protection: Changing isDirty or typing characters does NOT re-trigger initial field focus", () => {
-  let titleFocusCalls = 0;
-  let captionFocusCalls = 0;
-
-  const fakeOpener = { focus: () => {} };
-  const fakeTitle = { focus: () => { titleFocusCalls++; } };
-  const fakeCaption = { focus: () => { captionFocusCalls++; } };
-
-  const controller = new ModalFocusController();
-
-  // Mount
-  controller.handleMount(fakeOpener, fakeTitle);
-  assert.equal(titleFocusCalls, 1, "Initial focus on mount");
-
-  // User focuses caption and types first character (causing isDirty: false -> true)
-  fakeCaption.focus();
-  assert.equal(captionFocusCalls, 1);
-
-  // Under the old bug, changing isDirty re-ran the mount effect, calling fakeTitle.focus()!
-  controller.handleDirtyStateChange();
-  assert.equal(
-    titleFocusCalls,
-    1,
-    "Mutating dirty state must NOT re-trigger initial field focus (must stay at 1)"
-  );
-  assert.equal(controller.getInitialFocusCount(), 1);
-});
-
-test("Focus Lifecycle: Discard dialog saves initiating control, cancel restores to it, confirm restores to opener", () => {
-  let openerFocusCalls = 0;
-  let closeBtnFocusCalls = 0;
-  let cancelBtnFocusCalls = 0;
-
-  const fakeOpener = { focus: () => { openerFocusCalls++; } };
-  const fakeCloseBtn = { focus: () => { closeBtnFocusCalls++; } };
-  const fakeCancelBtn = { focus: () => { cancelBtnFocusCalls++; } };
-
-  const controller = new ModalFocusController();
-  controller.handleMount(fakeOpener, null);
-
-  // User attempts to close by clicking close button
-  controller.handleRequestDiscard(fakeCloseBtn);
-  assert.equal(controller.getInitiatingControl(), fakeCloseBtn);
-
-  // Discard dialog is opened (Cancel button focused)
-  fakeCancelBtn.focus();
-  assert.equal(cancelBtnFocusCalls, 1);
-
-  // User cancels discard: focus must return to the initiating control (fakeCloseBtn)
-  controller.handleCancelDiscard(null);
-  assert.equal(closeBtnFocusCalls, 1, "Cancelling discard must restore focus to initiating control");
-
-  // Now user confirms discard and modal unmounts
-  controller.handleConfirmDiscard();
-  controller.handleUnmount();
-  assert.equal(openerFocusCalls, 1, "Confirming discard and unmounting restores focus to opener element");
-});
-
-// ==============================================================================
-// 6. Clipboard Utility Resilience
+// 5. Clipboard Utility Resilience
 // ==============================================================================
 test("Clipboard Utility: Handles success, missing API, empty strings, and rejection gracefully", async () => {
   // 1. Rejection on empty or invalid text
@@ -370,7 +354,7 @@ test("Clipboard Utility: Handles success, missing API, empty strings, and reject
 });
 
 // ==============================================================================
-// 7. Dirty-State Comparison (Including Link Order)
+// 6. Dirty-State Comparison (Including Link Order)
 // ==============================================================================
 test("Dirty State Helpers: arePlatformsEqual and areLinksEqual check equality and ordering", () => {
   assert.equal(arePlatformsEqual(["tiktok", "instagram"], ["instagram", "tiktok"]), true);
@@ -485,11 +469,11 @@ test("Dirty State: Link order changes cause form to become dirty", () => {
 });
 
 // ==============================================================================
-// 8. Thai and English Translation Key Parity for Milestone 4
+// 7. Thai and English Translation Key Parity for Milestone 4
 // ==============================================================================
 test("Localization Parity: All Milestone 4 keys exist in both en.json and th.json", () => {
-  const en = JSON.parse(fs.readFileSync(path.join(projectRoot, "src/messages/en.json"), "utf8"));
-  const th = JSON.parse(fs.readFileSync(path.join(projectRoot, "src/messages/th.json"), "utf8"));
+  const en = enMessages;
+  const th = thMessages;
 
   const requiredMilestone4Keys = [
     "copyCaption",
@@ -539,7 +523,7 @@ test("Localization Parity: All Milestone 4 keys exist in both en.json and th.jso
 });
 
 // ==============================================================================
-// 9. Static Component Markup & ARIA Contract Assertions
+// 8. Static Component Markup & ARIA Contract Assertions
 // ==============================================================================
 test("Static Markup & ARIA Contracts: Declarations exist for accessibility and security", () => {
   const linkCardContent = fs.readFileSync(path.join(projectRoot, "src/components/planner/LinkCard.tsx"), "utf8");

@@ -285,26 +285,26 @@ export function TasksView({
   const handleSaveContentItem = async (data: ContentItemInput) => {
     if (selectedContentItem) {
       const res = await updateContentItemAction(selectedContentItem.id, data);
-      if (!res.success) throw new Error(getLocalizedErrorMessage(t, res.error));
+      if (!res.success) throw new Error(res.error || "save_failed");
     }
     await loadData();
   };
 
   const handleDeleteContentItem = async (id: string) => {
     const res = await deleteContentItemAction(id);
-    if (!res.success) throw new Error(getLocalizedErrorMessage(t, res.error));
+    if (!res.success) throw new Error(res.error || "save_failed");
     await loadData();
   };
 
   const handleDuplicateContentItem = async (id: string) => {
     const res = await duplicateContentItemAction(id, locale);
-    if (!res.success) throw new Error(getLocalizedErrorMessage(t, res.error));
+    if (!res.success) throw new Error(res.error || "save_failed");
     await loadData();
   };
 
   const handleToggleArchiveContentItem = async (id: string, archive: boolean) => {
     const res = await archiveContentItemAction(id, archive);
-    if (!res.success) throw new Error(getLocalizedErrorMessage(t, res.error));
+    if (!res.success) throw new Error(res.error || "save_failed");
     await loadData();
   };
 

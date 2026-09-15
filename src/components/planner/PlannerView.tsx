@@ -181,30 +181,30 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
   const handleSaveItem = async (data: ContentItemInput) => {
     if (selectedItem) {
       const res = await updateContentItemAction(selectedItem.id, data);
-      if (!res.success) throw new Error(getLocalizedErrorMessage(t, res.error));
+      if (!res.success) throw new Error(res.error || "save_failed");
     } else {
       const res = await createContentItemAction(data);
-      if (!res.success) throw new Error(getLocalizedErrorMessage(t, res.error));
+      if (!res.success) throw new Error(res.error || "save_failed");
     }
     await loadData();
   };
 
   const handleDeleteItem = async (id: string) => {
     const res = await deleteContentItemAction(id);
-    if (!res.success) throw new Error(getLocalizedErrorMessage(t, res.error));
+    if (!res.success) throw new Error(res.error || "save_failed");
     await loadData();
   };
 
   const handleDuplicateItem = async (id: string) => {
     const prefix = t("recordModal.duplicatePrefix");
     const res = await duplicateContentItemAction(id, locale, prefix);
-    if (!res.success) throw new Error(getLocalizedErrorMessage(t, res.error));
+    if (!res.success) throw new Error(res.error || "save_failed");
     await loadData();
   };
 
   const handleToggleArchiveItem = async (id: string, archive: boolean) => {
     const res = await archiveContentItemAction(id, archive);
-    if (!res.success) throw new Error(getLocalizedErrorMessage(t, res.error));
+    if (!res.success) throw new Error(res.error || "save_failed");
     await loadData();
   };
 
