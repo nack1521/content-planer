@@ -95,6 +95,8 @@
 - **Authoritative In-Transaction Verification**: Pre-commit verification is performed directly inside the database transaction before committing. It asserts row counts for all tables, owner isolation, and exact 38/22 date decision matching. Any discrepancy raises an exception, aborting the entire transaction.
 - **Authoritative Post-Commit Verification**: A secondary post-commit verification pass queries the database under authenticated owner sessions (RLS) to confirm committed state.
 - **Deep-Equality Atomicity Test**: The test suite seeds pre-existing conflicting records across all 5 tables for every target owner, takes a complete row-level snapshot, triggers a failure during owner 2 after updates, and asserts exact deep equality (`assert.deepEqual`) between database state before and after the failure. It also tests successful commit and idempotent rerun.
+- **Safe Reruns & User Edits Survival**: Reruns are non-destructive by default. If content items already exist, existing user edits (title, notes, status, progress, dates) are preserved. Links are reconciled non-destructively by URL: existing link IDs survive (no delete-and-recreate), and extra links added by users in the website survive intact. Overwriting requires explicit approval via `--allow-overwrite`.
+- **Clear Error Differentiation**: Unambiguously distinguishes `[TRANSACTION ROLLED BACK]` (in-transaction failure, engine rollback, zero records persisted) from `[IMPORT COMMITTED - VERIFICATION INCOMPLETE]` (transaction committed, records written, rollback did not occur).
 - **Rerun Idempotency**: Subsequent runs match existing items by `source_number`, tasks by `import_key`, and reference accounts by `platform:url`, resulting in 0 created and identical totals.
 - **Zero Secret / Private URL Leakage**: CLI outputs aggregate counts only. No private URLs (TikTok, Instagram, Drive, Notion), credentials, or bearer tokens are ever written to stdout/stderr.
 - **Hosted Database Untouched**: Zero database writes were executed against hosted Supabase during this cycle.
@@ -110,8 +112,10 @@ Created comprehensive automated test suite covering:
 7. **Dry-Run Safety**: Default CLI mode performs zero database writes.
 8. **Structured JSON Output**: CLI with `--json` outputs structured verification report with `database_writes_performed: 0`.
 9. **Privacy & Secret Leakage Prevention**: Asserts zero private URLs, tokens, passwords, or service keys in output.
-10. **Transactional Rollback**: Asserts invalid link payload rolls back content item mutation atomically.
-11. **Multi-Account Isolation, Expected Counts & Idempotency**: Full local execution on isolated Supabase stack imports exactly 158/419/30/16 per account, 474/1257/90/48 total, strictly isolated under RLS; second run verifies 0 created and 100% updated with unchanged totals; asserts exact date decisions in database (38 corrected timestamps, 22 nulls).
+10. **Transactional Rollback & Deep Equality**: Asserts failure during owner 2 rolls back all tables and restores exact pre-import state via `assert.deepEqual`.
+11. **Multi-Account Isolation & Expected Counts**: Full local execution on isolated Supabase stack imports exactly 158/419/30/16 per account, 474/1257/90/48 total, strictly isolated under RLS.
+12. **Safe Rerun Preservation**: Proves user edits made in the website, extra user-added links, and original link IDs survive reruns without deletion or recreation.
+13. **Error Differentiation**: Verifies in-transaction failure reports rollback while post-commit failure reports verification incomplete with committed data intact.
 
 ---
 
@@ -255,7 +259,7 @@ Result:
 === 5. Running Production Importer CLI & Idempotency Suite ===
 ✔ 10/10 tests passed
 === 5b. Running Controlled Hosted Import Preparation Suite ===
-✔ 14/14 tests passed
+✔ 16/16 tests passed
 === 6. Running Authenticated Server Actions & Atomic Rollback Suite ===
 ✔ 8/8 tests passed
 === 6b. Running Content Editor & Link Workspace Suite (Milestone 4) ===
@@ -269,7 +273,7 @@ Result:
 === 8. Running Live Server & HTTP Integration Suites ===
 ✔ 14/14 tests passed
 === [SUCCESS] ALL CLEAN-ENVIRONMENT CHECKS AND TEST SUITES PASSED ===
-Total: 197 tests passing cleanly across pgTAP database suite (85 tests) and application test suites (112 tests: domain validation 15, accessibility 7, localization scanner 5, local importer 10, hosted import preparation 14, server actions 8, Milestone 4 editor 17, Milestone 5 calendar & ideas 13, Milestone 6 release quality 9, and live HTTP integration 14).
+Total: 199 tests passing cleanly across pgTAP database suite (85 tests) and application test suites (114 tests: domain validation 15, accessibility 7, localization scanner 5, local importer 10, hosted import preparation 16, server actions 8, Milestone 4 editor 17, Milestone 5 calendar & ideas 13, Milestone 6 release quality 9, and live HTTP integration 14).
 ```
 
 ---

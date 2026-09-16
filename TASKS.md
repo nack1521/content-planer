@@ -308,7 +308,10 @@ Status: In Progress
 - [x] Preserve fully synthetic portable fixtures without private URLs, real emails, or confidential data.
 - [x] Enforce rerun idempotency: subsequent commit runs update existing records with 0 created and identical totals.
 - [x] Enforce zero secret, credential, or private source URL leakage in CLI stdout/stderr.
-- [x] Add comprehensive automated test suite (`tests/hosted-import-prep.test.mjs`, 14 tests) using fully synthetic portable fixtures and wire into `tests/run-tests.mjs` (197/197 tests pass).
+- [x] Make reruns non-destructive by default: preserve website user edits, extra links added in the web app, and pre-existing link IDs without drop-and-recreate.
+- [x] Require explicit `--allow-overwrite` flag to overwrite existing records during reruns.
+- [x] Unambiguously distinguish `[TRANSACTION ROLLED BACK]` (zero database changes committed) from `[IMPORT COMMITTED - VERIFICATION INCOMPLETE]` (data persisted and committed, rollback did not occur).
+- [x] Expand automated test suite (`tests/hosted-import-prep.test.mjs`, 16 tests) proving website edits, extra links, and link IDs survive, and verifying error differentiation (199/199 tests pass).
 - [ ] Verify hosted Supabase target auth users are created and confirmed before import execution.
 - [ ] Obtain verified database backup confirmation and explicit execution confirmation before hosted commit.
 - [ ] Complete owner authenticated smoke test on Preview deployment (`https://content-planner-otp300zpj-nack4.vercel.app/th/login`) verifying private planner isolation per owner.

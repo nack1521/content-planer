@@ -387,6 +387,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     isLocal: false,
     targetEmails: null,
     json: false,
+    allowOverwrite: false,
   };
 
   const allowedFlags = new Set([
@@ -400,6 +401,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     "--local",
     "--target-emails",
     "--json",
+    "--allow-overwrite",
     "--help",
     "-h",
   ]);
@@ -430,6 +432,8 @@ export function parseArgs(argv = process.argv.slice(2)) {
       options.targetEmails = argv[++i].split(",").map((s) => s.trim()).filter(Boolean);
     } else if (arg === "--json") {
       options.json = true;
+    } else if (arg === "--allow-overwrite") {
+      options.allowOverwrite = true;
     } else if (arg === "--help" || arg === "-h") {
       console.log(`
 Usage: node scripts/prepare-hosted-import.mjs [options]
@@ -443,6 +447,7 @@ Options:
   --confirm-backup         Explicit confirmation of database backup
   --confirm-execution      Explicit confirmation of final import execution
   --target-emails <list>   Comma-separated list of target emails (must match approved manifest targets)
+  --allow-overwrite        Explicitly approve overwriting existing content (default: false, preserves user edits)
   --local                  Assert execution must resolve strictly to 127.0.0.1 or localhost
   --json                   Output structured JSON report
   --help, -h               Show this help message
@@ -607,9 +612,16 @@ export async function runWorkflow(options = {}) {
   const userCheck = await verifyAuthUsersExist(adminClient, targetEmails);
 
   // 8. SINGLE-TRANSACTION ATOMIC BATCH IMPORT
+  const allowOverwrite = Boolean(options.allowOverwrite);
+  const allowExtraRecords = Boolean(options.allowExtraRecords);
+  const verifyDateDecisions = options.verifyDateDecisions !== false;
+
   // Prepare payload for database-side execution inside a genuine PostgreSQL transaction
   const batchPayload = {
     owners: [],
+    allow_overwrite: allowOverwrite,
+    allow_extra_records: allowExtraRecords,
+    verify_date_decisions: verifyDateDecisions,
     expected: {
       content_items: EXPECTED_PER_ACCOUNT.content_items,
       content_links: EXPECTED_PER_ACCOUNT.content_links,
@@ -617,6 +629,7 @@ export async function runWorkflow(options = {}) {
       reference_accounts: EXPECTED_PER_ACCOUNT.reference_accounts,
       corrected_date_decisions: EXPECTED_PER_ACCOUNT.corrected_date_decisions,
       unscheduled_date_decisions: EXPECTED_PER_ACCOUNT.unscheduled_date_decisions,
+      allow_extra_records: allowExtraRecords,
     },
     date_decisions: [],
   };
@@ -718,111 +731,169 @@ export async function runWorkflow(options = {}) {
   }
 
   // Execute genuine single PostgreSQL transaction via RPC
-  const { data: batchResult, error: batchErr } = await adminClient.rpc(
-    "import_controlled_batch",
-    { p_payload: batchPayload }
-  );
-
-  if (batchErr) {
-    // Database transaction automatically aborted and rolled back by PostgreSQL
-    throw new Error(`[TRANSACTION ABORTED] Single-transaction batch import failed: ${batchErr.message}`);
+  let batchResult;
+  try {
+    const { data, error } = await adminClient.rpc("import_controlled_batch", {
+      p_payload: batchPayload,
+    });
+    if (error) throw error;
+    batchResult = data;
+  } catch (txErr) {
+    // TRANSACTION ROLLED BACK: PostgreSQL engine aborted the transaction.
+    // Zero database changes persisted.
+    throw new Error(
+      `[TRANSACTION ROLLED BACK] The single-transaction database batch import failed and was completely rolled back by PostgreSQL: ${txErr.message}. Zero database changes were committed.`
+    );
   }
 
+  // AT THIS POINT: The transaction has successfully COMMITTED.
+  // Records ARE written to the database.
+  report.transaction_status = "committed";
+
   // 9. AUTHORITATIVE POST-COMMIT DATABASE VERIFICATION
-  for (const email of targetEmails) {
-    const targetUserId = userCheck.userMap.get(email);
-    const userClient = createClient(supabaseUrl, publishableKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+  try {
+    for (const email of targetEmails) {
+      const targetUserId = userCheck.userMap.get(email);
+      const userClient = createClient(supabaseUrl, publishableKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
 
-    // Connect as owner via OTP to verify under RLS
-    const linkRes = await adminClient.auth.admin.generateLink({ type: "magiclink", email });
-    if (!linkRes.data?.properties?.email_otp) throw new Error("[VERIFICATION ERROR] Could not verify owner session.");
-    await userClient.auth.verifyOtp({ email, token: linkRes.data.properties.email_otp, type: "email" });
+      // Connect as owner via OTP to verify under RLS
+      const linkRes = await adminClient.auth.admin.generateLink({ type: "magiclink", email });
+      if (!linkRes.data?.properties?.email_otp) {
+        throw new Error("Could not generate owner OTP session for post-commit verification.");
+      }
+      const { error: otpErr } = await userClient.auth.verifyOtp({
+        email,
+        token: linkRes.data.properties.email_otp,
+        type: "email",
+      });
+      if (otpErr) {
+        throw new Error(`Owner OTP authentication failed: ${otpErr.message}`);
+      }
 
-    const [itemsRes, linksRes, tasksRes, accsRes] = await Promise.all([
-      userClient.from("content_items").select("id, user_id, source_number, publish_at"),
-      userClient.from("content_links").select("id, user_id"),
-      userClient.from("production_tasks").select("id, user_id"),
-      userClient.from("reference_accounts").select("id, user_id"),
-    ]);
+      // Failure injection hook for post-commit verification testing
+      if (options._injectFailureDuringPostCommitVerification) {
+        throw new Error("[TEST INJECTION] Simulated post-commit verification network failure.");
+      }
 
-    if (itemsRes.error || linksRes.error || tasksRes.error || accsRes.error) {
-      throw new Error("[VERIFICATION ERROR] Database query failed during post-commit verification.");
-    }
+      const [itemsRes, linksRes, tasksRes, accsRes] = await Promise.all([
+        userClient.from("content_items").select("id, user_id, source_number, publish_at"),
+        userClient.from("content_links").select("id, user_id, url"),
+        userClient.from("production_tasks").select("id, user_id, import_key"),
+        userClient.from("reference_accounts").select("id, user_id, platform, url"),
+      ]);
 
-    const items = itemsRes.data || [];
-    const links = linksRes.data || [];
-    const tasks = tasksRes.data || [];
-    const accounts = accsRes.data || [];
+      if (itemsRes.error || linksRes.error || tasksRes.error || accsRes.error) {
+        throw new Error("Database query failed during post-commit verification.");
+      }
 
-    // Verify counts
-    if (items.length !== EXPECTED_PER_ACCOUNT.content_items) {
-      throw new Error(`[VERIFICATION FAILED] Content items count mismatch: expected ${EXPECTED_PER_ACCOUNT.content_items}, found ${items.length}.`);
-    }
-    if (links.length !== EXPECTED_PER_ACCOUNT.content_links) {
-      throw new Error(`[VERIFICATION FAILED] Content links count mismatch: expected ${EXPECTED_PER_ACCOUNT.content_links}, found ${links.length}.`);
-    }
-    if (tasks.length !== EXPECTED_PER_ACCOUNT.production_tasks) {
-      throw new Error(`[VERIFICATION FAILED] Tasks count mismatch: expected ${EXPECTED_PER_ACCOUNT.production_tasks}, found ${tasks.length}.`);
-    }
-    if (accounts.length !== EXPECTED_PER_ACCOUNT.reference_accounts) {
-      throw new Error(`[VERIFICATION FAILED] Reference accounts count mismatch: expected ${EXPECTED_PER_ACCOUNT.reference_accounts}, found ${accounts.length}.`);
-    }
+      const items = itemsRes.data || [];
+      const links = linksRes.data || [];
+      const tasks = tasksRes.data || [];
+      const accounts = accsRes.data || [];
 
-    // Verify owner isolation for every single row
-    for (const i of items) if (i.user_id !== targetUserId) throw new Error("[ISOLATION FAILED] Content item belongs to incorrect owner.");
-    for (const l of links) if (l.user_id !== targetUserId) throw new Error("[ISOLATION FAILED] Content link belongs to incorrect owner.");
-    for (const t of tasks) if (t.user_id !== targetUserId) throw new Error("[ISOLATION FAILED] Production task belongs to incorrect owner.");
-    for (const a of accounts) if (a.user_id !== targetUserId) throw new Error("[ISOLATION FAILED] Reference account belongs to incorrect owner.");
-
-    // Verify exact date decision application in database
-    const itemsBySourceNum = new Map(items.map((i) => [i.source_number, i]));
-    let actualCorrected = 0;
-    let actualUnscheduled = 0;
-
-    for (const [srcNum, expectedDate] of decisionsMap.entries()) {
-      const item = itemsBySourceNum.get(srcNum);
-      if (!item) throw new Error(`[DATE DECISION FAILED] Item #${srcNum} missing from database.`);
-      if (expectedDate !== null) {
-        if (!item.publish_at || !item.publish_at.startsWith(expectedDate)) {
-          throw new Error(`[DATE DECISION FAILED] Item #${srcNum} publish_at (${item.publish_at}) did not match expected ${expectedDate}.`);
+      // Count verification
+      if (allowExtraRecords) {
+        if (items.length < EXPECTED_PER_ACCOUNT.content_items) {
+          throw new Error(`Content items count below expected: expected at least ${EXPECTED_PER_ACCOUNT.content_items}, found ${items.length}.`);
         }
-        actualCorrected++;
+        if (links.length < EXPECTED_PER_ACCOUNT.content_links) {
+          throw new Error(`Content links count below expected: expected at least ${EXPECTED_PER_ACCOUNT.content_links}, found ${links.length}.`);
+        }
+        if (tasks.length < EXPECTED_PER_ACCOUNT.production_tasks) {
+          throw new Error(`Tasks count below expected: expected at least ${EXPECTED_PER_ACCOUNT.production_tasks}, found ${tasks.length}.`);
+        }
+        if (accounts.length < EXPECTED_PER_ACCOUNT.reference_accounts) {
+          throw new Error(`Reference accounts count below expected: expected at least ${EXPECTED_PER_ACCOUNT.reference_accounts}, found ${accounts.length}.`);
+        }
       } else {
-        if (item.publish_at !== null) {
-          throw new Error(`[DATE DECISION FAILED] Item #${srcNum} was expected to be unscheduled (null), got ${item.publish_at}.`);
+        if (items.length !== EXPECTED_PER_ACCOUNT.content_items) {
+          throw new Error(`Content items count mismatch: expected ${EXPECTED_PER_ACCOUNT.content_items}, found ${items.length}.`);
         }
-        actualUnscheduled++;
+        if (links.length !== EXPECTED_PER_ACCOUNT.content_links) {
+          throw new Error(`Content links count mismatch: expected ${EXPECTED_PER_ACCOUNT.content_links}, found ${links.length}.`);
+        }
+        if (tasks.length !== EXPECTED_PER_ACCOUNT.production_tasks) {
+          throw new Error(`Tasks count mismatch: expected ${EXPECTED_PER_ACCOUNT.production_tasks}, found ${tasks.length}.`);
+        }
+        if (accounts.length !== EXPECTED_PER_ACCOUNT.reference_accounts) {
+          throw new Error(`Reference accounts count mismatch: expected ${EXPECTED_PER_ACCOUNT.reference_accounts}, found ${accounts.length}.`);
+        }
+      }
+
+      // Verify owner isolation for every single row
+      for (const i of items) if (i.user_id !== targetUserId) throw new Error("Content item belongs to incorrect owner.");
+      for (const l of links) if (l.user_id !== targetUserId) throw new Error("Content link belongs to incorrect owner.");
+      for (const t of tasks) if (t.user_id !== targetUserId) throw new Error("Production task belongs to incorrect owner.");
+      for (const a of accounts) if (a.user_id !== targetUserId) throw new Error("Reference account belongs to incorrect owner.");
+
+      // Verify exact date decision application for imported items (unless date verification skipped on custom rerun)
+      if (verifyDateDecisions) {
+        const itemsBySourceNum = new Map(items.map((i) => [i.source_number, i]));
+        let actualCorrected = 0;
+        let actualUnscheduled = 0;
+
+        for (const [srcNum, expectedDate] of decisionsMap.entries()) {
+          const item = itemsBySourceNum.get(srcNum);
+          if (!item) throw new Error(`Item #${srcNum} missing from database.`);
+          if (expectedDate !== null) {
+            if (!item.publish_at || !item.publish_at.startsWith(expectedDate)) {
+              throw new Error(`Item #${srcNum} publish_at (${item.publish_at}) did not match expected ${expectedDate}.`);
+            }
+            actualCorrected++;
+          } else {
+            if (item.publish_at !== null) {
+              throw new Error(`Item #${srcNum} was expected to be unscheduled (null), got ${item.publish_at}.`);
+            }
+            actualUnscheduled++;
+          }
+        }
+
+        if (actualCorrected !== EXPECTED_PER_ACCOUNT.corrected_date_decisions || actualUnscheduled !== EXPECTED_PER_ACCOUNT.unscheduled_date_decisions) {
+          throw new Error(`Date decision counts mismatch in database: ${actualCorrected} corrected, ${actualUnscheduled} unscheduled.`);
+        }
       }
     }
-
-    if (actualCorrected !== EXPECTED_PER_ACCOUNT.corrected_date_decisions || actualUnscheduled !== EXPECTED_PER_ACCOUNT.unscheduled_date_decisions) {
-      throw new Error(`[DATE DECISION FAILED] Date decision counts mismatch in database: ${actualCorrected} corrected, ${actualUnscheduled} unscheduled.`);
-    }
+  } catch (postCommitErr) {
+    // CRITICAL: Unambiguously distinguish from transaction rollback
+    const msg =
+      `[IMPORT COMMITTED - VERIFICATION INCOMPLETE] The database transaction was successfully COMMITTED, but post-commit verification failed: ${postCommitErr.message}.\n` +
+      `CRITICAL STATE: Records WERE written and committed to the database. A transaction rollback did NOT occur (and cannot occur after commit).\n` +
+      `Do NOT execute a blind re-import without verifying current database state.`;
+    const err = new Error(msg);
+    err.name = "ImportCommittedVerificationIncompleteError";
+    err.status = "committed_verification_incomplete";
+    err.batchResult = batchResult;
+    throw err;
   }
 
   report.execution_results = {
+    mode: allowOverwrite ? "overwrite" : "safe_preserve",
     totals: {
       content_items: {
         created: batchResult.items_created,
         updated: batchResult.items_updated,
-        total: batchResult.items_created + batchResult.items_updated,
+        preserved: batchResult.items_preserved,
+        total: batchResult.items_created + batchResult.items_updated + batchResult.items_preserved,
       },
       content_links: {
         created: batchResult.links_created,
         updated: batchResult.links_updated,
-        total: batchResult.links_created + batchResult.links_updated,
+        preserved: batchResult.links_preserved,
+        total: batchResult.links_created + batchResult.links_updated + batchResult.links_preserved,
       },
       production_tasks: {
         created: batchResult.tasks_created,
         updated: batchResult.tasks_updated,
-        total: batchResult.tasks_created + batchResult.tasks_updated,
+        preserved: batchResult.tasks_preserved,
+        total: batchResult.tasks_created + batchResult.tasks_updated + batchResult.tasks_preserved,
       },
       reference_accounts: {
         created: batchResult.accs_created,
         updated: batchResult.accs_updated,
-        total: batchResult.accs_created + batchResult.accs_updated,
+        preserved: batchResult.accs_preserved,
+        total: batchResult.accs_created + batchResult.accs_updated + batchResult.accs_preserved,
       },
       content_pillars: {
         created: batchResult.pillars_created,
@@ -838,7 +909,9 @@ export async function runWorkflow(options = {}) {
     batchResult.tasks_updated +
     batchResult.accs_created +
     batchResult.accs_updated;
-  report.verdict = "Single-transaction commit and post-write verification completed successfully for all owner accounts.";
+  report.verdict = allowOverwrite
+    ? "Single-transaction commit (overwrite mode) and post-write verification completed successfully for all owner accounts."
+    : "Single-transaction commit (safe preserve mode) and post-write verification completed successfully for all owner accounts.";
   return report;
 }
 

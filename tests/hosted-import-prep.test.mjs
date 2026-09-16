@@ -382,6 +382,7 @@ test("Import-Level Atomicity: Seeded pre-existing records with conflicting value
     const allTasks = [...csv.linked_tasks, ...csv.standalone_tasks];
     const firstTaskKey = allTasks[0].import_key;
     const firstAcc = excel.reference_accounts[0];
+    const firstItemLink = excel.all_links.find((l) => l.source_number === 1);
 
     // Seed every target owner with pre-existing content items, links, tasks, pillars, and reference accounts
     // containing values different from the import dataset
@@ -428,15 +429,15 @@ test("Import-Level Atomicity: Seeded pre-existing records with conflicting value
         .single();
       if (itemErr) throw itemErr;
 
-      // 3. Pre-existing content link attached to item #1
+      // 3. Pre-existing content link attached to item #1 matching import URL with conflicting label
       const { error: linkErr } = await adminClient.from("content_links").insert({
         user_id: u.id,
         content_item_id: item.id,
-        link_type: "idea_source",
-        platform: "facebook",
-        url: "https://pre-existing.example.test/old-link",
-        label: "Pre-existing Seed Link",
-        sort_order: 0,
+        link_type: firstItemLink.link_type,
+        platform: firstItemLink.platform,
+        url: firstItemLink.url,
+        label: "Pre-existing Conflicting Seed Link Label",
+        sort_order: 99,
       });
       if (linkErr) throw linkErr;
 
@@ -504,7 +505,7 @@ test("Import-Level Atomicity: Seeded pre-existing records with conflicting value
     );
 
     // -------------------------------------------------------------------------
-    // Successful Commit & Authoritative Verification
+    // Successful Commit & Authoritative Verification (with explicit overwrite)
     // -------------------------------------------------------------------------
     const res1 = await runWorkflow({
       commit: true,
@@ -514,6 +515,7 @@ test("Import-Level Atomicity: Seeded pre-existing records with conflicting value
       excelPath: FIXTURE_EXCEL,
       csvPath: FIXTURE_CSV,
       decisionsPath: FIXTURE_DECISIONS,
+      allowOverwrite: true,
     });
 
     assert.equal(res1.status, "success");
@@ -592,7 +594,7 @@ test("Import-Level Atomicity: Seeded pre-existing records with conflicting value
     }
 
     // -------------------------------------------------------------------------
-    // Idempotent Rerun
+    // Idempotent Rerun (with explicit overwrite)
     // -------------------------------------------------------------------------
     const res2 = await runWorkflow({
       commit: true,
@@ -602,6 +604,7 @@ test("Import-Level Atomicity: Seeded pre-existing records with conflicting value
       excelPath: FIXTURE_EXCEL,
       csvPath: FIXTURE_CSV,
       decisionsPath: FIXTURE_DECISIONS,
+      allowOverwrite: true,
     });
 
     assert.equal(res2.status, "success");
@@ -720,6 +723,7 @@ test("Full Execution & Authoritative Post-Write Verification: 158/419/30/16 per 
       excelPath: FIXTURE_EXCEL,
       csvPath: FIXTURE_CSV,
       decisionsPath: FIXTURE_DECISIONS,
+      allowOverwrite: true,
     });
 
     assert.equal(res2.execution_results.totals.content_items.created, 0);
@@ -730,6 +734,216 @@ test("Full Execution & Authoritative Post-Write Verification: 158/419/30/16 per 
     assert.equal(res2.execution_results.totals.production_tasks.updated, EXPECTED_TOTAL.production_tasks);
     assert.equal(res2.execution_results.totals.reference_accounts.created, 0);
     assert.equal(res2.execution_results.totals.reference_accounts.updated, EXPECTED_TOTAL.reference_accounts);
+  } finally {
+    await cleanSyntheticUsers(adminClient);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 8. SAFE RERUN: PRESERVE WEBSITE EDITS, EXTRA LINKS, AND LINK IDS
+// -----------------------------------------------------------------------------
+test("Safe Rerun: Preserves user edits made in website, extra user-added links, and original link IDs", async () => {
+  const { adminClient } = getLocalAdminClient();
+
+  try {
+    await ensureSyntheticUsersExist(adminClient, true);
+    await cleanSyntheticUsers(adminClient);
+    await ensureSyntheticUsersExist(adminClient, true);
+
+    // 1. Initial Import (Clean commit)
+    const initialRes = await runWorkflow({
+      commit: true,
+      confirmBackup: true,
+      confirmExecution: true,
+      manifestPath: FIXTURE_MANIFEST,
+      excelPath: FIXTURE_EXCEL,
+      csvPath: FIXTURE_CSV,
+      decisionsPath: FIXTURE_DECISIONS,
+    });
+    assert.equal(initialRes.status, "success");
+    assert.equal(initialRes.execution_results.totals.content_items.created, EXPECTED_TOTAL.content_items);
+
+    const { data: usersData } = await adminClient.auth.admin.listUsers();
+    const owner1 = usersData.users.find((u) => u.email?.toLowerCase() === SYNTHETIC_TARGETS[0].toLowerCase());
+    assert.ok(owner1);
+
+    // 2. Query Item #1 and its pre-existing links for Owner 1
+    const { data: item1 } = await adminClient
+      .from("content_items")
+      .select("id, title, notes, status, progress")
+      .eq("user_id", owner1.id)
+      .eq("source_number", 1)
+      .single();
+    assert.ok(item1);
+
+    const { data: initialLinks } = await adminClient
+      .from("content_links")
+      .select("id, url, sort_order")
+      .eq("user_id", owner1.id)
+      .eq("content_item_id", item1.id)
+      .order("sort_order");
+    assert.ok(initialLinks && initialLinks.length > 0);
+    const originalFirstLinkId = initialLinks[0].id;
+    const originalFirstLinkUrl = initialLinks[0].url;
+
+    // 3. Simulate User Edits in the Website
+    const editedTitle = "Website Edited Title for Item 1";
+    const editedNotes = "Custom notes written in web interface";
+    const editedStatus = "reviewing";
+    const editedProgress = 85;
+
+    const { error: updateErr } = await adminClient
+      .from("content_items")
+      .update({
+        title: editedTitle,
+        notes: editedNotes,
+        status: editedStatus,
+        progress: editedProgress,
+      })
+      .eq("id", item1.id);
+    assert.ifError(updateErr);
+
+    // User adds an extra link in the website to item #1
+    const extraLinkUrl = "https://custom.example.test/user-extra-footage-link";
+    const { data: extraLink, error: extraLinkErr } = await adminClient
+      .from("content_links")
+      .insert({
+        user_id: owner1.id,
+        content_item_id: item1.id,
+        link_type: "asset",
+        platform: "youtube",
+        url: extraLinkUrl,
+        label: "Extra User Asset Added in Web",
+        sort_order: 99,
+      })
+      .select("id")
+      .single();
+    assert.ifError(extraLinkErr);
+    const extraLinkId = extraLink.id;
+
+    // 4. Trigger Safe Rerun (allowOverwrite: false by default, allowExtraRecords: true)
+    const rerunRes = await runWorkflow({
+      commit: true,
+      confirmBackup: true,
+      confirmExecution: true,
+      manifestPath: FIXTURE_MANIFEST,
+      excelPath: FIXTURE_EXCEL,
+      csvPath: FIXTURE_CSV,
+      decisionsPath: FIXTURE_DECISIONS,
+      allowOverwrite: false,
+      allowExtraRecords: true,
+      verifyDateDecisions: false,
+    });
+
+    assert.equal(rerunRes.status, "success");
+    // All items preserved without overwriting user edits
+    assert.equal(rerunRes.execution_results.totals.content_items.created, 0);
+    assert.equal(rerunRes.execution_results.totals.content_items.updated, 0);
+    assert.equal(rerunRes.execution_results.totals.content_items.preserved, EXPECTED_TOTAL.content_items);
+
+    // 5. Authoritative Verification: Check that Website Edits, Extra Link, and Link IDs Survived!
+    const { data: itemAfterRerun } = await adminClient
+      .from("content_items")
+      .select("id, title, notes, status, progress")
+      .eq("id", item1.id)
+      .single();
+
+    assert.equal(itemAfterRerun.title, editedTitle, "User edited title must survive rerun");
+    assert.equal(itemAfterRerun.notes, editedNotes, "User edited notes must survive rerun");
+    assert.equal(itemAfterRerun.status, editedStatus, "User edited status must survive rerun");
+    assert.equal(itemAfterRerun.progress, editedProgress, "User edited progress must survive rerun");
+
+    // Verify existing link ID survived
+    const { data: preservedLink } = await adminClient
+      .from("content_links")
+      .select("id, url")
+      .eq("id", originalFirstLinkId)
+      .single();
+    assert.ok(preservedLink, "Original link ID must survive rerun without being deleted/recreated");
+    assert.equal(preservedLink.url, originalFirstLinkUrl);
+
+    // Verify extra link added in website survived
+    const { data: preservedExtraLink } = await adminClient
+      .from("content_links")
+      .select("id, url, label")
+      .eq("id", extraLinkId)
+      .single();
+    assert.ok(preservedExtraLink, "Extra link added in website must survive rerun");
+    assert.equal(preservedExtraLink.url, extraLinkUrl);
+  } finally {
+    await cleanSyntheticUsers(adminClient);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 9. ERROR DIFFERENTIATION: DISTINGUISH TRANSACTION ROLLBACK FROM VERIFICATION INCOMPLETE
+// -----------------------------------------------------------------------------
+test("Error Differentiation: In-transaction failure causes rollback, while post-commit failure reports verification incomplete without rollback", async () => {
+  const { adminClient } = getLocalAdminClient();
+
+  try {
+    await ensureSyntheticUsersExist(adminClient, true);
+    await cleanSyntheticUsers(adminClient);
+    await ensureSyntheticUsersExist(adminClient, true);
+
+    // Case 1: In-transaction failure causes engine rollback
+    let rollbackErr = null;
+    try {
+      await runWorkflow({
+        commit: true,
+        confirmBackup: true,
+        confirmExecution: true,
+        manifestPath: FIXTURE_MANIFEST,
+        excelPath: FIXTURE_EXCEL,
+        csvPath: FIXTURE_CSV,
+        decisionsPath: FIXTURE_DECISIONS,
+        _injectFailureDuringOwner2AfterContent: true,
+      });
+    } catch (err) {
+      rollbackErr = err;
+    }
+
+    assert.ok(rollbackErr);
+    assert.match(rollbackErr.message, /\[TRANSACTION ROLLED BACK\]/);
+    assert.match(rollbackErr.message, /Zero database changes were committed/);
+
+    // Verify database was completely rolled back: 0 items for all owners
+    const { data: usersData } = await adminClient.auth.admin.listUsers();
+    for (const email of SYNTHETIC_TARGETS) {
+      const u = usersData.users.find((user) => user.email?.toLowerCase() === email.toLowerCase());
+      const { count } = await adminClient.from("content_items").select("*", { count: "exact", head: true }).eq("user_id", u.id);
+      assert.equal(count, 0, `Database must be empty after rollback for ${email}`);
+    }
+
+    // Case 2: Post-commit failure reports verification incomplete while keeping database committed
+    let postCommitErr = null;
+    try {
+      await runWorkflow({
+        commit: true,
+        confirmBackup: true,
+        confirmExecution: true,
+        manifestPath: FIXTURE_MANIFEST,
+        excelPath: FIXTURE_EXCEL,
+        csvPath: FIXTURE_CSV,
+        decisionsPath: FIXTURE_DECISIONS,
+        _injectFailureDuringPostCommitVerification: true,
+      });
+    } catch (err) {
+      postCommitErr = err;
+    }
+
+    assert.ok(postCommitErr);
+    assert.equal(postCommitErr.name, "ImportCommittedVerificationIncompleteError");
+    assert.match(postCommitErr.message, /\[IMPORT COMMITTED - VERIFICATION INCOMPLETE\]/);
+    assert.match(postCommitErr.message, /The database transaction was successfully COMMITTED/);
+    assert.match(postCommitErr.message, /A transaction rollback did NOT occur/);
+
+    // Verify database records WERE written and committed (NOT rolled back)
+    for (const email of SYNTHETIC_TARGETS) {
+      const u = usersData.users.find((user) => user.email?.toLowerCase() === email.toLowerCase());
+      const { count } = await adminClient.from("content_items").select("*", { count: "exact", head: true }).eq("user_id", u.id);
+      assert.equal(count, EXPECTED_PER_ACCOUNT.content_items, `Records must be committed in database for ${email}`);
+    }
   } finally {
     await cleanSyntheticUsers(adminClient);
   }
