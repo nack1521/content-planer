@@ -289,6 +289,20 @@ Status: In Progress
 - [x] Update documentation and `.env.example` without exposing real emails or secrets.
 - [x] Verify `ALLOWED_EMAILS` is configured on Vercel across Production, Preview, and Development.
 - [x] Confirm no environment values, email addresses, tokens, or private URLs appear in deployment output or client bundles.
+- [x] Create separate controlled hosted-import preparation workflow (`scripts/prepare-hosted-import.mjs`), preserving `scripts/import-data.mjs` strictly as the local-only importer.
+- [x] Enforce dry-run mode as default with zero database writes.
+- [x] Enforce exact target accounts: strictly targets the 3 approved owner accounts specified in the private manifest, rejecting extra, missing, duplicate, or malformed addresses.
+- [x] Lock date policy: strictly applies 38 corrected reversals and 22 unscheduled records from `.private-import/approved-date-decisions.json`, rejecting deviations or extra/missing keys.
+- [x] Implement two-stage confirmation guard requiring `--confirm-backup` and `--confirm-execution`, plus manifest authorization check (`hosted_write_authorized`).
+- [x] Require all 3 target auth users to exist in Supabase Auth before allowing commit mode.
+- [x] Ensure strict multi-account planner isolation under `auth.uid() = user_id`, with non-destructive native OTP session establishment.
+- [x] Verify expected counts: 158 content items, 419 links, 30 reference accounts, 16 tasks per account; 474 items, 1,257 links, 90 reference accounts, 48 tasks total.
+- [x] Enforce atomic transactional rollback on link failures using `upsert_content_item_with_links`.
+- [x] Enforce rerun idempotency: subsequent commit runs update existing records with 0 created and identical totals.
+- [x] Enforce zero secret, credential, or private source URL leakage in CLI stdout/stderr.
+- [x] Add comprehensive automated test suite (`tests/hosted-import-prep.test.mjs`, 14 tests) using fully synthetic portable fixtures and wire into `tests/run-tests.mjs` (197/197 tests pass).
+- [ ] Verify hosted Supabase target auth users are created and confirmed before import execution.
+- [ ] Obtain verified database backup confirmation and explicit execution confirmation before hosted commit.
 - [ ] Complete owner authenticated smoke test on Preview deployment (`https://content-planner-otp300zpj-nack4.vercel.app/th/login`) verifying private planner isolation per owner.
 - [ ] Deploy accepted version to Production.
 - [ ] Confirm that no secret values or private media URLs appear in client output or documentation.

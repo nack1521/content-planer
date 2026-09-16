@@ -27,6 +27,9 @@ yarn-error.log*
 .env*.local
 .env
 
+# private one-time import material
+/.private-import/
+
 # vercel
 .vercel
 

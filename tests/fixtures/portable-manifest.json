@@ -1,0 +1,15 @@
+{
+  "target_accounts": [
+    "owner1@example.test",
+    "owner2@example.test",
+    "owner3@example.test"
+  ],
+  "sources": {
+    "excel": "tests/fixtures/portable-planner.xlsx",
+    "notion_csv": "tests/fixtures/portable-notion.csv",
+    "date_decisions": "tests/fixtures/portable-decisions.json"
+  },
+  "execution": {
+    "hosted_write_authorized": false
+  }
+}

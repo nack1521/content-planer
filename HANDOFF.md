@@ -1,8 +1,8 @@
-# Content Planner Handoff — Milestone 7 (Multi-Owner Authentication & Vercel Release)
+# Content Planner Handoff — Milestone 7 (Controlled Hosted Supabase Import Preparation & Vercel Release)
 
 ## Milestone Status
 
-**Status: In Progress — Multi-Owner Authentication Complete; Authenticated Owner Smoke Test Pending on Preview**
+**Status: In Progress — Controlled Hosted Supabase Import Prepared & Validated; Awaiting Codex Review Before Hosted Execution**
 
 - **Milestone 6**: Accepted by Codex at commit `db0da61`.
 - **Milestone 7**: In Progress — Vercel release, hosted Supabase verification, and secure multi-owner authorization.
@@ -70,6 +70,48 @@
 
 ---
 
+
+---
+
+## Milestone 7 Updates — Controlled Hosted Supabase Data Import Preparation
+
+### 1. Dedicated Preparation Workflow (`scripts/prepare-hosted-import.mjs`)
+- **Strict Separation**: `scripts/import-data.mjs` remains strictly untouched and preserved as the local-only importer.
+- **Default Mode**: Strictly DRY-RUN. Zero database records are written by default.
+- **Hosted Write Authorization Guard**: Checked against `.private-import/import-manifest.json` (`hosted_write_authorized: false`). Attempts to commit against hosted Supabase are immediately blocked unless explicitly authorized in the manifest.
+- **Two-Stage Operator Confirmation**: Commit mode requires `--confirm-backup` (database snapshot verified) and `--confirm-execution` (final operator approval).
+- **Target Account Enforcement**: Validates and strictly accepts only the 3 approved owner accounts specified in the private manifest.
+  Rejects extra accounts, missing accounts, duplicate entries, or malformed emails. Synthetic addresses (e.g. `owner1@example.test`) are used for automated test isolation.
+- **Supabase Auth User Existence Guard**: Confirms all 3 target users exist in `auth.users` before allowing commit mode.
+- **Non-Destructive Session Establishment**: Generates genuine authenticated user sessions using native magic-link OTP verification (`adminClient.auth.admin.generateLink({ type: "magiclink", email })` + `userClient.auth.verifyOtp(...)`). This guarantees operations execute under `auth.uid() = user_id` without overwriting or destroying existing user passwords.
+- **Locked Date Policy**: Loads `.private-import/approved-date-decisions.json` and strictly enforces the locked decision set:
+  - 38 records with corrected day/month reversals scheduled.
+  - 22 reviewed records left unscheduled as ideas (`publish_at: null`).
+  - Rejects extra, missing, duplicate, or modified date decisions.
+- **Expected Record Counts**:
+  - Per Account: 158 content items, 419 content links, 30 reference accounts, 16 production tasks (12 linked + 4 standalone).
+  - Total across 3 Accounts: 474 content items, 1,257 content links, 90 reference accounts, 48 production tasks.
+- **Transactional Atomicity & Rollback**: Uses `upsert_content_item_with_links` to guarantee atomic mutations. Any failure during item or link insertion triggers a full rollback, preventing partial imports.
+- **Rerun Idempotency**: Subsequent runs match existing items by `source_number`, tasks by `import_key`, and reference accounts by `platform:url`, resulting in 0 created and identical totals.
+- **Zero Secret / Private URL Leakage**: CLI outputs aggregate counts only. No private URLs (TikTok, Instagram, Drive, Notion), credentials, or bearer tokens are ever written to stdout/stderr.
+- **Hosted Database Untouched**: Zero database writes were executed against hosted Supabase during this cycle.
+
+### 2. Dedicated Automated Test Suite (`tests/hosted-import-prep.test.mjs`)
+Created comprehensive automated test suite covering:
+1. **Target Enforcement**: Exact 3 approved accounts accepted; rejects extra, missing, duplicate, or malformed emails.
+2. **CLI Target Arguments**: Rejects unauthorized or extra target email arguments.
+3. **Date Policy Enforcement**: Rejects missing, extra, invalid calendar dates (e.g. `2026-02-30`), or deviations from the 38/22 policy.
+4. **Safety Guards**: Commit mode strictly requires `--confirm-backup` and `--confirm-execution`.
+5. **Hosted Write Guard**: Non-local commit halted when manifest has `hosted_write_authorized: false`.
+6. **Auth User Verification**: Halts if any target user does not exist in `auth.users`.
+7. **Dry-Run Safety**: Default CLI mode performs zero database writes.
+8. **Structured JSON Output**: CLI with `--json` outputs structured verification report with `database_writes_performed: 0`.
+9. **Privacy & Secret Leakage Prevention**: Asserts zero private URLs, tokens, passwords, or service keys in output.
+10. **Transactional Rollback**: Asserts invalid link payload rolls back content item mutation atomically.
+11. **Multi-Account Isolation, Expected Counts & Idempotency**: Full local execution on isolated Supabase stack imports exactly 158/419/30/16 per account, 474/1257/90/48 total, strictly isolated under RLS; second run verifies 0 created and 100% updated with unchanged totals; asserts exact date decisions in database (38 corrected timestamps, 22 nulls).
+
+---
+
 ## Issues Discovered & Corrections Made
 
 ### 1. Dead Sample Code Elimination
@@ -112,6 +154,18 @@
 ---
 
 ## Files Changed
+
+- `scripts/prepare-hosted-import.mjs`: [NEW] Controlled hosted Supabase import preparation workflow with dry-run default, two-stage confirmations, strict locality derivation, exact manifest target enforcement, locked date policy, multi-account RLS isolation, failure rollback, authoritative post-write verification, and rerun idempotency.
+- `tests/hosted-import-prep.test.mjs`: [NEW] Portable automated test suite using synthetic targets and committed fixtures, verifying dry-run safety, remote bypass regressions, target validation, date decisions, safety guards, import-level atomicity rollback, authoritative post-write verification, expected counts, and secret leakage prevention.
+- `tests/fixtures/portable-planner.xlsx`: [NEW] Fully synthetic portable Excel fixture containing 158 generated items, 419 example.test links, and 30 generated reference accounts. It contains no copied owner content.
+- `tests/fixtures/portable-notion.csv`: [NEW] Fully synthetic portable CSV fixture containing 16 generated production tasks. It contains no copied owner task content.
+- `tests/fixtures/portable-decisions.json`: [NEW] Portable date decisions fixture matching the 60 warning source numbers.
+- `tests/fixtures/portable-manifest.json`: [NEW] Portable manifest fixture referencing synthetic test owners and portable fixtures.
+- `package.json`: [MODIFIED] Added `audit:private-import` script for opt-in private source dry-run verification.
+- `tests/run-tests.mjs`: Added suite 5b for controlled hosted import preparation.
+- `.gitignore`: Added `/.private-import/` to ignore private import decision files and manifests.
+- `TASKS.md`: Updated Milestone 7 checklist with import preparation details and status.
+- `HANDOFF.md`: Documented import preparation architecture, safety controls, test suite, and verification results.
 
 - `src/data/sampleContent.ts`: [DELETED] Removed dead sample mock data.
 - `src/messages/en.json`: Purged dead keys and placeholders; added `common.saving`; 355 keys verified.
@@ -197,6 +251,8 @@ Result:
 ✔ 5/5 tests passed
 === 5. Running Production Importer CLI & Idempotency Suite ===
 ✔ 10/10 tests passed
+=== 5b. Running Controlled Hosted Import Preparation Suite ===
+✔ 14/14 tests passed
 === 6. Running Authenticated Server Actions & Atomic Rollback Suite ===
 ✔ 8/8 tests passed
 === 6b. Running Content Editor & Link Workspace Suite (Milestone 4) ===
@@ -210,7 +266,7 @@ Result:
 === 8. Running Live Server & HTTP Integration Suites ===
 ✔ 14/14 tests passed
 === [SUCCESS] ALL CLEAN-ENVIRONMENT CHECKS AND TEST SUITES PASSED ===
-Total: 183 tests passing cleanly across database, domain, accessibility, localization, importer, server actions, Milestone 4 editor, Milestone 5 calendar & ideas, Milestone 6 release quality, and live HTTP integration.
+Total: 197 tests passing cleanly across pgTAP database suite (85 tests) and application test suites (112 tests: domain validation 15, accessibility 7, localization scanner 5, local importer 10, hosted import preparation 14, server actions 8, Milestone 4 editor 17, Milestone 5 calendar & ideas 13, Milestone 6 release quality 9, and live HTTP integration 14).
 ```
 
 ---
@@ -251,5 +307,10 @@ Total: 183 tests passing cleanly across database, domain, accessibility, localiz
 ## Assumptions and Remaining Limitations
 
 - **Sprint 1 Link-Only MVP**: Asset storage relies completely on external links (`content_links`). Direct media uploads, signed viewing URLs, and storage quotas are deferred to Sprint 2.
-- **Hosted Supabase**: Hosted Supabase remains untouched. Zero hosted migrations or hosted imports were performed.
-- **Milestone 7 Scope**: Vercel deployment, environment variable configuration on Vercel, and production domain routing are deferred to Milestone 7.
+- **Hosted Supabase Untouched**: Zero hosted database writes or imports were performed in this cycle. The hosted Supabase database remains in its clean, post-Migration 3 state.
+- **Hosted Import Execution Preconditions**:
+  1. The 3 approved owner accounts specified in the private manifest must exist and be confirmed in hosted Supabase Auth (`auth.users`).
+  2. A verified hosted database backup snapshot must be taken and confirmed (`--confirm-backup`).
+  3. Final operator authorization must be confirmed (`--confirm-execution`).
+  4. Explicit authorization in `.private-import/import-manifest.json` (`hosted_write_authorized: true`) is required before non-local execution.
+  5. Operator and Codex review is required before executing the hosted write.

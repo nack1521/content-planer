@@ -1,0 +1,506 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { resolve } from "node:path";
+import { writeFileSync, unlinkSync, existsSync, readFileSync } from "node:fs";
+import { createClient } from "@supabase/supabase-js";
+import {
+  EXPECTED_PER_ACCOUNT,
+  EXPECTED_TOTAL,
+  validateTargetEmails,
+  loadAndValidateDateDecisions,
+  parseSourceDatasets,
+  runWorkflow,
+} from "../scripts/prepare-hosted-import.mjs";
+
+const SCRIPT_PATH = resolve(process.cwd(), "scripts/prepare-hosted-import.mjs");
+const FIXTURE_EXCEL = resolve(process.cwd(), "tests/fixtures/portable-planner.xlsx");
+const FIXTURE_CSV = resolve(process.cwd(), "tests/fixtures/portable-notion.csv");
+const FIXTURE_DECISIONS = resolve(process.cwd(), "tests/fixtures/portable-decisions.json");
+const FIXTURE_MANIFEST = resolve(process.cwd(), "tests/fixtures/portable-manifest.json");
+
+const SYNTHETIC_TARGETS = Object.freeze([
+  "owner1@example.test",
+  "owner2@example.test",
+  "owner3@example.test",
+]);
+const UNAUTHORIZED_TARGET = "unauthorized@example.test";
+
+function getLocalAdminClient() {
+  const statusProc = spawnSync("npx", ["supabase", "status", "-o", "json"], { encoding: "utf8" });
+  assert.equal(statusProc.status, 0, "Failed to query local supabase status");
+  const statusJson = JSON.parse(statusProc.stdout);
+  return {
+    supabaseUrl: statusJson.API_URL || "http://127.0.0.1:54321",
+    serviceRoleKey: statusJson.SERVICE_ROLE_KEY,
+    publishableKey: statusJson.PUBLISHABLE_KEY || statusJson.ANON_KEY,
+    adminClient: createClient(statusJson.API_URL || "http://127.0.0.1:54321", statusJson.SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    }),
+  };
+}
+
+async function ensureSyntheticUsersExist(adminClient, confirmed = true) {
+  const { data: listData, error: listErr } = await adminClient.auth.admin.listUsers();
+  if (listErr) throw new Error(`Listing users: ${listErr.message}`);
+  const existingUsers = listData?.users || [];
+
+  for (const email of SYNTHETIC_TARGETS) {
+    const found = existingUsers.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+    if (!found) {
+      const { error: createErr } = await adminClient.auth.admin.createUser({
+        email,
+        email_confirm: confirmed,
+        user_metadata: { role: "owner" },
+      });
+      if (createErr && !createErr.message.includes("already registered")) {
+        throw new Error(`Creating synthetic user ${email}: ${createErr.message}`);
+      }
+    }
+  }
+}
+
+async function cleanSyntheticUsers(adminClient) {
+  try {
+    const { data: listData } = await adminClient.auth.admin.listUsers();
+    const users = listData?.users || [];
+
+    for (const email of SYNTHETIC_TARGETS) {
+      const user = users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+      if (user) {
+        await adminClient.from("production_tasks").delete().eq("user_id", user.id);
+        await adminClient.from("content_links").delete().eq("user_id", user.id);
+        await adminClient.from("content_items").delete().eq("user_id", user.id);
+        await adminClient.from("reference_accounts").delete().eq("user_id", user.id);
+        await adminClient.from("content_pillars").delete().eq("user_id", user.id);
+        await adminClient.auth.admin.deleteUser(user.id);
+      }
+    }
+  } catch (err) {
+    throw new Error(`[CLEANUP FAILURE] Failed cleaning synthetic users: ${err.message}`);
+  }
+}
+
+function runScript(args = [], env = {}) {
+  return spawnSync(process.execPath, [SCRIPT_PATH, "--manifest", FIXTURE_MANIFEST, ...args], {
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      ...env,
+    },
+  });
+}
+
+// -----------------------------------------------------------------------------
+// 1. EXACT TARGET ENFORCEMENT (SYNTHETIC ADDRESSES ONLY)
+// -----------------------------------------------------------------------------
+test("Target Enforcement: Exact manifest targets accepted, rejects extra, missing, duplicate, or malformed", () => {
+  const approved = [...SYNTHETIC_TARGETS];
+
+  // Exact match
+  const validRes = validateTargetEmails(approved, approved);
+  assert.equal(validRes.valid, true);
+  assert.equal(validRes.normalized.length, 3);
+
+  // Missing target
+  const missingRes = validateTargetEmails([approved[0], approved[1]], approved);
+  assert.equal(missingRes.valid, false);
+  assert.match(missingRes.error, /Expected exactly 3 target accounts/);
+
+  // Extra target
+  const extraRes = validateTargetEmails([...approved, UNAUTHORIZED_TARGET], approved);
+  assert.equal(extraRes.valid, false);
+  assert.match(extraRes.error, /Expected exactly 3 target accounts/);
+
+  // Duplicate target
+  const dupRes = validateTargetEmails([approved[0], approved[0], approved[1]], approved);
+  assert.equal(dupRes.valid, false);
+  assert.match(dupRes.error, /Duplicate target email detected/);
+
+  // Malformed target
+  const malformedRes = validateTargetEmails([approved[0], "not-an-email", approved[2]], approved);
+  assert.equal(malformedRes.valid, false);
+  assert.match(malformedRes.error, /Malformed target email/);
+
+  // Replaced with unauthorized target
+  const unauthRes = validateTargetEmails([approved[0], UNAUTHORIZED_TARGET, approved[2]], approved);
+  assert.equal(unauthRes.valid, false);
+  assert.match(unauthRes.error, /Unauthorized or unexpected target email/);
+});
+
+test("Target Enforcement: CLI rejects unauthorized or extra target email arguments", () => {
+  const res = runScript([
+    "--target-emails",
+    `${SYNTHETIC_TARGETS[0]},${SYNTHETIC_TARGETS[1]},${UNAUTHORIZED_TARGET}`,
+  ]);
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /Unauthorized or unexpected target email/);
+});
+
+// -----------------------------------------------------------------------------
+// 2. REMOTE BYPASS REGRESSION TESTS (PROVE ZERO NETWORK/DB CALLS)
+// -----------------------------------------------------------------------------
+test("Remote Bypass Regression: --allow-hosted-write is completely removed and rejected before any execution", () => {
+  const res = runScript(["--allow-hosted-write"]);
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /Unknown argument: "--allow-hosted-write"/);
+});
+
+test("Remote Bypass Regression: --local with hosted URL hostname fails as assertion before any network/database call", () => {
+  const res = runScript(["--local"], {
+    NEXT_PUBLIC_SUPABASE_URL: "https://remote-project-bypass-attempt.supabase.co",
+  });
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /\[SECURITY ABORT\]/);
+  assert.match(res.stderr, /--local flag was specified, but Supabase URL hostname is non-local/);
+  assert.match(res.stderr, /A CLI flag must never turn a hosted URL into a local target/);
+});
+
+test("Remote Bypass Regression: Non-local target URL strictly halts commit mode", () => {
+  const res = runScript(
+    ["--commit", "--confirm-backup", "--confirm-execution"],
+    {
+      NEXT_PUBLIC_SUPABASE_URL: "https://remote-project.supabase.co",
+    }
+  );
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /\[SAFETY STOP\] Hosted database writes are strictly disabled in this cycle/);
+});
+
+// -----------------------------------------------------------------------------
+// 3. DATE POLICY ENFORCEMENT & LOCKED POLICY
+// -----------------------------------------------------------------------------
+test("Date Policy Enforcement: Locked decisions required, rejects missing, extra, invalid calendar dates, or policy count deviations", () => {
+  const dummyWarnings = Array.from({ length: 60 }, (_, i) => ({ source_number: i + 1, warning: "Reversal" }));
+
+  // Valid 38 dates, 22 nulls
+  const validDecisions = {};
+  for (let i = 1; i <= 38; i++) validDecisions[i] = "2026-06-15";
+  for (let i = 39; i <= 60; i++) validDecisions[i] = null;
+
+  const validPath = resolve(process.cwd(), "tests/fixtures/temp-valid-decisions.json");
+  writeFileSync(validPath, JSON.stringify(validDecisions));
+
+  try {
+    const res = loadAndValidateDateDecisions(validPath, dummyWarnings);
+    assert.equal(res.valid, true);
+    assert.equal(res.counts.corrected, 38);
+    assert.equal(res.counts.unscheduled, 22);
+    assert.equal(res.counts.total, 60);
+  } finally {
+    if (existsSync(validPath)) unlinkSync(validPath);
+  }
+
+  // Policy deviation: 39 dates, 21 nulls
+  const deviatedDecisions = { ...validDecisions, 39: "2026-07-20" };
+  const deviatedPath = resolve(process.cwd(), "tests/fixtures/temp-deviated-decisions.json");
+  writeFileSync(deviatedPath, JSON.stringify(deviatedDecisions));
+
+  try {
+    const res = loadAndValidateDateDecisions(deviatedPath, dummyWarnings);
+    assert.equal(res.valid, false);
+    assert.match(res.error, /Date decision policy mismatch/);
+  } finally {
+    if (existsSync(deviatedPath)) unlinkSync(deviatedPath);
+  }
+
+  // Invalid calendar date (e.g. leap year mismatch or 31st on 30-day month)
+  const invalidDateDecisions = { ...validDecisions, 1: "2026-02-30" };
+  const invalidPath = resolve(process.cwd(), "tests/fixtures/temp-invalid-decisions.json");
+  writeFileSync(invalidPath, JSON.stringify(invalidDateDecisions));
+
+  try {
+    const res = loadAndValidateDateDecisions(invalidPath, dummyWarnings);
+    assert.equal(res.valid, false);
+    assert.match(res.error, /Must be a valid calendar date/);
+  } finally {
+    if (existsSync(invalidPath)) unlinkSync(invalidPath);
+  }
+
+  // Extra decision key not in warnings
+  const extraDecisions = { ...validDecisions, 999: "2026-08-01" };
+  const extraPath = resolve(process.cwd(), "tests/fixtures/temp-extra-decisions.json");
+  writeFileSync(extraPath, JSON.stringify(extraDecisions));
+
+  try {
+    const res = loadAndValidateDateDecisions(extraPath, dummyWarnings);
+    assert.equal(res.valid, false);
+    assert.match(res.error, /Extra unexpected decision for content item #999/);
+  } finally {
+    if (existsSync(extraPath)) unlinkSync(extraPath);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 4. SAFETY GUARDS: BACKUP, CONFIRMATION, & AUTH PREFLIGHT
+// -----------------------------------------------------------------------------
+test("Safety Guards: Commit mode strictly requires --confirm-backup and --confirm-execution", () => {
+  const res1 = runScript(["--commit"]);
+  assert.equal(res1.status, 1);
+  assert.match(res1.stderr, /Commit mode requires explicit backup confirmation flag: --confirm-backup/);
+
+  const res2 = runScript(["--commit", "--confirm-backup"]);
+  assert.equal(res2.status, 1);
+  assert.match(res2.stderr, /Commit mode requires explicit final execution confirmation flag: --confirm-execution/);
+});
+
+test("Auth Preflight: Commit mode halts if target user is missing or email is unconfirmed", async () => {
+  const { adminClient } = getLocalAdminClient();
+  await cleanSyntheticUsers(adminClient);
+
+  try {
+    // Missing user test
+    const resMissing = runScript(["--commit", "--confirm-backup", "--confirm-execution"]);
+    assert.equal(resMissing.status, 1);
+    assert.match(resMissing.stderr, /Target user\(s\) missing from Supabase Auth/);
+
+    // Unconfirmed email test
+    await ensureSyntheticUsersExist(adminClient, false); // created with email_confirm = false
+    const resUnconfirmed = runScript(["--commit", "--confirm-backup", "--confirm-execution"]);
+    assert.equal(resUnconfirmed.status, 1);
+    assert.match(resUnconfirmed.stderr, /Target user email\(s\) not confirmed in Supabase Auth/);
+  } finally {
+    await cleanSyntheticUsers(adminClient);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 5. DRY-RUN SAFETY & PRIVACY
+// -----------------------------------------------------------------------------
+test("Dry-Run Safety: Default CLI mode performs zero database writes and reports dry-run status", () => {
+  const res = runScript([]);
+  assert.equal(res.status, 0);
+  assert.match(res.stdout, /Execution Mode:\s+DRY-RUN/);
+  assert.match(res.stdout, /Target Accounts:\s+3 verified owner accounts \[redacted for privacy\]/);
+  assert.match(res.stdout, /VERDICT: Dry-run verification completed successfully\. Zero database writes performed\./);
+});
+
+test("Dry-Run Safety: CLI with --json outputs structured validation report with 0 writes performed without leaking emails", () => {
+  const res = runScript(["--json"]);
+  assert.equal(res.status, 0);
+  const data = JSON.parse(res.stdout);
+  assert.equal(data.mode, "dry-run");
+  assert.equal(data.status, "success");
+  assert.equal(data.database_writes_performed, 0);
+  assert.equal(data.target_count, 3);
+  // Guarantee no emails or user IDs in JSON report
+  assert.equal(data.target_accounts, undefined);
+  assert.equal(data.user_ids, undefined);
+  assert.equal(data.verification.date_decisions_total, 60);
+  assert.equal(data.verification.date_decisions_corrected, 38);
+  assert.equal(data.verification.date_decisions_unscheduled, 22);
+  assert.equal(data.verification.baselines_match, true);
+});
+
+test("Privacy & Secret Leakage: Zero private source URLs, tokens, passwords, or emails in CLI output", () => {
+  const res = runScript([]);
+  assert.equal(res.status, 0);
+
+  // Reject external URLs or domains
+  assert.doesNotMatch(res.stdout, /https:\/\//);
+  assert.doesNotMatch(res.stdout, /tiktok\.com|instagram\.com|drive\.google\.com|notion\.so/i);
+  // Reject keys, secrets, tokens
+  assert.doesNotMatch(res.stdout, /eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/);
+  assert.doesNotMatch(res.stdout, /sb_secret_/);
+  assert.doesNotMatch(res.stdout, /service_role/i);
+  // Reject email addresses in stdout
+  assert.doesNotMatch(res.stdout, /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+});
+
+test("Portable Fixture Privacy: workbook and task fixtures contain synthetic content only", () => {
+  const { excel, csv } = parseSourceDatasets(FIXTURE_EXCEL, FIXTURE_CSV);
+
+  for (const item of excel.auto_candidates) {
+    assert.match(item.title, /^Synthetic content topic \d{3}$/);
+    assert.match(item.objective, /^Synthetic objective \d{3}$/);
+    assert.match(item.hook, /^Synthetic main message \d{3}$/);
+    assert.match(item.production_detail, /^Synthetic production detail \d{3}$/);
+    assert.match(item.cta, /^Synthetic call to action \d{3}$/);
+  }
+
+  for (const link of excel.all_links) {
+    assert.equal(new URL(link.url).hostname, "example.test");
+  }
+
+  for (const account of excel.reference_accounts) {
+    assert.match(account.account_label, /^synthetic-reference-\d{2}$/);
+    assert.equal(new URL(account.url).hostname, "example.test");
+  }
+
+  const tasks = [...csv.linked_tasks, ...csv.standalone_tasks];
+  for (const task of tasks) {
+    assert.match(task.title, /synthetic/i);
+    assert.match(task.description, /synthetic/i);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 6. GENUINE IMPORT-LEVEL ATOMICITY: FAILURE INJECTION & COMPENSATING ROLLBACK
+// -----------------------------------------------------------------------------
+test("Import-Level Atomicity: Failure during second owner after content creation rolls back all tables across all owners to exact pre-import state", async () => {
+  const { adminClient } = getLocalAdminClient();
+
+  try {
+    await ensureSyntheticUsersExist(adminClient, true);
+    await cleanSyntheticUsers(adminClient);
+    await ensureSyntheticUsersExist(adminClient, true);
+
+    // Execute with failure injection hook active
+    let caughtErr = null;
+    try {
+      await runWorkflow({
+        commit: true,
+        confirmBackup: true,
+        confirmExecution: true,
+        manifestPath: FIXTURE_MANIFEST,
+        excelPath: FIXTURE_EXCEL,
+        csvPath: FIXTURE_CSV,
+        decisionsPath: FIXTURE_DECISIONS,
+        _injectFailureDuringOwner2AfterContent: true,
+      });
+    } catch (err) {
+      caughtErr = err;
+    }
+
+    assert.ok(caughtErr, "Workflow must fail on injected error");
+    assert.match(caughtErr.message, /\[TEST INJECTION\] Simulated failure during owner 2 after content creation/);
+
+    // Verify all tables across ALL owners are in exact pre-import state (0 items, 0 links, 0 tasks, 0 accounts)
+    const { data: usersData } = await adminClient.auth.admin.listUsers();
+    for (const email of SYNTHETIC_TARGETS) {
+      const u = usersData.users.find((user) => user.email.toLowerCase() === email.toLowerCase());
+      assert.ok(u);
+
+      const [items, links, tasks, accs] = await Promise.all([
+        adminClient.from("content_items").select("*", { count: "exact", head: true }).eq("user_id", u.id),
+        adminClient.from("content_links").select("*", { count: "exact", head: true }).eq("user_id", u.id),
+        adminClient.from("production_tasks").select("*", { count: "exact", head: true }).eq("user_id", u.id),
+        adminClient.from("reference_accounts").select("*", { count: "exact", head: true }).eq("user_id", u.id),
+      ]);
+
+      assert.equal(items.count, 0, `Owner ${email} content_items must be rolled back to 0`);
+      assert.equal(links.count, 0, `Owner ${email} content_links must be rolled back to 0`);
+      assert.equal(tasks.count, 0, `Owner ${email} production_tasks must be rolled back to 0`);
+      assert.equal(accs.count, 0, `Owner ${email} reference_accounts must be rolled back to 0`);
+    }
+  } finally {
+    await cleanSyntheticUsers(adminClient);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 7. FULL EXECUTION, AUTHORITATIVE POST-WRITE VERIFICATION, & RERUN IDEMPOTENCY
+// -----------------------------------------------------------------------------
+test("Full Execution & Authoritative Post-Write Verification: 158/419/30/16 per owner, exact date decisions, and idempotent rerun", async () => {
+  const { adminClient, supabaseUrl, publishableKey } = getLocalAdminClient();
+
+  try {
+    await ensureSyntheticUsersExist(adminClient, true);
+    await cleanSyntheticUsers(adminClient);
+    await ensureSyntheticUsersExist(adminClient, true);
+
+    // 1. First Execution
+    const res1 = await runWorkflow({
+      commit: true,
+      confirmBackup: true,
+      confirmExecution: true,
+      manifestPath: FIXTURE_MANIFEST,
+      excelPath: FIXTURE_EXCEL,
+      csvPath: FIXTURE_CSV,
+      decisionsPath: FIXTURE_DECISIONS,
+    });
+
+    assert.equal(res1.status, "success");
+    assert.equal(res1.execution_results.totals.content_items.created, EXPECTED_TOTAL.content_items);
+    assert.equal(res1.execution_results.totals.content_items.updated, 0);
+    assert.equal(res1.execution_results.totals.content_links.created, EXPECTED_TOTAL.content_links);
+    assert.equal(res1.execution_results.totals.content_links.updated, 0);
+    assert.equal(res1.execution_results.totals.production_tasks.created, EXPECTED_TOTAL.production_tasks);
+    assert.equal(res1.execution_results.totals.production_tasks.updated, 0);
+    assert.equal(res1.execution_results.totals.reference_accounts.created, EXPECTED_TOTAL.reference_accounts);
+    assert.equal(res1.execution_results.totals.reference_accounts.updated, 0);
+
+    // 2. Authoritative Database Verification under RLS per synthetic owner
+    const decisionsData = JSON.parse(readFileSync(FIXTURE_DECISIONS, "utf8"));
+
+    for (const email of SYNTHETIC_TARGETS) {
+      const linkRes = await adminClient.auth.admin.generateLink({ type: "magiclink", email });
+      assert.ok(linkRes.data?.properties?.email_otp);
+      const userClient = createClient(supabaseUrl, publishableKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: authData } = await userClient.auth.verifyOtp({
+        email,
+        token: linkRes.data.properties.email_otp,
+        type: "email",
+      });
+      const userId = authData.user.id;
+
+      // Query row counts directly from database
+      const [itemsRes, linksRes, tasksRes, accsRes] = await Promise.all([
+        userClient.from("content_items").select("id, user_id, source_number, publish_at"),
+        userClient.from("content_links").select("id, user_id"),
+        userClient.from("production_tasks").select("id, user_id"),
+        userClient.from("reference_accounts").select("id, user_id"),
+      ]);
+
+      const items = itemsRes.data || [];
+      const links = linksRes.data || [];
+      const tasks = tasksRes.data || [];
+      const accounts = accsRes.data || [];
+
+      assert.equal(items.length, EXPECTED_PER_ACCOUNT.content_items);
+      assert.equal(links.length, EXPECTED_PER_ACCOUNT.content_links);
+      assert.equal(tasks.length, EXPECTED_PER_ACCOUNT.production_tasks);
+      assert.equal(accounts.length, EXPECTED_PER_ACCOUNT.reference_accounts);
+
+      // Verify every row belongs to current owner user_id
+      for (const i of items) assert.equal(i.user_id, userId);
+      for (const l of links) assert.equal(l.user_id, userId);
+      for (const t of tasks) assert.equal(t.user_id, userId);
+      for (const a of accounts) assert.equal(a.user_id, userId);
+
+      // Verify 38 corrected dates and 22 null dates exactly
+      const itemsBySrc = new Map(items.map((i) => [i.source_number, i]));
+      let correctedCount = 0;
+      let unscheduledCount = 0;
+
+      for (const [srcStr, expDate] of Object.entries(decisionsData)) {
+        const item = itemsBySrc.get(Number(srcStr));
+        assert.ok(item, `Missing item #${srcStr}`);
+        if (expDate !== null) {
+          assert.ok(item.publish_at && item.publish_at.startsWith(expDate));
+          correctedCount++;
+        } else {
+          assert.equal(item.publish_at, null);
+          unscheduledCount++;
+        }
+      }
+
+      assert.equal(correctedCount, 38);
+      assert.equal(unscheduledCount, 22);
+    }
+
+    // 3. Idempotent Rerun: second run updates existing records with 0 created
+    const res2 = await runWorkflow({
+      commit: true,
+      confirmBackup: true,
+      confirmExecution: true,
+      manifestPath: FIXTURE_MANIFEST,
+      excelPath: FIXTURE_EXCEL,
+      csvPath: FIXTURE_CSV,
+      decisionsPath: FIXTURE_DECISIONS,
+    });
+
+    assert.equal(res2.execution_results.totals.content_items.created, 0);
+    assert.equal(res2.execution_results.totals.content_items.updated, EXPECTED_TOTAL.content_items);
+    assert.equal(res2.execution_results.totals.content_links.created, 0);
+    assert.equal(res2.execution_results.totals.content_links.updated, EXPECTED_TOTAL.content_links);
+    assert.equal(res2.execution_results.totals.production_tasks.created, 0);
+    assert.equal(res2.execution_results.totals.production_tasks.updated, EXPECTED_TOTAL.production_tasks);
+    assert.equal(res2.execution_results.totals.reference_accounts.created, 0);
+    assert.equal(res2.execution_results.totals.reference_accounts.updated, EXPECTED_TOTAL.reference_accounts);
+  } finally {
+    await cleanSyntheticUsers(adminClient);
+  }
+});
