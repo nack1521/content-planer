@@ -12,8 +12,6 @@
     "calendar": "Calendar",
     "ideas": "Idea Bank",
     "settings": "Settings",
-    "collapseNav": "Collapse Navigation",
-    "expandNav": "Expand Navigation",
     "mainNavAria": "Main navigation",
     "mobileNavAria": "Mobile navigation bar",
     "tasks": "Tasks"
@@ -32,7 +30,6 @@
     "compactToday": "Today",
     "compactMonth": "This Month",
     "compactProd": "In Prod",
-    "allCount": "All ({count})",
     "showMoreStages": "All stages ({count})",
     "hideStages": "Collapse stages"
   },
@@ -50,13 +47,9 @@
     "goalLabel": "Goal",
     "allGoals": "All Goals",
     "reset": "Reset Filters",
-    "filterResults": "item shown",
-    "filterResultsPlural": "items shown",
     "filterSummary": "Showing {count} of {total} content records",
-    "activeFilters": "Active filters:",
     "toggleFilters": "Filter options",
-    "hideFilters": "Hide filter options",
-    "quickFilterAria": "Quick filter by status"
+    "hideFilters": "Hide filter options"
   },
   "status": {
     "idea": "Idea",
@@ -90,13 +83,6 @@
     "leads": "Lead Generation",
     "conversion": "Product Sales & Conversion"
   },
-  "pillars": {
-    "educational": "Educational",
-    "behindTheScenes": "Behind the Scenes",
-    "lifestyleTips": "Lifestyle & Tips",
-    "productDeepDive": "Product Deep Dive",
-    "industryInsights": "Industry Insights"
-  },
   "table": {
     "headerTitle": "Content & Hook",
     "headerPlatform": "Platforms",
@@ -107,22 +93,11 @@
     "headerProgress": "Progress",
     "headerActions": "Actions",
     "unscheduled": "Unscheduled",
-    "viewAction": "View details",
-    "editAction": "Edit record",
-    "duplicateAction": "Duplicate item",
-    "archiveAction": "Archive record",
-    "deleteAction": "Delete permanently",
-    "progressLabel": "Production progress",
     "openMenu": "Open options menu",
     "copyHook": "Copy hook",
     "copied": "Copied!"
   },
   "card": {
-    "targetDate": "Target Date",
-    "format": "Format",
-    "goal": "Goal",
-    "viewDetails": "View Details",
-    "progress": "Progress",
     "unscheduled": "Unscheduled Idea"
   },
   "empty": {
@@ -134,28 +109,22 @@
     "createBtn": "New Content Record"
   },
   "loading": {
-    "loadingData": "Loading production schedule...",
-    "pleaseWait": "Updating view with Bangkok timezone calculations"
+    "loadingData": "Loading production schedule..."
   },
   "common": {
-    "localeTh": "ไทย (TH)",
-    "localeEn": "English (EN)",
     "switchLocale": "Switch Language",
     "currentLocale": "Active Language",
     "close": "Close",
     "save": "Save",
     "cancel": "Cancel",
     "today": "Today",
-    "tomorrow": "Tomorrow",
-    "yesterday": "Yesterday",
     "items": "items",
-    "item": "item"
+    "item": "item",
+    "saving": "Saving..."
   },
   "calendar": {
     "title": "Calendar",
     "subtitle": "Monthly schedule overview in Bangkok time",
-    "inDevelopment": "Calendar view is in development. Scheduled content with target publication dates will be organized here.",
-    "backToPlanner": "Back to Planner",
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
     "today": "Today",
@@ -185,8 +154,6 @@
   "ideas": {
     "title": "Idea Bank",
     "subtitle": "Quick capture concepts and inspiration",
-    "inDevelopment": "Idea Bank is in development. Fast-captured content concepts and unscheduled ideas will be organized here.",
-    "backToPlanner": "Back to Planner",
     "referenceAccountsTitle": "Reference Accounts",
     "referenceAccountsSubtitle": "Curated accounts for creative benchmarking and style inspiration",
     "newReferenceAccount": "New Reference Account",
@@ -293,14 +260,10 @@
       "descPlaceholder": "Additional instructions or notes"
     },
     "empty": "No tasks found matching your filters.",
-    "createSuccess": "Task created successfully.",
-    "updateSuccess": "Task updated successfully.",
-    "deleteSuccess": "Task deleted successfully.",
     "confirmDelete": "Are you sure you want to delete this task?",
     "save": "Save Task",
     "cancel": "Cancel",
     "standalone": "Standalone",
-    "sourceNumber": "Source #{num}",
     "type": {
       "video": "Video",
       "photo": "Photo",
@@ -323,13 +286,10 @@
       "noDueDate": "No Due Date"
     },
     "errors": {
-      "titleRequired": "Task title is required",
-      "saveFailed": "Failed to save task",
-      "deleteFailed": "Failed to delete task"
+      "titleRequired": "Task title is required"
     }
   },
   "recordModal": {
-    "createTitle": "Create Content Record",
     "editTitle": "Edit Content Record",
     "title": "Title",
     "titlePlaceholder": "e.g. 5 tips for better acoustic design",
@@ -383,11 +343,7 @@
     "errors": {
       "titleRequired": "Title is required",
       "urlInvalid": "All links must have a valid http/https URL",
-      "dateFormatInvalid": "Invalid publication date format",
-      "saveFailed": "Failed to save record",
-      "deleteFailed": "Failed to delete record",
-      "duplicateFailed": "Failed to duplicate record",
-      "archiveFailed": "Failed to archive record"
+      "dateFormatInvalid": "Invalid publication date format"
     },
     "objectivePlaceholder": "e.g. Educate audience about product features",
     "productionDetailPlaceholder": "e.g. Talking head on camera with B-roll graphics",
@@ -451,9 +407,7 @@
     },
     "errors": {
       "labelRequired": "Account name is required",
-      "urlInvalid": "Valid profile URL starting with http:// or https:// is required",
-      "saveFailed": "Failed to save reference account",
-      "deleteFailed": "Failed to delete reference account"
+      "urlInvalid": "Valid profile URL starting with http:// or https:// is required"
     }
   },
   "errors": {

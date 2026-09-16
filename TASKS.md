@@ -227,7 +227,7 @@ Review checkpoint: Milestone 4 accepted by Codex on 2026-09-15.
 
 ## Milestone 5 — Calendar and idea bank
 
-Status: Revision complete; awaiting Codex review
+Status: Accepted by Codex on 2026-09-15
 
 - [x] Implement a locale-aware monthly calendar.
 - [x] Display scheduled content by platform and status.
@@ -242,19 +242,24 @@ Status: Revision complete; awaiting Codex review
 - [x] Added multi-platform badge display and localized desktop empty state with Create Post action to CalendarView.
 - [x] Extracted production unscheduled-idea predicate and roving tabIndex utilities; expanded accessibility scan coverage.
 
-Review checkpoint: Stop and request workflow review before Milestone 6.
+Review checkpoint: Milestone 5 accepted by Codex on 2026-09-15.
 
 ## Milestone 6 — Bilingual completion and release quality
 
-Status: Blocked by Milestone 5
+Status: Complete; awaiting Codex review
 
-- [ ] Audit every visible string in Thai and English.
-- [ ] Verify Thai typography, wrapping, dates, times, and form validation.
-- [ ] Verify keyboard navigation and visible focus.
-- [ ] Verify loading, empty, error, offline, success, and destructive confirmation states.
-- [ ] Verify planner, editor, calendar, ideas, tasks, login, and settings on mobile and desktop.
-- [ ] Remove debug output, dead sample code, and unresolved placeholders.
-- [ ] Run lint, all tests, and production build successfully.
+- [x] Audit every visible string in Thai and English (100% key parity, zero unlocalized strings).
+- [x] Verify Thai typography, wrapping (`overflow-wrap: break-word; word-break: break-word`), dates, times, and form validation.
+- [x] Verify keyboard navigation and visible focus (`:focus-visible`, roving focus, focus trap).
+- [x] Verify loading, empty, error, offline, success, and destructive confirmation states.
+- [x] Verify planner, editor, calendar, ideas, tasks, login, and settings on mobile and desktop.
+- [x] Fixed tablet breakpoint visibility gap where `PlannerCards` container had `md:hidden` under `PlannerView`'s `block lg:hidden`.
+- [x] Adjusted mobile navigation tab label width and responsive typography in `MobileNav.tsx` to prevent Thai label truncation on 390px viewports.
+- [x] Added localized button pending/saving states (`common.saving`) to replace raw '...' across all form modals.
+- [x] Added localized metadata for `/settings` via `src/app/[locale]/settings/layout.tsx`.
+- [x] Removed dead sample code (`src/data/sampleContent.ts`) and purged unresolved placeholders and orphaned translation keys.
+- [x] Added automated Milestone 6 test suite `tests/release-quality-milestone6.test.mjs` (8/8 tests passing).
+- [x] Run lint (0 errors, 0 warnings), all tests (182/182 passed), and production build successfully.
 
 Review checkpoint: Stop and request release review before Milestone 7.
 

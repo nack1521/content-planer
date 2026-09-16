@@ -989,7 +989,7 @@ function RecordModalForm({
                 disabled={isPending}
                 className="px-4 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 active:bg-purple-800 rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50"
               >
-                {isPending ? '...' : t('recordModal.save')}
+                {isPending ? t('common.saving') : t('recordModal.save')}
               </button>
             </div>
           </div>

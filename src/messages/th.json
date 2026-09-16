@@ -12,8 +12,6 @@
     "calendar": "ปฏิทิน",
     "ideas": "คลังไอเดีย",
     "settings": "ตั้งค่า",
-    "collapseNav": "ย่อแถบนำทาง",
-    "expandNav": "ขยายแถบนำทาง",
     "mainNavAria": "แถบนำทางหลัก",
     "mobileNavAria": "แถบนำทางสำหรับอุปกรณ์พกพา",
     "tasks": "งานที่ต้องทำ"
@@ -32,7 +30,6 @@
     "compactToday": "วันนี้",
     "compactMonth": "เดือนนี้",
     "compactProd": "กำลังผลิต",
-    "allCount": "ทั้งหมด ({count})",
     "showMoreStages": "ทุกขั้นตอน ({count})",
     "hideStages": "ย่อขั้นตอน"
   },
@@ -50,13 +47,9 @@
     "goalLabel": "เป้าหมาย",
     "allGoals": "ทุกเป้าหมาย",
     "reset": "ล้างตัวกรอง",
-    "filterResults": "รายการที่แสดง",
-    "filterResultsPlural": "รายการที่แสดง",
     "filterSummary": "แสดง {count} จากทั้งหมด {total} รายการ",
-    "activeFilters": "ตัวกรองที่เลือก:",
     "toggleFilters": "ตัวเลือกตัวกรอง",
-    "hideFilters": "ซ่อนตัวเลือกตัวกรอง",
-    "quickFilterAria": "ตัวกรองด่วนตามสถานะ"
+    "hideFilters": "ซ่อนตัวเลือกตัวกรอง"
   },
   "status": {
     "idea": "ไอเดีย",
@@ -90,13 +83,6 @@
     "leads": "ค้นหากลุ่มลูกค้าเป้าหมาย",
     "conversion": "ยอดขายและคอนเวอร์ชัน"
   },
-  "pillars": {
-    "educational": "ให้ความรู้และทักษะ",
-    "behindTheScenes": "เบื้องหลังการทำงาน",
-    "lifestyleTips": "ไลฟ์สไตล์และทริค",
-    "productDeepDive": "เจาะลึกผลิตภัณฑ์",
-    "industryInsights": "วิเคราะห์เจาะลึกอุตสาหกรรม"
-  },
   "table": {
     "headerTitle": "คอนเทนต์และฮุกเปิดเรื่อง",
     "headerPlatform": "แพลตฟอร์ม",
@@ -107,22 +93,11 @@
     "headerProgress": "ความคืบหน้า",
     "headerActions": "การจัดการ",
     "unscheduled": "ยังไม่กำหนดวัน",
-    "viewAction": "ดูรายละเอียด",
-    "editAction": "แก้ไขข้อมูล",
-    "duplicateAction": "คัดลอกรายการ",
-    "archiveAction": "จัดเก็บรายการ",
-    "deleteAction": "ลบอย่างถาวร",
-    "progressLabel": "ความคืบหน้าการผลิต",
     "openMenu": "เปิดเมนูจัดการ",
     "copyHook": "คัดลอกฮุก",
     "copied": "คัดลอกแล้ว!"
   },
   "card": {
-    "targetDate": "กำหนดการ",
-    "format": "รูปแบบ",
-    "goal": "เป้าหมาย",
-    "viewDetails": "ดูรายละเอียด",
-    "progress": "ความคืบหน้า",
     "unscheduled": "ไอเดียรอระบุวัน"
   },
   "empty": {
@@ -134,28 +109,22 @@
     "createBtn": "สร้างรายการคอนเทนต์ใหม่"
   },
   "loading": {
-    "loadingData": "กำลังโหลดตารางการผลิตคอนเทนต์...",
-    "pleaseWait": "กำลังอัปเดตมุมมองเวลาตามโซนเวลาเอเชีย/กรุงเทพ"
+    "loadingData": "กำลังโหลดตารางการผลิตคอนเทนต์..."
   },
   "common": {
-    "localeTh": "ไทย (TH)",
-    "localeEn": "English (EN)",
     "switchLocale": "เปลี่ยนภาษา",
     "currentLocale": "ภาษาที่ใช้งาน",
     "close": "ปิด",
     "save": "บันทึก",
     "cancel": "ยกเลิก",
     "today": "วันนี้",
-    "tomorrow": "พรุ่งนี้",
-    "yesterday": "เมื่อวาน",
     "items": "รายการ",
-    "item": "รายการ"
+    "item": "รายการ",
+    "saving": "กำลังบันทึก..."
   },
   "calendar": {
     "title": "ปฏิทิน",
     "subtitle": "ภาพรวมกำหนดการเผยแพร่รายเดือนตามเวลาไทย",
-    "inDevelopment": "ระบบปฏิทินอยู่ระหว่างการพัฒนา คอนเทนต์ที่มีกำหนดวันเผยแพร่จะถูกจัดเรียงที่นี่",
-    "backToPlanner": "กลับไปยังแผนคอนเทนต์",
     "previousMonth": "เดือนก่อนหน้า",
     "nextMonth": "เดือนถัดไป",
     "today": "วันนี้",
@@ -185,8 +154,6 @@
   "ideas": {
     "title": "คลังไอเดีย",
     "subtitle": "บันทึกไอเดียคอนเทนต์และแหล่งแรงบันดาลใจ",
-    "inDevelopment": "ระบบคลังไอเดียอยู่ระหว่างการพัฒนา คอนเทนต์ที่บันทึกอย่างรวดเร็วและไอเดียที่ยังไม่กำหนดเวลาจะถูกจัดเรียงที่นี่",
-    "backToPlanner": "กลับไปยังแผนคอนเทนต์",
     "referenceAccountsTitle": "บัญชีอ้างอิงและแรงบันดาลใจ",
     "referenceAccountsSubtitle": "รวบรวมบัญชีอ้างอิงและแนวคิดคอนเทนต์สำหรับการผลิต",
     "newReferenceAccount": "เพิ่มบัญชีอ้างอิง",
@@ -293,14 +260,10 @@
       "descPlaceholder": "คำแนะนำหรือบันทึกเพิ่มเติมสำหรับงานนี้"
     },
     "empty": "ไม่พบงานที่ตรงกับเงื่อนไขการค้นหา",
-    "createSuccess": "สร้างงานใหม่เรียบร้อยแล้ว",
-    "updateSuccess": "บันทึกงานเรียบร้อยแล้ว",
-    "deleteSuccess": "ลบงานเรียบร้อยแล้ว",
     "confirmDelete": "คุณแน่ใจหรือไม่ว่าต้องการลบงานนี้?",
     "save": "บันทึกงาน",
     "cancel": "ยกเลิก",
     "standalone": "งานทั่วไป",
-    "sourceNumber": "ลำดับที่ {num}",
     "type": {
       "video": "วิดีโอ",
       "photo": "รูปภาพ",
@@ -323,13 +286,10 @@
       "noDueDate": "ไม่มีกำหนดส่ง"
     },
     "errors": {
-      "titleRequired": "กรุณากรอกชื่องานโปรดักชัน",
-      "saveFailed": "ไม่สามารถบันทึกงานได้",
-      "deleteFailed": "ไม่สามารถลบงานได้"
+      "titleRequired": "กรุณากรอกชื่องานโปรดักชัน"
     }
   },
   "recordModal": {
-    "createTitle": "สร้างรายการคอนเทนต์ใหม่",
     "editTitle": "แก้ไขรายการคอนเทนต์",
     "title": "ชื่อคอนเทนต์",
     "titlePlaceholder": "เช่น 5 เทคนิคเลือกแผ่นยิปซัมกันเสียง",
@@ -383,11 +343,7 @@
     "errors": {
       "titleRequired": "กรุณากรอกชื่อหัวข้อคอนเทนต์",
       "urlInvalid": "ลิงก์ทั้งหมดต้องขึ้นต้นด้วย http:// หรือ https://",
-      "dateFormatInvalid": "รูปแบบวันที่เผยแพร่ไม่ถูกต้อง",
-      "saveFailed": "ไม่สามารถบันทึกข้อมูลได้",
-      "deleteFailed": "ไม่สามารถลบข้อมูลได้",
-      "duplicateFailed": "ไม่สามารถคัดลอกข้อมูลได้",
-      "archiveFailed": "ไม่สามารถจัดเก็บข้อมูลได้"
+      "dateFormatInvalid": "รูปแบบวันที่เผยแพร่ไม่ถูกต้อง"
     },
     "objectivePlaceholder": "เช่น ให้ความรู้เกี่ยวกับคุณสมบัติของสินค้า",
     "productionDetailPlaceholder": "เช่น ถ่ายตอนพูดหน้ากล้อง + แทรกภาพกราฟิก",
@@ -451,9 +407,7 @@
     },
     "errors": {
       "labelRequired": "กรุณากรอกชื่อบัญชี",
-      "urlInvalid": "กรุณากรอกลิงก์โปรไฟล์ที่ถูกต้อง (ขึ้นต้นด้วย http:// หรือ https://)",
-      "saveFailed": "ไม่สามารถบันทึกบัญชีอ้างอิงได้",
-      "deleteFailed": "ไม่สามารถลบบัญชีอ้างอิงได้"
+      "urlInvalid": "กรุณากรอกลิงก์โปรไฟล์ที่ถูกต้อง (ขึ้นต้นด้วย http:// หรือ https://)"
     }
   },
   "errors": {

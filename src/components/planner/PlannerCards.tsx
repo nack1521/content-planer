@@ -26,7 +26,7 @@ export function PlannerCards({ items, onSelectItem }: PlannerCardsProps) {
   };
 
   return (
-    <div className="space-y-3 md:hidden">
+    <div className="space-y-3">
       {items.map((item) => {
         const isToday = isTodayBangkok(item.publish_at);
         const formattedSchedule = item.publish_at

@@ -90,6 +90,9 @@ async function main() {
   console.log("\n=== 6c. Running Calendar and Idea Bank Suite (Milestone 5) ===");
   runCommand(process.execPath, ["--loader", "./tests/test-loader.mjs", "tests/calendar-ideas-milestone5.test.mjs"]);
 
+  console.log("\n=== 6d. Running Bilingual Completion & Release Quality Suite (Milestone 6) ===");
+  runCommand(process.execPath, ["--loader", "./tests/test-loader.mjs", "tests/release-quality-milestone6.test.mjs"]);
+
 
   console.log("\n=== 7. Building Content Planner Application from Current Source ===");
   runCommand("npx", ["next", "build"], { env: { ...process.env, NODE_ENV: "production" } });

@@ -70,7 +70,7 @@ export function MobileNav() {
             }`}
           >
             <Icon className="w-5 h-5 mb-0.5" size={20} />
-            <span className="truncate max-w-[55px] text-[11px]">{item.label}</span>
+            <span className="truncate max-w-[68px] text-[10px] sm:text-[11px]">{item.label}</span>
           </Link>
         );
       })}

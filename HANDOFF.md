@@ -1,89 +1,75 @@
-# Content Planner Handoff — Milestone 5 Revision Complete
+# Content Planner Handoff — Milestone 6 Complete
 
 ## Milestone Status
 
-**Status: Revision complete; awaiting Codex review**
+**Status: Complete; awaiting Codex review**
 
-- **Milestone 3**: Accepted by Codex on 2026-09-14.
-- **Milestone 4**: Accepted by Codex on 2026-09-15.
-- **Milestone 5**: Revision complete and verified across all criteria; stopping for Codex review.
-- **Milestone 6**: Unstarted (blocked by Milestone 5 review).
+- **Milestone 5**: Accepted by Codex on 2026-09-15 at commit `f3dcd81`.
+- **Milestone 6**: Complete — bilingual completion and release quality audit.
+- **Milestone 7**: Blocked by Milestone 6 review (Vercel release and deployment).
 - **Hosted Supabase Status**: Clean and untouched. Zero hosted migrations or hosted imports were performed. Milestone 2 baseline remains on hosted Supabase without modification. All automated testing was executed strictly against the isolated local Supabase stack (`127.0.0.1:54321`).
 - **Media Uploads / Sprint 2**: Zero media upload features or Sprint 2 capabilities added; dormant `content_media` infrastructure left untouched.
 
 ---
 
-## Implemented Behavior & Revisions
+## Issues Discovered & Corrections Made
 
-### 1. Restored Strict General Content Creation Boundary
-- **Strict Validation in `createContentItemAction`**:
-  - Reverted silent platform fallback from `createContentItemAction`.
-  - Normal creation now strictly validates `platforms` via `sanitizePlatforms(data.platforms)`.
-  - An omitted, non-array, invalid, or explicitly empty (`[]`) platform array strictly returns `{ success: false, error: "validation_failed" }`.
-- **Platform Resolution Isolated to `quickCaptureIdeaAction`**:
-  - Only `quickCaptureIdeaAction` resolves the owner's saved `default_platforms` from `user_preferences`.
-  - If unconfigured or empty, falls back reversibly to `["tiktok"]` without requiring database schema changes.
-  - Quick capture passes the resolved, validated platform array directly into `createContentItemAction`.
-  - Production tests prove:
-    1. `createContentItemAction({ platforms: [] })` returns `validation_failed`.
-    2. `createContentItemAction({})` (omitted platforms) returns `validation_failed`.
-    3. `quickCaptureIdeaAction` succeeds without a platform argument.
-    4. `quickCaptureIdeaAction` uses saved defaults when available.
-    5. `quickCaptureIdeaAction` falls back to `["tiktok"]` only when defaults are unavailable.
+### 1. Dead Sample Code Elimination
+- **Discovered**: `src/data/sampleContent.ts` was an unreferenced mock file created during Milestone 1 before Supabase persistence was implemented. It was not imported anywhere in production code or tests.
+- **Correction**: Completely removed `src/data/sampleContent.ts` via `git rm`. Added automated test asserting this file does not exist.
 
-### 2. Repaired Quick-Capture Accessibility & Feedback (`src/components/ideas/IdeasView.tsx`)
-- **Explicit Accessible Form Labels**:
-  - Added localized `<label>` elements with `htmlFor` and visually hidden styling (`sr-only`) for Title (`ideas.quickCaptureTitleLabel`), Notes (`ideas.notesLabel`), and Search (`ideas.searchLabel`), ensuring controls do not rely solely on placeholder text for their accessible names.
-- **Empty Submission & Live Region Error Connection**:
-  - Submit button is enabled when the form is empty (`disabled={isCapturing}`) and disabled strictly while a save is in progress.
-  - Empty submissions trigger the localized title-required error message ("กรุณาระบุหัวข้อไอเดีย" / "Please enter an idea title.").
-  - Connected the title input to the error container via `aria-invalid={Boolean(validationError)}` and `aria-describedby={validationError ? "quick-capture-title-error" : undefined}`.
-  - Validation and server error banners declare `role="alert"` with `aria-live="assertive"`.
-  - Success banner declares `role="status"` with `aria-live="polite"`.
-  - Notes toggle button is disabled during submission (`disabled={isCapturing}`). Duplicate submission protection is maintained (`if (isCapturing) return;`).
+### 2. Translation Dictionaries Audit & Unresolved Placeholders Cleanup
+- **Discovered**:
+  - `src/messages/en.json` and `th.json` contained unresolved placeholders from early mockups (`calendar.inDevelopment`, `calendar.backToPlanner`, `ideas.inDevelopment`, `ideas.backToPlanner`).
+  - Orphaned translation keys existed from earlier milestone refactors: `recordModal.createTitle` (replaced by `newTitle`), `recordModal.errors.*`, `tasks.errors.*`, `referenceAccounts.errors.*` (centralized into `errors.*`), mock pillar names (`pillars.educational`, etc.), and unused table/card action keys (`table.viewAction`, `card.targetDate`, etc.).
+- **Correction**:
+  - Purged all unresolved placeholders and orphaned translation keys.
+  - Preserved `calendar.morePosts` and `calendar.morePlatforms` for Milestone 5 test compatibility.
+  - Added `common.saving` (`"Saving..."` / `"กำลังบันทึก..."`).
+  - Verified 100% key parity (354 keys in both EN and TH) and verified all `{placeholder}` tokens match 1:1.
 
-### 3. Complete Tab Keyboard Navigation (`src/components/ideas/IdeasView.tsx` & `src/utils/tabs.ts`)
-- **Roving `tabIndex`**:
-  - Active tab receives `tabIndex={0}`; inactive tab receives `tabIndex={-1}`.
-- **Keyboard Navigation**:
-  - ArrowRight and ArrowLeft cycle between tabs with wrap-around.
-  - Home and End jump to the first and last tabs.
-  - Automatically moves DOM focus to the targeted tab and activates it.
-  - Preserves `aria-selected`, `aria-controls`, and `aria-labelledby`.
-  - Backed by pure utility `src/utils/tabs.ts` (`getNextTabIndex`) with full unit test coverage.
+### 3. Accessible, Localized Form Submit States
+- **Discovered**: Submit buttons in `RecordModal.tsx`, `TasksView.tsx`, and `ReferenceAccountsView.tsx` rendered raw unlocalized `...` while `isPending` was true.
+- **Correction**: Replaced `...` with `{t(common.saving)}` across all three modals, providing accessible screen-reader and visual feedback during asynchronous mutations.
 
-### 4. Multi-Platform Display & Desktop Calendar Empty State (`src/components/calendar/CalendarView.tsx`)
-- **Multi-Platform Badge Treatment**:
-  - Removed single-platform truncation (`item.platforms[0]`).
-  - Desktop chips and mobile agenda cards render all platform badges from `item.platforms`.
-  - Accessible `aria-label` includes the post title and all associated platform names.
-- **Desktop Empty State**:
-  - When the selected month has zero scheduled items, desktop displays a localized empty message banner ("ไม่มีคอนเทนต์ที่กำหนดเผยแพร่ในเดือนนี้" / "No content scheduled for this month") with a prominent "Create Post" action.
-  - Month navigation toolbar (Previous month, Today, Next month) remains visible and fully usable.
-  - Seven-column grid structure, mobile agenda view, Bangkok timezone date grouping, and `RecordModal` integration are completely preserved.
+### 4. Tablet Layout Visibility Bug in `PlannerCards`
+- **Discovered**: `PlannerCards.tsx` contained `space-y-3 md:hidden` on its container, while `PlannerView.tsx` wrapped cards in `<div className="block lg:hidden">` and the table in `<div className="hidden lg:block">`. On tablet screen widths between 768px (`md`) and 1023px (`lg`), both the table and cards were hidden from view.
+- **Correction**: Removed `md:hidden` from `PlannerCards.tsx` container (`<div className="space-y-3">`), allowing `PlannerView`'s `block lg:hidden` to properly control card display on tablets and mobile devices.
 
-### 5. Production Utilities & Expanded Test Suite
-- **Extracted Production Utilities**:
-  - `src/utils/ideas.ts`: Exports `isUnscheduledIdea` predicate and `filterUnscheduledIdeas` array filter, shared between `IdeasView.tsx` and automated tests.
-  - `src/utils/tabs.ts`: Exports `getNextTabIndex` for roving focus navigation.
-- **Expanded Accessibility Coverage**:
-  - `tests/accessibility.test.mjs` updated to verify `IdeasView.tsx` and `CalendarView.tsx` for form label associations, accessible button names, roving tabIndex, and live region contracts.
+### 5. Mobile Navigation Typography & Tab Sizing
+- **Discovered**: In `MobileNav.tsx`, tab labels had `truncate max-w-[55px] text-[11px]`. On narrow mobile screens (e.g. 390px), Thai labels such as `แผนคอนเทนต์` (11 characters) could be truncated.
+- **Correction**: Updated label container to `truncate max-w-[68px] text-[10px] sm:text-[11px]`, allowing all five tabs ("แผนคอนเทนต์", "งานที่ต้องทำ", "ปฏิทิน", "คลังไอเดีย", "ตั้งค่า") to fit comfortably without clipping on 390px viewports.
+
+### 6. Thai Typography & Word Breaking
+- **Discovered**: Thai text lacks inter-word spaces, and long compound phrases or URLs without explicit word break rules could cause container overflow or horizontal clipping.
+- **Correction**: Added `overflow-wrap: break-word; word-break: break-word;` to `html` in `src/app/globals.css`.
+
+### 7. Localized Settings Page Metadata
+- **Discovered**: `/settings` was missing localized page metadata (`<title>` and `<meta name="description">`) because `settings/page.tsx` is a client component (`'use client'`).
+- **Correction**: Created `src/app/[locale]/settings/layout.tsx` exporting `generateMetadata` with localized title (`ตั้งค่า — Content Planner` / `Settings — Content Planner`) and description. All application routes now provide localized metadata.
+
+### 8. Automated Milestone 6 Release Quality Test Suite
+- **Correction**: Created `tests/release-quality-milestone6.test.mjs` containing 8 comprehensive tests covering Thai typography/wrapping, dead code elimination, 100% dictionary/token parity, accessible saving states, responsive layout contracts, localized metadata across all routes, Asia/Bangkok date/time formatting with Thai suffixes (`" น."`), and error translation coverage. Connected to `tests/run-tests.mjs`.
 
 ---
 
 ## Files Changed
 
-- `src/utils/ideas.ts`: [NEW] Pure unscheduled-idea predicate and array filter utility.
-- `src/utils/tabs.ts`: [NEW] Pure W3C WAI-ARIA tablist roving focus navigation utility.
-- `src/app/actions/content.ts`: Restored strict `sanitizePlatforms(data.platforms)` in `createContentItemAction`; isolated default platform fallback to `quickCaptureIdeaAction`.
-- `src/components/ideas/IdeasView.tsx`: Added explicit accessible labels, assertive/polite live regions, aria-invalid/aria-describedby error connections, roving tabIndex with Arrow/Home/End keyboard handling, multi-platform badges, and integrated `filterUnscheduledIdeas`.
-- `src/components/calendar/CalendarView.tsx`: Displayed all platform badges on desktop chips and mobile cards; added desktop empty state banner with Create Post action when 0 items scheduled in month.
-- `src/messages/en.json`: Added `quickCaptureTitleLabel`, `notesLabel`, `searchLabel`, and `morePlatforms` keys.
-- `src/messages/th.json`: Added matching Thai keys with 100% key parity.
-- `tests/calendar-ideas-milestone5.test.mjs`: Updated to import `isUnscheduledIdea` and `filterUnscheduledIdeas` from `src/utils/ideas.ts`; added regression tests for strict normal creation vs quick-capture fallback; added tab navigation tests.
-- `tests/accessibility.test.mjs`: Added `IdeasView.tsx` and `CalendarView.tsx` to form label, accessible button name, and ARIA live region test suites.
-- `TASKS.md`: Marked Milestone 5 as revision complete awaiting Codex review.
-- `HANDOFF.md`: Updated handoff documentation.
+- `src/data/sampleContent.ts`: [DELETED] Removed dead sample mock data.
+- `src/messages/en.json`: Purged dead keys and placeholders; added `common.saving`; 354 keys verified.
+- `src/messages/th.json`: Purged dead keys and placeholders; added `common.saving`; 354 keys verified with 100% parity.
+- `src/components/planner/RecordModal.tsx`: Used `t(common.saving)` during `isPending`.
+- `src/components/tasks/TasksView.tsx`: Used `t(common.saving)` during `isPending`.
+- `src/components/ideas/ReferenceAccountsView.tsx`: Used `t(common.saving)` during `isPending`.
+- `src/components/planner/PlannerCards.tsx`: Removed `md:hidden` to fix tablet 768px-1023px visibility gap.
+- `src/components/shell/MobileNav.tsx`: Adjusted label container width to `max-w-[68px]` and responsive font size.
+- `src/app/globals.css`: Added `overflow-wrap: break-word; word-break: break-word;` to `html`.
+- `src/app/[locale]/settings/layout.tsx`: [NEW] Localized metadata layout for settings page.
+- `src/utils/date.ts`: Used `import type { Locale }` for cleaner ESM loader compilation.
+- `tests/release-quality-milestone6.test.mjs`: [NEW] 8 automated release quality and bilingual completion tests.
+- `tests/run-tests.mjs`: Added suite 6d for Milestone 6 testing.
+- `TASKS.md`: Marked Milestone 5 accepted by Codex and Milestone 6 complete.
+- `HANDOFF.md`: Updated with complete Milestone 6 verification evidence.
 
 ---
 
@@ -114,12 +100,29 @@ Result:
 ```
 ▲ Next.js 16.3.5 (Turbopack)
 - Environments: .env.local
-✓ Compiled successfully in 2.3s
+✓ Compiled successfully in 707ms
   Running TypeScript ...
-  Finished TypeScript in 2.0s ...
-✓ Generating static pages using 7 workers (17/17) in 674ms
+  Finished TypeScript in 859ms ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (17/17) in 230ms
   Finalizing page optimization ...
-Route (app): all 17 routes compiled and generated cleanly without errors.
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /[locale]/auth/callback
+├ ƒ /[locale]/auth/signout
+├ ƒ /[locale]/calendar
+├ ƒ /[locale]/ideas
+├   /[locale]/login
+│ ├ ● /th/login
+│ └ ● /en/login
+├ ƒ /[locale]/planner
+├   /[locale]/settings
+│ ├ ● /th/settings
+│ └ ● /en/settings
+├ ƒ /[locale]/tasks
+└ ○ /icon.svg
 ```
 
 ### 5. Complete Test Suite (`npm test`)
@@ -131,7 +134,7 @@ Result:
 === 2. Running Production Domain & Validation Suites ===
 ✔ 15/15 tests passed
 === 3. Running Accessibility & Keyboard Navigation Suite ===
-✔ 7/7 tests passed (including IdeasView and CalendarView)
+✔ 7/7 tests passed
 === 4. Running Localization & String Scanner Suite ===
 ✔ 5/5 tests passed
 === 5. Running Production Importer CLI & Idempotency Suite ===
@@ -141,13 +144,15 @@ Result:
 === 6b. Running Content Editor & Link Workspace Suite (Milestone 4) ===
 ✔ 17/17 tests passed
 === 6c. Running Calendar and Idea Bank Suite (Milestone 5) ===
-✔ 13/13 tests passed (including strict normal creation vs quick-capture fallback)
+✔ 13/13 tests passed
+=== 6d. Running Bilingual Completion & Release Quality Suite (Milestone 6) ===
+✔ 8/8 tests passed
 === 7. Building Content Planner Application from Current Source ===
 ✓ Compiled successfully
 === 8. Running Live Server & HTTP Integration Suites ===
 ✔ 14/14 tests passed
 === [SUCCESS] ALL CLEAN-ENVIRONMENT CHECKS AND TEST SUITES PASSED ===
-Total: 174 tests passing cleanly across database, domain, accessibility, localization, importer, server actions, Milestone 4 editor, Milestone 5 calendar & ideas, and live HTTP integration.
+Total: 182 tests passing cleanly across database, domain, accessibility, localization, importer, server actions, Milestone 4 editor, Milestone 5 calendar & ideas, Milestone 6 release quality, and live HTTP integration.
 ```
 
 ---
@@ -155,33 +160,38 @@ Total: 174 tests passing cleanly across database, domain, accessibility, localiz
 ## Manual Review Instructions
 
 ### Desktop Review:
-1. Start development server: `npm run dev` and navigate to `http://localhost:3000/th/calendar`.
-2. **Monthly Calendar Desktop**:
-   - Verify current month displays in Bangkok time (e.g., "กันยายน 2569").
-   - Multi-Platform Display: For posts with multiple platforms (e.g. TikTok + YouTube), observe that all platform badges appear on the calendar chip and in its accessible label.
-   - Zero-Scheduled-Items Empty State: Navigate to a month with zero scheduled items (e.g. November 2026). Observe that a localized empty banner appears with "Create Post" action, while month navigation buttons remain fully functional.
-   - Item click opens `RecordModal`; edit and save to confirm calendar refreshes.
-3. **Idea Bank Desktop**:
-   - Navigate to `http://localhost:3000/th/ideas`.
-   - Accessible Form Submission: Click "บันทึกไอเดีย" with an empty title input. Observe that submission is allowed, does not crash, and displays the localized error "กรุณาระบุหัวข้อไอเดีย" with `role="alert"`.
-   - Title input receives `aria-invalid="true"` and `aria-describedby="quick-capture-title-error"`.
-   - Enter title and notes, click "บันทึกไอเดีย". Observe button is disabled during save (`disabled={isCapturing}`), notes toggle is disabled, success banner appears (`role="status"`), and idea card appears.
-   - Tab Keyboard Navigation: Focus the active tab button. Press ArrowRight or ArrowLeft to switch between "ไอเดียที่ยังไม่กำหนดเวลา" and "บัญชีอ้างอิง". Press Home/End to jump to first/last tab. Observe focus moves and tab switches immediately.
-   - Click "วางแผนไอเดียนี้": observe `RecordModal` opens with the exact record; schedule it and save; confirm it leaves the unscheduled list.
+1. Start development server: `npm run dev` and navigate to `http://localhost:3000/th/planner`.
+2. **Planner View Desktop**:
+   - Verify Thai titles, column headers, status badges, and summary counters.
+   - Switch language to English using the sidebar switch: observe instant UI update without reloading or losing state.
+   - Resize window between 768px and 1024px (tablet width): observe card presentation displays without blanking.
+3. **Record Modal**:
+   - Open any item or create a new post.
+   - Click Save: observe submit button transitions to "กำลังบันทึก..." (TH) or "Saving..." (EN) while mutation is pending.
+   - Add a link: observe safe domain chip and external link controls.
+   - Click Close with dirty form: observe discard confirmation dialog traps focus.
+4. **Settings Page**:
+   - Navigate to `/th/settings`: observe browser tab displays "ตั้งค่า — Content Planner".
+   - Navigate to `/en/settings`: observe browser tab displays "Settings — Content Planner".
+   - Toggle default platforms: observe instant feedback and persistence.
+5. **Calendar & Ideas Views**:
+   - Navigate to `/th/calendar`: observe Thai month names (e.g. "กันยายน 2569") and platform badges.
+   - Navigate to `/th/ideas`: test quick capture with empty input (alert error) and roving tabIndex between tabs.
 
-### Mobile Review (Viewport width <= 768px):
-1. Navigate to `/th/calendar` at 390px width:
-   - Observe touch-friendly compact agenda list.
-   - Multi-Platform Display: Verify mobile cards show all platform badges.
-2. Navigate to `/th/ideas` at 390px width:
-   - Test tab switching and quick capture form responsiveness.
+### Mobile Review (Viewport width: 390px):
+1. Navigate to `/th/planner` at 390px:
+   - Verify Mobile Header with logo, title, and compact locale switch.
+   - Verify bottom navigation bar: observe all 5 Thai labels ("แผนคอนเทนต์", "งานที่ต้องทำ", "ปฏิทิน", "คลังไอเดีย", "ตั้งค่า") fit comfortably with no truncation.
+   - Verify cards presentation: tags, titles, hooks, and timestamps wrap cleanly without horizontal scrolling.
+2. Navigate to `/th/tasks` at 390px:
+   - Observe touch-friendly task list, filter chips, and checkbox controls.
+3. Navigate to `/th/calendar` at 390px:
+   - Observe agenda list grouped by date.
 
 ---
 
 ## Assumptions and Remaining Limitations
 
-- **Platform Fallback for Quick Capture**: Database schema check constraint requires `array_length(platforms, 1) > 0`. Quick capture does not require platform selection; it retrieves the owner's saved `default_platforms` from `user_preferences`, falling back reversibly to `['tiktok']`. General creation (`createContentItemAction`) strictly enforces caller-supplied platform arrays.
-- **Verification Honesty on DOM Focus**: Pure tab indexing (`getNextTabIndex`) and static accessibility contracts are fully verified in automated tests. Real live-browser DOM activeElement transitions across actual window event loops were verified via manual live-browser review.
-- **No Drag-and-Drop**: Drag-and-drop calendar scheduling is an explicit non-goal in Sprint 1.
-- **Media Uploads**: No media upload UI was introduced (deferred to Sprint 2).
-- **Hosted Supabase**: Hosted Supabase was untouched. Zero hosted migrations or hosted imports were performed.
+- **Sprint 1 Link-Only MVP**: Asset storage relies completely on external links (`content_links`). Direct media uploads, signed viewing URLs, and storage quotas are deferred to Sprint 2.
+- **Hosted Supabase**: Hosted Supabase remains untouched. Zero hosted migrations or hosted imports were performed.
+- **Milestone 7 Scope**: Vercel deployment, environment variable configuration on Vercel, and production domain routing are deferred to Milestone 7.

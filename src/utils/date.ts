@@ -1,4 +1,4 @@
-import { Locale } from '@/types/planner';
+import type { Locale } from '@/types/planner';
 
 export const TIMEZONE = 'Asia/Bangkok';
 
