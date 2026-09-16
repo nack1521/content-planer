@@ -276,7 +276,7 @@ Status: In Progress
 - [x] Inspect hosted Supabase migration state and confirm Migration 3 (`20260914000002_add_workflow_tables.sql`) applied.
 - [x] Verify `content_links`, `production_tasks`, `reference_accounts`, and `content_items` workflow columns exist on hosted Supabase.
 - [x] Verify anonymous access remains blocked by RLS (HTTP 401 across all tables).
-- [x] Create Vercel Preview deployment (`https://content-planner-motlxvxc2-nack4.vercel.app`).
+- [x] Create Vercel Preview deployment (`https://content-planner-otp300zpj-nack4.vercel.app`) from reviewed commit `abd923e`.
 - [x] Verify route loading and redirections for Thai and English login, planner, tasks, calendar, ideas, and settings.
 - [x] Confirm public signup remains strictly disabled (`disable_signup: true`).
 - [x] Verify localized sign-out endpoints redirect to `/{locale}/login` with HTTP 303.
@@ -287,8 +287,9 @@ Status: In Progress
 - [x] Update all authorization boundaries (`sendMagicLinkAction`, auth callback route, and proxy session updater).
 - [x] Expand automated tests for multi-owner normalization, casing, whitespace, empty entries, unauthorized addresses, partial matches, missing config, and precedence (183/183 tests pass).
 - [x] Update documentation and `.env.example` without exposing real emails or secrets.
-- [ ] Complete owner authenticated smoke test on Preview deployment.
-- [ ] Update `ALLOWED_EMAILS` in Vercel project environment variables (Production, Preview, Development).
+- [x] Verify `ALLOWED_EMAILS` is configured on Vercel across Production, Preview, and Development.
+- [x] Confirm no environment values, email addresses, tokens, or private URLs appear in deployment output or client bundles.
+- [ ] Complete owner authenticated smoke test on Preview deployment (`https://content-planner-otp300zpj-nack4.vercel.app/th/login`) verifying private planner isolation per owner.
 - [ ] Deploy accepted version to Production.
 - [ ] Confirm that no secret values or private media URLs appear in client output or documentation.
 - [ ] Record deployment results in `HANDOFF.md` without secrets.

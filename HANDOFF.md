@@ -2,16 +2,40 @@
 
 ## Milestone Status
 
-**Status: In Progress — Multi-Owner Authentication & Preview Verification Complete**
+**Status: In Progress — Multi-Owner Authentication Complete; Authenticated Owner Smoke Test Pending on Preview**
 
 - **Milestone 6**: Accepted by Codex at commit `db0da61`.
 - **Milestone 7**: In Progress — Vercel release, hosted Supabase verification, and secure multi-owner authorization.
 - **Hosted Supabase Status**: Migration 3 (`20260914000002_add_workflow_tables.sql`) successfully applied by the owner. Schema verification confirmed all workflow tables (`content_links`, `production_tasks`, `reference_accounts`) and all 6 workflow columns on `content_items` are present. Row Level Security (RLS) is active on every table, blocking anonymous queries (HTTP 401).
 - **Public Signups**: Strictly disabled on hosted Supabase Auth (`disable_signup: true`, HTTP 422 for unauthorized users) and guarded at the application boundary via `isAllowedEmail`.
-- **Vercel Preview Deployment**: Deployed and verified at `https://content-planner-motlxvxc2-nack4.vercel.app`.
+- **Vercel Preview Deployment**: Deployed and verified at `https://content-planner-otp300zpj-nack4.vercel.app` (commit `abd923e`, deployment `dpl_AsXQWcrisPuNUsTAVt8QrorjRVJi`).
 - **Protection Bypass Remediation**: Compromised token revoked and rotated via Vercel Project Protection API without exposing or printing the new secret.
 
+
+### 4. New Preview Deployment & Route Verification (Commit abd923e)
+- **Preview Deployment URL**: `https://content-planner-otp300zpj-nack4.vercel.app`
+- **Deployment ID**: `dpl_AsXQWcrisPuNUsTAVt8QrorjRVJi` (Target: Preview)
+- **Vercel Environment Variables**: `ALLOWED_EMAILS` confirmed present as a secret across `Production, Preview, Development`. Legacy `ALLOWED_EMAIL` remains available as fallback.
+- **Route Loading & Security Verification**:
+  - `/th/login`: `HTTP 200 OK`
+  - `/en/login`: `HTTP 200 OK`
+  - `/th/planner`, `/en/planner`: `HTTP 307` redirect to localized `/login`
+  - `/th/tasks`, `/th/calendar`, `/th/ideas`, `/th/settings`: `HTTP 307` redirect to localized `/login`
+  - `/th/auth/callback`: `HTTP 307` redirect to localized `/login` when unauthenticated
+  - `POST /th/auth/signout`, `POST /en/auth/signout`: `HTTP 303` redirect to localized `/login`
+- **Zero-Leakage Bundle Audit**: Rendered HTML and static JavaScript chunks were audited for secrets, email addresses, service-role keys, and private tokens with 0 occurrences found.
+
+### 5. Remaining Manual Smoke-Test Steps
+1. **Supabase Redirect URLs**: Ensure `https://content-planner-otp300zpj-nack4.vercel.app/**` (or wildcard `https://*-nack4.vercel.app/**`) is listed in Supabase Dashboard -> **Authentication** -> **URL Configuration** -> **Redirect URLs**.
+2. **Authorized Supabase Accounts**: Ensure all authorized owner accounts are provisioned in **Supabase Dashboard** -> **Authentication** -> **Users** with confirmed emails.
+3. **Owner Magic-Link Sign-In**: Open `https://content-planner-otp300zpj-nack4.vercel.app/th/login` and sign in with any authorized email.
+4. **Private Planner Smoke Test**:
+   - Verify Planner, Content Editor, Links, Tasks, Calendar, Ideas, Settings, and Sign-out.
+   - Verify each authorized user has their own completely separate, private planner records governed by the `auth.uid() = user_id` RLS policies without cross-user leakage.
+5. **Production Promotion**: Once Preview verification is confirmed, promote to Production (`vercel deploy --prod`).
+
 ---
+
 
 ## Milestone 7 Updates — Secure Multiple-Owner Email Authentication
 
