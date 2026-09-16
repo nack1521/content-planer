@@ -11,6 +11,10 @@ import {
   loadAndValidateDateDecisions,
   parseSourceDatasets,
   runWorkflow,
+  ConfirmedTransactionRollbackError,
+  UnknownTransactionOutcomeError,
+  ImportCommittedVerificationIncompleteError,
+  isConfirmedEngineRollback,
 } from "../scripts/prepare-hosted-import.mjs";
 
 const SCRIPT_PATH = resolve(process.cwd(), "scripts/prepare-hosted-import.mjs");
@@ -876,9 +880,9 @@ test("Safe Rerun: Preserves user edits made in website, extra user-added links, 
 });
 
 // -----------------------------------------------------------------------------
-// 9. ERROR DIFFERENTIATION: DISTINGUISH TRANSACTION ROLLBACK FROM VERIFICATION INCOMPLETE
+// 9. ERROR DIFFERENTIATION: DISTINGUISH CONFIRMED ROLLBACK, LOST RESPONSE, AND POST-COMMIT FAILURE
 // -----------------------------------------------------------------------------
-test("Error Differentiation: In-transaction failure causes rollback, while post-commit failure reports verification incomplete without rollback", async () => {
+test("Error Differentiation: Lost response reports unknown outcome and requires reconciliation; confirmed engine rollback reports rolled back; post-commit failure reports verification incomplete", async () => {
   const { adminClient } = getLocalAdminClient();
 
   try {
@@ -886,7 +890,7 @@ test("Error Differentiation: In-transaction failure causes rollback, while post-
     await cleanSyntheticUsers(adminClient);
     await ensureSyntheticUsersExist(adminClient, true);
 
-    // Case 1: In-transaction failure causes engine rollback
+    // Case 1: Confirmed in-transaction engine failure causes engine rollback
     let rollbackErr = null;
     try {
       await runWorkflow({
@@ -904,6 +908,10 @@ test("Error Differentiation: In-transaction failure causes rollback, while post-
     }
 
     assert.ok(rollbackErr);
+    assert.ok(rollbackErr instanceof ConfirmedTransactionRollbackError);
+    assert.equal(rollbackErr.name, "ConfirmedTransactionRollbackError");
+    assert.equal(isConfirmedEngineRollback(rollbackErr.cause), true);
+    assert.equal(rollbackErr.status, "rolled_back");
     assert.match(rollbackErr.message, /\[TRANSACTION ROLLED BACK\]/);
     assert.match(rollbackErr.message, /Zero database changes were committed/);
 
@@ -915,7 +923,37 @@ test("Error Differentiation: In-transaction failure causes rollback, while post-
       assert.equal(count, 0, `Database must be empty after rollback for ${email}`);
     }
 
-    // Case 2: Post-commit failure reports verification incomplete while keeping database committed
+    // Case 2: Lost response / transport failure reports unknown outcome and requires read-only reconciliation
+    let lostResponseErr = null;
+    try {
+      await runWorkflow({
+        commit: true,
+        confirmBackup: true,
+        confirmExecution: true,
+        manifestPath: FIXTURE_MANIFEST,
+        excelPath: FIXTURE_EXCEL,
+        csvPath: FIXTURE_CSV,
+        decisionsPath: FIXTURE_DECISIONS,
+        _injectLostResponseDuringBatchImport: true,
+      });
+    } catch (err) {
+      lostResponseErr = err;
+    }
+
+    assert.ok(lostResponseErr);
+    assert.ok(lostResponseErr instanceof UnknownTransactionOutcomeError);
+    assert.equal(lostResponseErr.name, "UnknownTransactionOutcomeError");
+    assert.equal(isConfirmedEngineRollback(lostResponseErr.cause), false);
+    assert.equal(lostResponseErr.status, "unknown_outcome");
+    assert.match(lostResponseErr.message, /\[TRANSACTION STATUS UNKNOWN - RESPONSE LOST\]/);
+    assert.match(lostResponseErr.message, /CRITICAL WARNING: It cannot be determined whether the transaction committed or rolled back/);
+    assert.match(lostResponseErr.message, /Zero database changes CANNOT be claimed/);
+    assert.match(lostResponseErr.message, /Operator action required: Perform a read-only reconciliation/);
+    // MUST NOT claim rollback or zero changes committed!
+    assert.doesNotMatch(lostResponseErr.message, /\[TRANSACTION ROLLED BACK\]/);
+    assert.doesNotMatch(lostResponseErr.message, /Zero database changes were committed/);
+
+    // Case 3: Post-commit failure reports verification incomplete while keeping database committed
     let postCommitErr = null;
     try {
       await runWorkflow({
@@ -933,6 +971,7 @@ test("Error Differentiation: In-transaction failure causes rollback, while post-
     }
 
     assert.ok(postCommitErr);
+    assert.ok(postCommitErr instanceof ImportCommittedVerificationIncompleteError);
     assert.equal(postCommitErr.name, "ImportCommittedVerificationIncompleteError");
     assert.match(postCommitErr.message, /\[IMPORT COMMITTED - VERIFICATION INCOMPLETE\]/);
     assert.match(postCommitErr.message, /The database transaction was successfully COMMITTED/);
@@ -944,6 +983,289 @@ test("Error Differentiation: In-transaction failure causes rollback, while post-
       const { count } = await adminClient.from("content_items").select("*", { count: "exact", head: true }).eq("user_id", u.id);
       assert.equal(count, EXPECTED_PER_ACCOUNT.content_items, `Records must be committed in database for ${email}`);
     }
+  } finally {
+    await cleanSyntheticUsers(adminClient);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 10. SAFE RERUN VIA CLI: PRESERVES USER EDITS, ADDED RECORDS, AND CUSTOM PUBLISH DATES
+// -----------------------------------------------------------------------------
+test("Safe Rerun CLI: Default CLI safe rerun preserves website user additions, custom publish dates, and verifies appropriately", async () => {
+  const { adminClient } = getLocalAdminClient();
+
+  try {
+    await ensureSyntheticUsersExist(adminClient, true);
+    await cleanSyntheticUsers(adminClient);
+    await ensureSyntheticUsersExist(adminClient, true);
+
+    // 1. Initial import via CLI
+    const initialProc = spawnSync(
+      "node",
+      [
+        SCRIPT_PATH,
+        "--commit",
+        "--confirm-backup",
+        "--confirm-execution",
+        "--manifest", FIXTURE_MANIFEST,
+        "--excel", FIXTURE_EXCEL,
+        "--csv", FIXTURE_CSV,
+        "--decisions", FIXTURE_DECISIONS,
+        "--json",
+      ],
+      { encoding: "utf8" }
+    );
+    assert.equal(initialProc.status, 0, `Initial CLI run failed: ${initialProc.stderr || initialProc.stdout}`);
+    const initialResult = JSON.parse(initialProc.stdout);
+    assert.equal(initialResult.status, "success");
+    assert.equal(initialResult.execution_results.totals.content_items.created, EXPECTED_TOTAL.content_items);
+
+    const { data: usersData } = await adminClient.auth.admin.listUsers();
+    const owner1 = usersData.users.find((u) => u.email?.toLowerCase() === SYNTHETIC_TARGETS[0].toLowerCase());
+    assert.ok(owner1);
+
+    // 2. User Edits in Website:
+    // a) User adds a new content item record in website
+    const userAddedTitle = "Website Added Video Record";
+    const { data: addedItem, error: addErr } = await adminClient
+      .from("content_items")
+      .insert({
+        user_id: owner1.id,
+        title: userAddedTitle,
+        status: "editing",
+        platforms: ["tiktok", "youtube"],
+        progress: 50,
+        publish_at: "2026-08-15T10:00:00+00:00",
+      })
+      .select("id, title, publish_at")
+      .single();
+    assert.ifError(addErr);
+    assert.ok(addedItem);
+
+    // b) User changes publish date on imported Item #5 in website
+    const customPublishDate = "2026-11-20T14:30:00+00:00";
+    const { error: dateEditErr } = await adminClient
+      .from("content_items")
+      .update({ publish_at: customPublishDate, title: "Website Customized Title Item 5" })
+      .eq("user_id", owner1.id)
+      .eq("source_number", 5);
+    assert.ifError(dateEditErr);
+
+    // 3. Trigger Default Safe Rerun via the ACTUAL CLI (No --allow-overwrite, no JS options)
+    const rerunProc = spawnSync(
+      "node",
+      [
+        SCRIPT_PATH,
+        "--commit",
+        "--confirm-backup",
+        "--confirm-execution",
+        "--manifest", FIXTURE_MANIFEST,
+        "--excel", FIXTURE_EXCEL,
+        "--csv", FIXTURE_CSV,
+        "--decisions", FIXTURE_DECISIONS,
+        "--json",
+      ],
+      { encoding: "utf8" }
+    );
+    assert.equal(rerunProc.status, 0, `CLI rerun failed: ${rerunProc.stderr || rerunProc.stdout}`);
+    const rerunResult = JSON.parse(rerunProc.stdout);
+    assert.equal(rerunResult.status, "success");
+    assert.equal(rerunResult.execution_results.mode, "safe_rerun_preserve");
+    assert.equal(rerunResult.execution_results.totals.content_items.created, 0);
+    assert.equal(rerunResult.execution_results.totals.content_items.preserved, EXPECTED_TOTAL.content_items);
+
+    // 4. Verify Database State
+    // a) User-added record must still exist
+    const { data: userAddedAfterRerun } = await adminClient
+      .from("content_items")
+      .select("id, title, publish_at")
+      .eq("id", addedItem.id)
+      .single();
+    assert.ok(userAddedAfterRerun, "User-added item must survive CLI safe rerun");
+    assert.equal(userAddedAfterRerun.title, userAddedTitle);
+
+    // b) User customized publish date on Item #5 must be preserved (NOT reverted to source date)
+    const { data: item5AfterRerun } = await adminClient
+      .from("content_items")
+      .select("id, title, publish_at")
+      .eq("user_id", owner1.id)
+      .eq("source_number", 5)
+      .single();
+    assert.ok(item5AfterRerun);
+    assert.equal(item5AfterRerun.title, "Website Customized Title Item 5");
+    assert.equal(item5AfterRerun.publish_at, customPublishDate, "User custom publish date must survive safe rerun");
+
+    // c) Total count for Owner 1 should be expected + 1 (158 imported + 1 user-added)
+    const { count: owner1TotalItems } = await adminClient
+      .from("content_items")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", owner1.id);
+    assert.equal(owner1TotalItems, EXPECTED_PER_ACCOUNT.content_items + 1);
+  } finally {
+    await cleanSyntheticUsers(adminClient);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 11. SAFE RERUN LINKS: REMOVED AND CHANGED LINK URLS ARE NOT ADDED BACK
+// -----------------------------------------------------------------------------
+test("Safe Rerun Links: Changed or removed imported link URLs in website are not re-added; existing link IDs and user links preserved", async () => {
+  const { adminClient } = getLocalAdminClient();
+
+  try {
+    await ensureSyntheticUsersExist(adminClient, true);
+    await cleanSyntheticUsers(adminClient);
+    await ensureSyntheticUsersExist(adminClient, true);
+
+    // 1. Initial Import
+    const initRes = await runWorkflow({
+      commit: true,
+      confirmBackup: true,
+      confirmExecution: true,
+      manifestPath: FIXTURE_MANIFEST,
+      excelPath: FIXTURE_EXCEL,
+      csvPath: FIXTURE_CSV,
+      decisionsPath: FIXTURE_DECISIONS,
+    });
+    assert.equal(initRes.status, "success");
+
+    const { data: usersData } = await adminClient.auth.admin.listUsers();
+    const owner1 = usersData.users.find((u) => u.email?.toLowerCase() === SYNTHETIC_TARGETS[0].toLowerCase());
+    assert.ok(owner1);
+
+    // 2. Setup user actions on links in website:
+    // a) Pick Item #2: Remove one of its imported links
+    const { data: item2 } = await adminClient
+      .from("content_items")
+      .select("id")
+      .eq("user_id", owner1.id)
+      .eq("source_number", 2)
+      .single();
+    assert.ok(item2);
+
+    const { data: item2Links } = await adminClient
+      .from("content_links")
+      .select("id, url")
+      .eq("user_id", owner1.id)
+      .eq("content_item_id", item2.id)
+      .order("sort_order");
+    assert.ok(item2Links && item2Links.length > 0);
+    const removedLink = item2Links[0];
+    const removedUrl = removedLink.url;
+
+    // Simulate user removing the link in website:
+    const { error: delErr } = await adminClient.from("content_links").delete().eq("id", removedLink.id);
+    assert.ifError(delErr);
+
+    // b) Pick Item #3: Change an imported link's URL in website
+    const { data: item3 } = await adminClient
+      .from("content_items")
+      .select("id")
+      .eq("user_id", owner1.id)
+      .eq("source_number", 3)
+      .single();
+    assert.ok(item3);
+
+    const { data: item3Links } = await adminClient
+      .from("content_links")
+      .select("id, url")
+      .eq("user_id", owner1.id)
+      .eq("content_item_id", item3.id)
+      .order("sort_order");
+    assert.ok(item3Links && item3Links.length > 0);
+    const modifiedLinkId = item3Links[0].id;
+    const oldUrlBeforeChange = item3Links[0].url;
+    const newChangedUrl = "https://tiktok.com/@gypstore/video/changed-in-website-by-user-12345";
+
+    // Simulate user modifying the link URL in website:
+    const { error: updateLinkErr } = await adminClient
+      .from("content_links")
+      .update({ url: newChangedUrl })
+      .eq("id", modifiedLinkId);
+    assert.ifError(updateLinkErr);
+
+    // c) Pick Item #4: Add a user-added link in website
+    const { data: item4 } = await adminClient
+      .from("content_items")
+      .select("id")
+      .eq("user_id", owner1.id)
+      .eq("source_number", 4)
+      .single();
+    assert.ok(item4);
+
+    const userAddedLinkUrl = "https://custom.example.test/user-added-custom-link-video";
+    const { data: userAddedLink, error: addLinkErr } = await adminClient
+      .from("content_links")
+      .insert({
+        user_id: owner1.id,
+        content_item_id: item4.id,
+        link_type: "asset",
+        platform: "tiktok",
+        url: userAddedLinkUrl,
+        label: "User Added Custom Link",
+        sort_order: 88,
+      })
+      .select("id")
+      .single();
+    assert.ifError(addLinkErr);
+    const userAddedLinkId = userAddedLink.id;
+
+    // 3. Execute Default Safe Rerun via CLI (invoking actual CLI binary)
+    const rerunProc = spawnSync(
+      "node",
+      [
+        SCRIPT_PATH,
+        "--commit",
+        "--confirm-backup",
+        "--confirm-execution",
+        "--manifest", FIXTURE_MANIFEST,
+        "--excel", FIXTURE_EXCEL,
+        "--csv", FIXTURE_CSV,
+        "--decisions", FIXTURE_DECISIONS,
+        "--json",
+      ],
+      { encoding: "utf8" }
+    );
+    assert.equal(rerunProc.status, 0, `Safe rerun CLI failed: ${rerunProc.stderr || rerunProc.stdout}`);
+    const rerunResult = JSON.parse(rerunProc.stdout);
+    assert.equal(rerunResult.status, "success");
+    assert.equal(rerunResult.execution_results.mode, "safe_rerun_preserve");
+
+    // 4. Assertions:
+    // a) Removed link URL must NOT be added back
+    const { data: checkRemoved } = await adminClient
+      .from("content_links")
+      .select("id, url")
+      .eq("user_id", owner1.id)
+      .eq("content_item_id", item2.id)
+      .eq("url", removedUrl);
+    assert.equal(checkRemoved.length, 0, "Removed link URL must NOT be resurrected by safe rerun!");
+
+    // b) Changed link URL must be preserved, link ID must be preserved, old URL must NOT be added back
+    const { data: checkModified } = await adminClient
+      .from("content_links")
+      .select("id, url")
+      .eq("id", modifiedLinkId)
+      .single();
+    assert.ok(checkModified, "Existing link ID must be preserved!");
+    assert.equal(checkModified.url, newChangedUrl, "User-modified link URL must be preserved!");
+
+    const { data: checkOldUrl } = await adminClient
+      .from("content_links")
+      .select("id, url")
+      .eq("user_id", owner1.id)
+      .eq("content_item_id", item3.id)
+      .eq("url", oldUrlBeforeChange);
+    assert.equal(checkOldUrl.length, 0, "Old URL that user replaced must NOT be added back by safe rerun!");
+
+    // c) User-added link must be preserved with its ID
+    const { data: checkUserAdded } = await adminClient
+      .from("content_links")
+      .select("id, url")
+      .eq("id", userAddedLinkId)
+      .single();
+    assert.ok(checkUserAdded, "User-added link must be preserved!");
+    assert.equal(checkUserAdded.url, userAddedLinkUrl);
   } finally {
     await cleanSyntheticUsers(adminClient);
   }

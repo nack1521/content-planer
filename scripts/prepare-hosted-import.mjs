@@ -71,6 +71,99 @@ export const EXPECTED_TOTAL = Object.freeze({
   production_tasks: 48,
 });
 
+export class ConfirmedTransactionRollbackError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "ConfirmedTransactionRollbackError";
+    this.status = "rolled_back";
+  }
+}
+
+export class UnknownTransactionOutcomeError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "UnknownTransactionOutcomeError";
+    this.status = "unknown_outcome";
+  }
+}
+
+export class ImportCommittedVerificationIncompleteError extends Error {
+  constructor(message, batchResult = null) {
+    super(message);
+    this.name = "ImportCommittedVerificationIncompleteError";
+    this.status = "committed_verification_incomplete";
+    this.batchResult = batchResult;
+  }
+}
+
+export function isConfirmedEngineRollback(err) {
+  if (!err) return false;
+
+  const msg = (err.message || "").toLowerCase();
+  const name = (err.name || "").toLowerCase();
+  const code = (err.code || "").toString();
+
+  // Explicit network / transport / timeout indicators indicate outcome is UNKNOWN
+  if (
+    err.isNetworkError === true ||
+    err.isTimeout === true ||
+    msg.includes("fetch failed") ||
+    msg.includes("econnreset") ||
+    msg.includes("etimedout") ||
+    msg.includes("econnrefused") ||
+    msg.includes("socket hang up") ||
+    msg.includes("network error") ||
+    msg.includes("connection reset") ||
+    msg.includes("timeout") ||
+    msg.includes("timed out") ||
+    msg.includes("bad gateway") ||
+    msg.includes("gateway timeout") ||
+    msg.includes("service unavailable") ||
+    msg.includes("abort") ||
+    name.includes("abort") ||
+    name.includes("timeout") ||
+    code === "ECONNRESET" ||
+    code === "ETIMEDOUT" ||
+    code === "ECONNREFUSED" ||
+    code === "UND_ERR_CONNECT_TIMEOUT" ||
+    code === "502" ||
+    code === "503" ||
+    code === "504"
+  ) {
+    return false;
+  }
+
+  // Explicit confirmation in test or simulation
+  if (err.isConfirmedRollback === true) {
+    return true;
+  }
+
+  // Postgres SQLSTATE codes are standard 5-character alphanumeric strings
+  if (typeof err.code === "string" && /^[0-9A-Za-z]{5}$/.test(err.code)) {
+    return true;
+  }
+
+  // PostgREST Postgres error objects have details and hint properties alongside message
+  if (err.details !== undefined && err.hint !== undefined && (err.code || err.message)) {
+    return true;
+  }
+
+  // Postgres exception prefix in message if code was stripped
+  if (
+    msg.includes("raise exception") ||
+    msg.includes("plpgsql") ||
+    msg.includes("verification_failed") ||
+    msg.includes("simulated_failure") ||
+    msg.includes("auth_guard") ||
+    msg.includes("invalid_payload")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+
 export function isValidCalendarDate(val) {
   if (typeof val !== "string") return false;
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(val.trim());
@@ -388,6 +481,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     targetEmails: null,
     json: false,
     allowOverwrite: false,
+    isRerun: false,
   };
 
   const allowedFlags = new Set([
@@ -402,6 +496,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     "--target-emails",
     "--json",
     "--allow-overwrite",
+    "--rerun",
     "--help",
     "-h",
   ]);
@@ -434,6 +529,8 @@ export function parseArgs(argv = process.argv.slice(2)) {
       options.json = true;
     } else if (arg === "--allow-overwrite") {
       options.allowOverwrite = true;
+    } else if (arg === "--rerun") {
+      options.isRerun = true;
     } else if (arg === "--help" || arg === "-h") {
       console.log(`
 Usage: node scripts/prepare-hosted-import.mjs [options]
@@ -448,6 +545,7 @@ Options:
   --confirm-execution      Explicit confirmation of final import execution
   --target-emails <list>   Comma-separated list of target emails (must match approved manifest targets)
   --allow-overwrite        Explicitly approve overwriting existing content (default: false, preserves user edits)
+  --rerun                  Explicitly indicate a rerun (auto-detected if records exist; safe rerun preserves edits)
   --local                  Assert execution must resolve strictly to 127.0.0.1 or localhost
   --json                   Output structured JSON report
   --help, -h               Show this help message
@@ -612,13 +710,27 @@ export async function runWorkflow(options = {}) {
   const userCheck = await verifyAuthUsersExist(adminClient, targetEmails);
 
   // 8. SINGLE-TRANSACTION ATOMIC BATCH IMPORT
+  // Auto-detect rerun if any target user already has existing content items
+  let isRerun = Boolean(options.isRerun);
+  if (!isRerun) {
+    const targetUserIds = Array.from(userCheck.userMap.values());
+    const { count: existingItemsCount, error: countErr } = await adminClient
+      .from("content_items")
+      .select("*", { count: "exact", head: true })
+      .in("user_id", targetUserIds);
+    if (!countErr && (existingItemsCount || 0) > 0) {
+      isRerun = true;
+    }
+  }
+
   const allowOverwrite = Boolean(options.allowOverwrite);
-  const allowExtraRecords = Boolean(options.allowExtraRecords);
-  const verifyDateDecisions = options.verifyDateDecisions !== false;
+  const allowExtraRecords = options.allowExtraRecords !== undefined ? Boolean(options.allowExtraRecords) : isRerun;
+  const verifyDateDecisions = options.verifyDateDecisions !== undefined ? Boolean(options.verifyDateDecisions) : (!isRerun || allowOverwrite);
 
   // Prepare payload for database-side execution inside a genuine PostgreSQL transaction
   const batchPayload = {
     owners: [],
+    is_rerun: isRerun,
     allow_overwrite: allowOverwrite,
     allow_extra_records: allowExtraRecords,
     verify_date_decisions: verifyDateDecisions,
@@ -733,17 +845,35 @@ export async function runWorkflow(options = {}) {
   // Execute genuine single PostgreSQL transaction via RPC
   let batchResult;
   try {
+    if (options._injectLostResponseDuringBatchImport) {
+      const lostResponseErr = new Error("fetch failed: socket hang up");
+      lostResponseErr.name = "FetchError";
+      lostResponseErr.code = "ECONNRESET";
+      lostResponseErr.isNetworkError = true;
+      throw lostResponseErr;
+    }
+
     const { data, error } = await adminClient.rpc("import_controlled_batch", {
       p_payload: batchPayload,
     });
     if (error) throw error;
     batchResult = data;
   } catch (txErr) {
-    // TRANSACTION ROLLED BACK: PostgreSQL engine aborted the transaction.
-    // Zero database changes persisted.
-    throw new Error(
-      `[TRANSACTION ROLLED BACK] The single-transaction database batch import failed and was completely rolled back by PostgreSQL: ${txErr.message}. Zero database changes were committed.`
-    );
+    if (isConfirmedEngineRollback(txErr)) {
+      const err = new ConfirmedTransactionRollbackError(
+        `[TRANSACTION ROLLED BACK] The single-transaction database batch import failed and was completely rolled back by PostgreSQL: ${txErr.message}. Zero database changes were committed.`
+      );
+      err.cause = txErr;
+      throw err;
+    } else {
+      const err = new UnknownTransactionOutcomeError(
+        `[TRANSACTION STATUS UNKNOWN - RESPONSE LOST] The database call failed to receive a confirmed response: ${txErr.message}.\n` +
+        `CRITICAL WARNING: It cannot be determined whether the transaction committed or rolled back. Zero database changes CANNOT be claimed.\n` +
+        `Operator action required: Perform a read-only reconciliation of the target database state before taking any further action.`
+      );
+      err.cause = txErr;
+      throw err;
+    }
   }
 
   // AT THIS POINT: The transaction has successfully COMMITTED.
@@ -798,7 +928,7 @@ export async function runWorkflow(options = {}) {
         if (items.length < EXPECTED_PER_ACCOUNT.content_items) {
           throw new Error(`Content items count below expected: expected at least ${EXPECTED_PER_ACCOUNT.content_items}, found ${items.length}.`);
         }
-        if (links.length < EXPECTED_PER_ACCOUNT.content_links) {
+        if (!isRerun && links.length < EXPECTED_PER_ACCOUNT.content_links) {
           throw new Error(`Content links count below expected: expected at least ${EXPECTED_PER_ACCOUNT.content_links}, found ${links.length}.`);
         }
         if (tasks.length < EXPECTED_PER_ACCOUNT.production_tasks) {
@@ -827,6 +957,16 @@ export async function runWorkflow(options = {}) {
       for (const l of links) if (l.user_id !== targetUserId) throw new Error("Content link belongs to incorrect owner.");
       for (const t of tasks) if (t.user_id !== targetUserId) throw new Error("Production task belongs to incorrect owner.");
       for (const a of accounts) if (a.user_id !== targetUserId) throw new Error("Reference account belongs to incorrect owner.");
+
+      // Verify that all original source items exist in the database for this owner
+      const itemsBySourceNum = new Map(
+        items.filter((i) => i.source_number !== null && i.source_number !== undefined).map((i) => [i.source_number, i])
+      );
+      for (const candidate of excel.auto_candidates) {
+        if (!itemsBySourceNum.has(candidate.source_number)) {
+          throw new Error(`Imported source item #${candidate.source_number} missing from database for owner.`);
+        }
+      }
 
       // Verify exact date decision application for imported items (unless date verification skipped on custom rerun)
       if (verifyDateDecisions) {
@@ -861,15 +1001,14 @@ export async function runWorkflow(options = {}) {
       `[IMPORT COMMITTED - VERIFICATION INCOMPLETE] The database transaction was successfully COMMITTED, but post-commit verification failed: ${postCommitErr.message}.\n` +
       `CRITICAL STATE: Records WERE written and committed to the database. A transaction rollback did NOT occur (and cannot occur after commit).\n` +
       `Do NOT execute a blind re-import without verifying current database state.`;
-    const err = new Error(msg);
-    err.name = "ImportCommittedVerificationIncompleteError";
-    err.status = "committed_verification_incomplete";
-    err.batchResult = batchResult;
+    const err = new ImportCommittedVerificationIncompleteError(msg, batchResult);
+    err.cause = postCommitErr;
     throw err;
   }
 
+  const executionMode = allowOverwrite ? "overwrite" : (isRerun ? "safe_rerun_preserve" : "initial_import");
   report.execution_results = {
-    mode: allowOverwrite ? "overwrite" : "safe_preserve",
+    mode: executionMode,
     totals: {
       content_items: {
         created: batchResult.items_created,
@@ -911,7 +1050,9 @@ export async function runWorkflow(options = {}) {
     batchResult.accs_updated;
   report.verdict = allowOverwrite
     ? "Single-transaction commit (overwrite mode) and post-write verification completed successfully for all owner accounts."
-    : "Single-transaction commit (safe preserve mode) and post-write verification completed successfully for all owner accounts.";
+    : (isRerun
+      ? "Single-transaction commit (safe rerun preserve mode) and post-write verification completed successfully for all owner accounts."
+      : "Single-transaction commit (initial import mode) and post-write verification completed successfully for all owner accounts.");
   return report;
 }
 

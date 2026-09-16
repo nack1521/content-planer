@@ -312,6 +312,10 @@ Status: In Progress
 - [x] Require explicit `--allow-overwrite` flag to overwrite existing records during reruns.
 - [x] Unambiguously distinguish `[TRANSACTION ROLLED BACK]` (zero database changes committed) from `[IMPORT COMMITTED - VERIFICATION INCOMPLETE]` (data persisted and committed, rollback did not occur).
 - [x] Expand automated test suite (`tests/hosted-import-prep.test.mjs`, 16 tests) proving website edits, extra links, and link IDs survive, and verifying error differentiation (199/199 tests pass).
+- [x] Distinguish lost response / transport failures from confirmed rollbacks: report outcome as unknown (`[TRANSACTION STATUS UNKNOWN - RESPONSE LOST]`) and require read-only reconciliation without claiming rollback or zero changes committed; reserve `[TRANSACTION ROLLED BACK]` strictly for confirmed database engine failures.
+- [x] Make safe reruns work directly through the actual CLI command (auto-detecting rerun state without relying on test-only JS options), preserving website user-added records and custom publish dates with appropriate verification.
+- [x] Ensure safe reruns do not add back imported link URLs changed or removed by the user in the website, preserving existing link IDs and user-added links.
+- [x] Expand automated tests (`tests/hosted-import-prep.test.mjs`, 18 tests) covering lost response outcome, default CLI safe rerun preserving website records & dates, and link change/deletion preservation (201/201 tests pass).
 - [ ] Verify hosted Supabase target auth users are created and confirmed before import execution.
 - [ ] Obtain verified database backup confirmation and explicit execution confirmation before hosted commit.
 - [ ] Complete owner authenticated smoke test on Preview deployment (`https://content-planner-otp300zpj-nack4.vercel.app/th/login`) verifying private planner isolation per owner.

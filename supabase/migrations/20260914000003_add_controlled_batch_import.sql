@@ -4,10 +4,12 @@
 -- Guarantees:
 -- 1. Atomic all-or-nothing execution across all target owners and all tables
 --    (content_items, content_links, production_tasks, reference_accounts, content_pillars).
--- 2. Safe reruns: preserves website user edits, extra links, and link IDs by default;
---    only overwrites when explicit allow_overwrite parameter is true.
--- 3. In-transaction authoritative verification before commit.
--- 4. Automatic engine-level rollback on any constraint, validation, or injected failure.
+-- 2. Safe reruns: preserves website user edits, custom publish dates, extra links,
+--    and existing link IDs. If a user changes or removes an imported link URL in the
+--    website, a safe rerun does NOT add the old URL back.
+-- 3. Overwrites only when explicit allow_overwrite parameter is true.
+-- 4. In-transaction authoritative verification before commit.
+-- 5. Automatic engine-level rollback on any constraint, validation, or injected failure.
 -- =============================================================================
 
 create or replace function public.import_controlled_batch(p_payload jsonb)
@@ -26,6 +28,8 @@ declare
   v_allow_overwrite boolean := false;
   v_allow_extra_records boolean := false;
   v_verify_dates boolean := true;
+  v_is_rerun boolean := false;
+  v_item_already_existed boolean := false;
 
   v_item jsonb;
   v_item_id uuid;
@@ -54,6 +58,7 @@ declare
   v_link_url text;
   v_link_label text;
   v_link_sort_order integer;
+  v_item_link_count integer;
 
   v_task jsonb;
   v_task_id uuid;
@@ -114,13 +119,14 @@ begin
     v_fail_owner_index := null;
   end if;
 
+  v_is_rerun := coalesce((p_payload->>'is_rerun')::boolean, false);
   v_allow_overwrite := coalesce((p_payload->>'allow_overwrite')::boolean, false);
   v_allow_extra_records := coalesce(
     (p_payload->'expected'->>'allow_extra_records')::boolean,
     (p_payload->>'allow_extra_records')::boolean,
-    false
+    v_is_rerun
   );
-  v_verify_dates := coalesce((p_payload->>'verify_date_decisions')::boolean, true);
+  v_verify_dates := coalesce((p_payload->>'verify_date_decisions')::boolean, (not v_is_rerun) or v_allow_overwrite);
 
   -- Process each target owner
   for v_owner in select * from jsonb_array_elements(p_payload->'owners') loop
@@ -186,6 +192,8 @@ begin
         from public.content_items
         where user_id = v_user_id and source_number = v_source_number;
 
+        v_item_already_existed := (v_item_id is not null);
+
         if v_item_id is not null then
           if v_allow_overwrite then
             -- Overwrite existing item when explicitly approved
@@ -211,7 +219,7 @@ begin
 
             v_items_updated := v_items_updated + 1;
           else
-            -- Safe rerun: PRESERVE existing content item and user edits
+            -- Safe rerun: PRESERVE existing content item and user edits (including custom publish dates)
             v_items_preserved := v_items_preserved + 1;
           end if;
         else
@@ -261,58 +269,67 @@ begin
           v_items_created := v_items_created + 1;
         end if;
 
-        -- Non-destructive link reconciliation:
-        -- Never deletes existing links or user-added links. Preserves existing link IDs.
-        if v_item ? 'links' and (v_item->'links') is not null then
-          for v_link in select * from jsonb_array_elements(v_item->'links') loop
-            v_link_type := v_link->>'link_type';
-            v_link_platform := nullif(trim(v_link->>'platform'), '');
-            v_link_url := trim(v_link->>'url');
-            v_link_label := nullif(trim(v_link->>'label'), '');
-            v_link_sort_order := coalesce((v_link->>'sort_order')::integer, 0);
+        -- Link handling:
+        -- Requirement 3: If a user changes or removes an imported link URL in the website,
+        -- a safe rerun must NOT add the old URL back. Preserve existing link IDs and user-added links.
+        if v_item_already_existed and not v_allow_overwrite then
+          -- Existing item during safe rerun: DO NOT modify links or add old URLs back!
+          -- Count existing links on this item as preserved
+          select count(*) into v_item_link_count
+          from public.content_links
+          where user_id = v_user_id and content_item_id = v_item_id;
 
-            -- Check if link with this exact URL already exists on this item
-            select id into v_existing_link_id
-            from public.content_links
-            where user_id = v_user_id and content_item_id = v_item_id and url = v_link_url;
+          v_links_preserved := v_links_preserved + v_item_link_count;
+        else
+          -- Brand new item OR explicit overwrite approved:
+          if v_item ? 'links' and (v_item->'links') is not null then
+            for v_link in select * from jsonb_array_elements(v_item->'links') loop
+              v_link_type := v_link->>'link_type';
+              v_link_platform := nullif(trim(v_link->>'platform'), '');
+              v_link_url := trim(v_link->>'url');
+              v_link_label := nullif(trim(v_link->>'label'), '');
+              v_link_sort_order := coalesce((v_link->>'sort_order')::integer, 0);
 
-            if v_existing_link_id is not null then
-              -- Existing link ID survives!
-              if v_allow_overwrite then
-                update public.content_links set
-                  link_type = v_link_type,
-                  platform = v_link_platform,
-                  label = v_link_label,
-                  sort_order = v_link_sort_order
-                where id = v_existing_link_id and user_id = v_user_id;
+              select id into v_existing_link_id
+              from public.content_links
+              where user_id = v_user_id and content_item_id = v_item_id and url = v_link_url;
 
-                v_links_updated := v_links_updated + 1;
+              if v_existing_link_id is not null then
+                if v_allow_overwrite then
+                  update public.content_links set
+                    link_type = v_link_type,
+                    platform = v_link_platform,
+                    label = v_link_label,
+                    sort_order = v_link_sort_order
+                  where id = v_existing_link_id and user_id = v_user_id;
+
+                  v_links_updated := v_links_updated + 1;
+                else
+                  v_links_preserved := v_links_preserved + 1;
+                end if;
               else
-                v_links_preserved := v_links_preserved + 1;
-              end if;
-            else
-              -- Missing link from import: insert
-              insert into public.content_links (
-                user_id,
-                content_item_id,
-                link_type,
-                platform,
-                url,
-                label,
-                sort_order
-              ) values (
-                v_user_id,
-                v_item_id,
-                v_link_type,
-                v_link_platform,
-                v_link_url,
-                v_link_label,
-                v_link_sort_order
-              );
+                insert into public.content_links (
+                  user_id,
+                  content_item_id,
+                  link_type,
+                  platform,
+                  url,
+                  label,
+                  sort_order
+                ) values (
+                  v_user_id,
+                  v_item_id,
+                  v_link_type,
+                  v_link_platform,
+                  v_link_url,
+                  v_link_label,
+                  v_link_sort_order
+                );
 
-              v_links_created := v_links_created + 1;
-            end if;
-          end loop;
+                v_links_created := v_links_created + 1;
+              end if;
+            end loop;
+          end if;
         end if;
 
       end loop;
@@ -469,7 +486,7 @@ begin
       end if;
     end if;
 
-    if v_expected_links is not null then
+    if v_expected_links is not null and not v_is_rerun then
       if v_allow_extra_records then
         if v_actual_links < v_expected_links then
           raise exception 'VERIFICATION_FAILED: Content links count below expected for owner %: expected at least %, actual %',

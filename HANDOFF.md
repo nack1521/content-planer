@@ -273,7 +273,7 @@ Result:
 === 8. Running Live Server & HTTP Integration Suites ===
 ✔ 14/14 tests passed
 === [SUCCESS] ALL CLEAN-ENVIRONMENT CHECKS AND TEST SUITES PASSED ===
-Total: 199 tests passing cleanly across pgTAP database suite (85 tests) and application test suites (114 tests: domain validation 15, accessibility 7, localization scanner 5, local importer 10, hosted import preparation 16, server actions 8, Milestone 4 editor 17, Milestone 5 calendar & ideas 13, Milestone 6 release quality 9, and live HTTP integration 14).
+Total: 201 tests passing cleanly across pgTAP database suite (85 tests) and application test suites (116 tests: domain validation 15, accessibility 7, localization scanner 5, local importer 10, hosted import preparation 18, server actions 8, Milestone 4 editor 17, Milestone 5 calendar & ideas 13, Milestone 6 release quality 9, and live HTTP integration 14).
 ```
 
 ---
