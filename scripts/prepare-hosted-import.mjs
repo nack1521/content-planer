@@ -974,7 +974,8 @@ export async function runWorkflow(options = {}) {
   const isRerun = Boolean(options.isRerun || collisionPreflight.isRerun);
 
   const allowOverwrite = Boolean(options.allowOverwrite);
-  const allowExtraRecords = options.allowExtraRecords !== undefined ? Boolean(options.allowExtraRecords) : isRerun;
+  const hasExistingContent = collisionPreflight.accountReports?.some((a) => a.totalItems > 0);
+  const allowExtraRecords = options.allowExtraRecords !== undefined ? Boolean(options.allowExtraRecords) : (isRerun || hasExistingContent);
   const verifyDateDecisions = options.verifyDateDecisions !== undefined ? Boolean(options.verifyDateDecisions) : (!isRerun || allowOverwrite);
 
   // Prepare payload for database-side execution inside a genuine PostgreSQL transaction
@@ -1173,11 +1174,19 @@ export async function runWorkflow(options = {}) {
       const tasks = tasksRes.data || [];
       const accounts = accsRes.data || [];
 
-      // Count verification
+      // Verify 158 newly imported numbered items per account, rather than requiring exactly 158 total items
+      const numberedItems = items.filter((i) => i.source_number !== null && i.source_number !== undefined);
+      if (numberedItems.length !== EXPECTED_PER_ACCOUNT.content_items) {
+        throw new Error(
+          `Numbered content items count mismatch: expected ${EXPECTED_PER_ACCOUNT.content_items} numbered items, found ${numberedItems.length}.`
+        );
+      }
+      if (items.length < EXPECTED_PER_ACCOUNT.content_items) {
+        throw new Error(`Content items count below expected: expected at least ${EXPECTED_PER_ACCOUNT.content_items}, found ${items.length}.`);
+      }
+
+      // Count verification for auxiliary tables
       if (allowExtraRecords) {
-        if (items.length < EXPECTED_PER_ACCOUNT.content_items) {
-          throw new Error(`Content items count below expected: expected at least ${EXPECTED_PER_ACCOUNT.content_items}, found ${items.length}.`);
-        }
         if (!isRerun && links.length < EXPECTED_PER_ACCOUNT.content_links) {
           throw new Error(`Content links count below expected: expected at least ${EXPECTED_PER_ACCOUNT.content_links}, found ${links.length}.`);
         }
@@ -1188,9 +1197,6 @@ export async function runWorkflow(options = {}) {
           throw new Error(`Reference accounts count below expected: expected at least ${EXPECTED_PER_ACCOUNT.reference_accounts}, found ${accounts.length}.`);
         }
       } else {
-        if (items.length !== EXPECTED_PER_ACCOUNT.content_items) {
-          throw new Error(`Content items count mismatch: expected ${EXPECTED_PER_ACCOUNT.content_items}, found ${items.length}.`);
-        }
         if (links.length !== EXPECTED_PER_ACCOUNT.content_links) {
           throw new Error(`Content links count mismatch: expected ${EXPECTED_PER_ACCOUNT.content_links}, found ${links.length}.`);
         }

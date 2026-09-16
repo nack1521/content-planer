@@ -1617,3 +1617,111 @@ test("Preflight Collision Provenance: Full set of 158 colliding records with onl
     await cleanSyntheticUsers(adminClient);
   }
 });
+
+// -----------------------------------------------------------------------------
+// 15. INITIAL IMPORT PRESERVES PRE-EXISTING UNNUMBERED ITEM ON ACCOUNT 2
+// -----------------------------------------------------------------------------
+test("Initial Import: Preserves unnumbered item on account 2 and verifies 158 numbered items (account 2 has 159 total, accounts 1 and 3 have 158)", async () => {
+  const { adminClient } = getLocalAdminClient();
+
+  try {
+    await ensureSyntheticUsersExist(adminClient, true);
+    await cleanSyntheticUsers(adminClient);
+    await ensureSyntheticUsersExist(adminClient, true);
+
+    const { data: usersData } = await adminClient.auth.admin.listUsers();
+    const owner1 = usersData.users.find((u) => u.email?.toLowerCase() === SYNTHETIC_TARGETS[0].toLowerCase());
+    const owner2 = usersData.users.find((u) => u.email?.toLowerCase() === SYNTHETIC_TARGETS[1].toLowerCase());
+    const owner3 = usersData.users.find((u) => u.email?.toLowerCase() === SYNTHETIC_TARGETS[2].toLowerCase());
+    assert.ok(owner1 && owner2 && owner3);
+
+    // Seed account 2 with exactly 1 existing item with no source number (e.g. web-created idea)
+    const { data: seededItem, error: seedErr } = await adminClient
+      .from("content_items")
+      .insert({
+        user_id: owner2.id,
+        title: "Account 2 Web-Created Idea Without Source Number",
+        status: "idea",
+        platforms: ["tiktok", "instagram"],
+        source_number: null,
+      })
+      .select()
+      .single();
+    assert.ifError(seedErr);
+    assert.ok(seededItem?.id);
+
+    // 1. Run read-only preflight check
+    const preflightReport = await runWorkflow({
+      preflight: true,
+      manifestPath: FIXTURE_MANIFEST,
+      excelPath: FIXTURE_EXCEL,
+      csvPath: FIXTURE_CSV,
+      decisionsPath: FIXTURE_DECISIONS,
+    });
+    assert.equal(preflightReport.mode, "preflight-only");
+    assert.equal(preflightReport.database_writes_performed, 0);
+    assert.equal(preflightReport.collision_check.can_proceed_to_import, true);
+    assert.equal(preflightReport.collision_check.has_collisions, false);
+    assert.equal(preflightReport.collision_check.account_summaries[0].total_items, 0);
+    assert.equal(preflightReport.collision_check.account_summaries[1].total_items, 1);
+    assert.equal(preflightReport.collision_check.account_summaries[1].items_with_source_number, 0);
+    assert.equal(preflightReport.collision_check.account_summaries[2].total_items, 0);
+
+    // 2. Run initial commit import
+    const importRes = await runWorkflow({
+      commit: true,
+      confirmBackup: true,
+      confirmExecution: true,
+      manifestPath: FIXTURE_MANIFEST,
+      excelPath: FIXTURE_EXCEL,
+      csvPath: FIXTURE_CSV,
+      decisionsPath: FIXTURE_DECISIONS,
+    });
+    assert.equal(importRes.status, "success");
+    assert.equal(importRes.execution_results.totals.content_items.created, 474);
+
+    // 3. Authoritative post-import database verification per account:
+    // Owner 1: exactly 158 total items, all 158 numbered
+    const { data: owner1Items, error: o1Err } = await adminClient
+      .from("content_items")
+      .select("id, source_number, title")
+      .eq("user_id", owner1.id);
+    assert.ifError(o1Err);
+    assert.equal(owner1Items.length, 158, "Account 1 must have 158 total items");
+    const o1Numbered = owner1Items.filter((i) => i.source_number !== null);
+    assert.equal(o1Numbered.length, 158, "Account 1 must have 158 numbered items");
+
+    // Owner 2: exactly 159 total items, 158 numbered items, and 1 unnumbered preserved item
+    const { data: owner2Items, error: o2Err } = await adminClient
+      .from("content_items")
+      .select("id, source_number, title")
+      .eq("user_id", owner2.id);
+    assert.ifError(o2Err);
+    assert.equal(owner2Items.length, 159, "Account 2 must have 159 total items");
+    const o2Numbered = owner2Items.filter((i) => i.source_number !== null);
+    assert.equal(o2Numbered.length, 158, "Account 2 must have 158 numbered items");
+    const preservedItem = owner2Items.find((i) => i.id === seededItem.id);
+    assert.ok(preservedItem, "Account 2 pre-existing unnumbered item must be preserved");
+    assert.equal(preservedItem.source_number, null);
+    assert.equal(preservedItem.title, "Account 2 Web-Created Idea Without Source Number");
+
+    // Owner 3: exactly 158 total items, all 158 numbered
+    const { data: owner3Items, error: o3Err } = await adminClient
+      .from("content_items")
+      .select("id, source_number, title")
+      .eq("user_id", owner3.id);
+    assert.ifError(o3Err);
+    assert.equal(owner3Items.length, 158, "Account 3 must have 158 total items");
+    const o3Numbered = owner3Items.filter((i) => i.source_number !== null);
+    assert.equal(o3Numbered.length, 158, "Account 3 must have 158 numbered items");
+
+    // Verify all 158 source candidate numbers exist across all 3 owners
+    for (let s = 1; s <= 158; s++) {
+      assert.ok(owner1Items.some((i) => i.source_number === s));
+      assert.ok(owner2Items.some((i) => i.source_number === s));
+      assert.ok(owner3Items.some((i) => i.source_number === s));
+    }
+  } finally {
+    await cleanSyntheticUsers(adminClient);
+  }
+});
