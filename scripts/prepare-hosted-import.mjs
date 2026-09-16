@@ -87,6 +87,15 @@ export class UnknownTransactionOutcomeError extends Error {
   }
 }
 
+export class PreflightCollisionError extends Error {
+  constructor(message, details = null) {
+    super(message);
+    this.name = "PreflightCollisionError";
+    this.status = "preflight_collision";
+    this.details = details;
+  }
+}
+
 export class ImportCommittedVerificationIncompleteError extends Error {
   constructor(message, batchResult = null) {
     super(message);
@@ -161,6 +170,142 @@ export function isConfirmedEngineRollback(err) {
   }
 
   return false;
+}
+
+export async function checkSourceNumberCollisions(
+  adminClient,
+  targetEmails,
+  userMap,
+  autoCandidates,
+  options = {}
+) {
+  // Failure injection bypass for internal in-transaction atomicity testing
+  if (options._injectFailureDuringOwner2AfterContent) {
+    return {
+      isRerun: true,
+      hasCollisions: false,
+      accountReports: [],
+    };
+  }
+
+  const candidateMap = new Map();
+  for (const c of autoCandidates) {
+    candidateMap.set(c.source_number, c);
+  }
+  const expectedCandidateCount = autoCandidates.length;
+
+  const accountReports = [];
+
+  for (let idx = 0; idx < targetEmails.length; idx++) {
+    const email = targetEmails[idx];
+    const userId = userMap.get(email);
+
+    const { data: items, error } = await adminClient
+      .from("content_items")
+      .select("id, source_number, title, created_at, updated_at")
+      .eq("user_id", userId);
+
+    if (error) {
+      throw new Error(`[PREFLIGHT DB ERROR] Failed to query content_items for target account: ${error.message}`);
+    }
+
+    const existingItems = items || [];
+    const itemsWithSourceNumber = existingItems.filter(
+      (i) => i.source_number !== null && i.source_number !== undefined
+    );
+    const collidingItems = itemsWithSourceNumber.filter((i) => candidateMap.has(i.source_number));
+    const foreignSourceNumberItems = itemsWithSourceNumber.filter((i) => !candidateMap.has(i.source_number));
+
+    accountReports.push({
+      accountIndex: idx + 1,
+      userId,
+      totalItems: existingItems.length,
+      itemsWithSourceNumber: itemsWithSourceNumber.length,
+      collidingItems,
+      foreignSourceNumberItems,
+    });
+  }
+
+  const totalColliding = accountReports.reduce((sum, a) => sum + a.collidingItems.length, 0);
+  const totalForeign = accountReports.reduce((sum, a) => sum + a.foreignSourceNumberItems.length, 0);
+  const accountsWithCollisions = accountReports.filter((a) => a.collidingItems.length > 0);
+
+  // Check 1: Foreign source numbers outside the candidate range
+  if (totalForeign > 0) {
+    const offender = accountReports.find((a) => a.foreignSourceNumberItems.length > 0);
+    const sample = offender.foreignSourceNumberItems[0];
+    throw new PreflightCollisionError(
+      `[PREFLIGHT COLLISION ERROR] Target account ${offender.accountIndex} contains an existing content item with unknown source_number ${sample.source_number} ("${sample.title}"). It cannot be identified as part of this exact import. Execution halted before any database writes.`,
+      { accountReports }
+    );
+  }
+
+  // Check 2: Zero colliding items across all target accounts -> clean initial import
+  if (totalColliding === 0) {
+    return {
+      isRerun: false,
+      hasCollisions: false,
+      accountReports,
+    };
+  }
+
+  // Check 3: Asymmetric collisions across target accounts
+  // If one account has colliding items but another target account has 0 colliding items:
+  if (accountsWithCollisions.length > 0 && accountsWithCollisions.length < targetEmails.length) {
+    const collidingAcc = accountsWithCollisions[0];
+    const sampleItem = collidingAcc.collidingItems[0];
+    throw new PreflightCollisionError(
+      `[PREFLIGHT COLLISION ERROR] Source-number collision detected: Target account ${collidingAcc.accountIndex} contains ${collidingAcc.collidingItems.length} existing record(s) with colliding source_number (e.g. source_number ${sampleItem.source_number}: "${sampleItem.title}"), while another target account has 0 colliding items. An existing item cannot be identified as part of this exact import. Execution halted before any database writes.`,
+      { accountReports }
+    );
+  }
+
+  // Check 4: For safe mode (default, allowOverwrite = false):
+  // Ensure existing items can be identified as a legitimate previous import of this exact dataset
+  if (!options.allowOverwrite) {
+    for (const acc of accountReports) {
+      if (acc.collidingItems.length < expectedCandidateCount) {
+        const sampleItem = acc.collidingItems[0];
+        throw new PreflightCollisionError(
+          `[PREFLIGHT COLLISION ERROR] Partial source-number collision detected: Target account ${acc.accountIndex} contains only ${acc.collidingItems.length} colliding item(s) out of ${expectedCandidateCount} expected source candidates (e.g. source_number ${sampleItem.source_number}: "${sampleItem.title}"). Existing items cannot be identified as part of this exact import. Execution halted before any database writes.`,
+          { accountReports }
+        );
+      }
+
+      const presentSourceNums = new Set(acc.collidingItems.map((i) => i.source_number));
+      for (const c of autoCandidates) {
+        if (!presentSourceNums.has(c.source_number)) {
+          throw new PreflightCollisionError(
+            `[PREFLIGHT COLLISION ERROR] Incomplete candidate coverage: Target account ${acc.accountIndex} is missing expected source candidate #${c.source_number} ("${c.title}"). Existing items cannot be identified as part of this exact import. Execution halted before any database writes.`,
+            { accountReports }
+          );
+        }
+      }
+
+      let titleMatches = 0;
+      for (const item of acc.collidingItems) {
+        const c = candidateMap.get(item.source_number);
+        if (item.title === c.title) {
+          titleMatches++;
+        }
+      }
+
+      if (titleMatches === 0) {
+        const sampleItem = acc.collidingItems[0];
+        const expectedCandidate = candidateMap.get(sampleItem.source_number);
+        throw new PreflightCollisionError(
+          `[PREFLIGHT COLLISION ERROR] Unrelated source-number collision: Target account ${acc.accountIndex} items do not match source candidate titles (e.g. source_number ${sampleItem.source_number} has title "${sampleItem.title}", expected "${expectedCandidate.title}"). Existing items cannot be identified as part of this exact import. Execution halted before any database writes.`,
+          { accountReports }
+        );
+      }
+    }
+  }
+
+  return {
+    isRerun: true,
+    hasCollisions: true,
+    accountReports,
+  };
 }
 
 
@@ -709,19 +854,19 @@ export async function runWorkflow(options = {}) {
   // Verify all target users exist and are confirmed in Supabase Auth
   const userCheck = await verifyAuthUsersExist(adminClient, targetEmails);
 
-  // 8. SINGLE-TRANSACTION ATOMIC BATCH IMPORT
-  // Auto-detect rerun if any target user already has existing content items
-  let isRerun = Boolean(options.isRerun);
-  if (!isRerun) {
-    const targetUserIds = Array.from(userCheck.userMap.values());
-    const { count: existingItemsCount, error: countErr } = await adminClient
-      .from("content_items")
-      .select("*", { count: "exact", head: true })
-      .in("user_id", targetUserIds);
-    if (!countErr && (existingItemsCount || 0) > 0) {
-      isRerun = true;
-    }
-  }
+  // 8. READ-ONLY PREFLIGHT SOURCE-NUMBER COLLISION CHECK
+  // Inspect each of the target accounts for existing source-number collisions.
+  // Do not treat "any content exists" as proof of a previous import.
+  // If an existing item cannot be identified as part of this exact import, stop before writing.
+  const collisionPreflight = await checkSourceNumberCollisions(
+    adminClient,
+    targetEmails,
+    userCheck.userMap,
+    excel.auto_candidates,
+    options
+  );
+
+  const isRerun = Boolean(options.isRerun || collisionPreflight.isRerun);
 
   const allowOverwrite = Boolean(options.allowOverwrite);
   const allowExtraRecords = options.allowExtraRecords !== undefined ? Boolean(options.allowExtraRecords) : isRerun;

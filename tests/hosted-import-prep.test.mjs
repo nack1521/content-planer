@@ -15,6 +15,8 @@ import {
   UnknownTransactionOutcomeError,
   ImportCommittedVerificationIncompleteError,
   isConfirmedEngineRollback,
+  PreflightCollisionError,
+  checkSourceNumberCollisions,
 } from "../scripts/prepare-hosted-import.mjs";
 
 const SCRIPT_PATH = resolve(process.cwd(), "scripts/prepare-hosted-import.mjs");
@@ -1266,6 +1268,144 @@ test("Safe Rerun Links: Changed or removed imported link URLs in website are not
       .single();
     assert.ok(checkUserAdded, "User-added link must be preserved!");
     assert.equal(checkUserAdded.url, userAddedLinkUrl);
+  } finally {
+    await cleanSyntheticUsers(adminClient);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 12. PREFLIGHT SOURCE-NUMBER COLLISION: HALT INITIAL IMPORT ON UNRELATED COLLISION
+// -----------------------------------------------------------------------------
+test("Preflight Collision: Unrelated item with colliding source number halts initial import before any database writes", async () => {
+  const { adminClient } = getLocalAdminClient();
+
+  try {
+    await ensureSyntheticUsersExist(adminClient, true);
+    await cleanSyntheticUsers(adminClient);
+    await ensureSyntheticUsersExist(adminClient, true);
+
+    const { data: usersData } = await adminClient.auth.admin.listUsers();
+    const owner1 = usersData.users.find((u) => u.email?.toLowerCase() === SYNTHETIC_TARGETS[0].toLowerCase());
+    const owner2 = usersData.users.find((u) => u.email?.toLowerCase() === SYNTHETIC_TARGETS[1].toLowerCase());
+    const owner3 = usersData.users.find((u) => u.email?.toLowerCase() === SYNTHETIC_TARGETS[2].toLowerCase());
+    assert.ok(owner1 && owner2 && owner3);
+
+    // Setup: One account has an unrelated item with a colliding source number (#1),
+    // and the other accounts are completely empty.
+    const unrelatedTitle = "Unrelated Pre-existing Custom Video";
+    const { data: unrelatedItem, error: insertErr } = await adminClient
+      .from("content_items")
+      .insert({
+        user_id: owner1.id,
+        source_number: 1, // Collides with candidate #1 in the import dataset
+        title: unrelatedTitle,
+        status: "idea",
+        platforms: ["tiktok"],
+      })
+      .select("id, source_number, title")
+      .single();
+    assert.ifError(insertErr);
+    assert.ok(unrelatedItem);
+
+    // Verify owner2 and owner3 are completely empty
+    const { count: owner2InitialCount } = await adminClient
+      .from("content_items")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", owner2.id);
+    const { count: owner3InitialCount } = await adminClient
+      .from("content_items")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", owner3.id);
+    assert.equal(owner2InitialCount, 0);
+    assert.equal(owner3InitialCount, 0);
+
+    // Direct preflight function check
+    let directCheckErr = null;
+    try {
+      const { excel: testExcel } = parseSourceDatasets(FIXTURE_EXCEL, FIXTURE_CSV);
+      const testUserMap = new Map([
+        [owner1.email.toLowerCase(), owner1.id],
+        [owner2.email.toLowerCase(), owner2.id],
+        [owner3.email.toLowerCase(), owner3.id],
+      ]);
+      await checkSourceNumberCollisions(adminClient, SYNTHETIC_TARGETS, testUserMap, testExcel.auto_candidates);
+    } catch (err) {
+      directCheckErr = err;
+    }
+    assert.ok(directCheckErr instanceof PreflightCollisionError);
+
+    // Attempt initial commit import via runWorkflow
+    let preflightError = null;
+    try {
+      await runWorkflow({
+        commit: true,
+        confirmBackup: true,
+        confirmExecution: true,
+        manifestPath: FIXTURE_MANIFEST,
+        excelPath: FIXTURE_EXCEL,
+        csvPath: FIXTURE_CSV,
+        decisionsPath: FIXTURE_DECISIONS,
+      });
+    } catch (err) {
+      preflightError = err;
+    }
+
+    // 1. Error assertion: Must stop before writing and report preflight collision
+    assert.ok(preflightError, "Initial import must halt when an unrelated item has a colliding source number");
+    assert.ok(preflightError instanceof PreflightCollisionError);
+    assert.equal(preflightError.name, "PreflightCollisionError");
+    assert.equal(preflightError.status, "preflight_collision");
+    assert.match(preflightError.message, /\[PREFLIGHT COLLISION ERROR\]/);
+    assert.match(preflightError.message, /colliding source_number/);
+    assert.match(preflightError.message, /Execution halted before any database writes/);
+
+    // 2. Database assertion: Zero writes were performed!
+    // Owner 1 still has only that 1 pre-existing item, untouched:
+    const { data: owner1ItemsAfter } = await adminClient
+      .from("content_items")
+      .select("id, source_number, title")
+      .eq("user_id", owner1.id);
+    assert.equal(owner1ItemsAfter.length, 1);
+    assert.equal(owner1ItemsAfter[0].id, unrelatedItem.id);
+    assert.equal(owner1ItemsAfter[0].title, unrelatedTitle);
+
+    // Owner 1 has 0 links, 0 tasks, 0 reference accounts:
+    const { count: owner1Links } = await adminClient
+      .from("content_links")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", owner1.id);
+    assert.equal(owner1Links, 0);
+
+    // Owner 2 and Owner 3 remain completely empty (0 items):
+    const { count: owner2CountAfter } = await adminClient
+      .from("content_items")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", owner2.id);
+    const { count: owner3CountAfter } = await adminClient
+      .from("content_items")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", owner3.id);
+    assert.equal(owner2CountAfter, 0);
+    assert.equal(owner3CountAfter, 0);
+
+    // 3. CLI execution assertion: Actual CLI also halts before writing
+    const cliRes = spawnSync(
+      "node",
+      [
+        SCRIPT_PATH,
+        "--commit",
+        "--confirm-backup",
+        "--confirm-execution",
+        "--manifest", FIXTURE_MANIFEST,
+        "--excel", FIXTURE_EXCEL,
+        "--csv", FIXTURE_CSV,
+        "--decisions", FIXTURE_DECISIONS,
+        "--json",
+      ],
+      { encoding: "utf8" }
+    );
+    assert.notEqual(cliRes.status, 0, "CLI must exit with non-zero error status");
+    assert.match(cliRes.stderr, /\[PREFLIGHT COLLISION ERROR\]/);
   } finally {
     await cleanSyntheticUsers(adminClient);
   }
