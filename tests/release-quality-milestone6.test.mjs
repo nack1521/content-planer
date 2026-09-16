@@ -54,7 +54,6 @@ test("2. Dead sample code and unresolved placeholders are removed", () => {
     "calendar.backToPlanner",
     "ideas.inDevelopment",
     "ideas.backToPlanner",
-    "recordModal.createTitle",
     "recordModal.errors.saveFailed",
     "tasks.errors.saveFailed",
     "referenceAccounts.errors.saveFailed",
@@ -279,4 +278,114 @@ test("8. Comprehensive error code translation coverage", () => {
     assert.ok(thMsg && !thMsg.startsWith("errors."), `Missing TH error translation for: ${code}`);
     assert.notEqual(enMsg, thMsg, `EN and TH must produce distinct localized messages for: ${code}`);
   }
+});
+
+test("9. Static translation call scanner and regression guard for missing keys", () => {
+  const en = JSON.parse(fs.readFileSync(path.join(projectRoot, "src/messages/en.json"), "utf8"));
+  const th = JSON.parse(fs.readFileSync(path.join(projectRoot, "src/messages/th.json"), "utf8"));
+
+  function getVal(obj, keyPath) {
+    return keyPath.split(".").reduce((acc, k) => acc?.[k], obj);
+  }
+
+  function walk(dir) {
+    let files = [];
+    for (const f of fs.readdirSync(dir)) {
+      const full = path.join(dir, f);
+      if (fs.statSync(full).isDirectory()) {
+        if (f !== "node_modules" && f !== ".next" && f !== ".git") {
+          files = files.concat(walk(full));
+        }
+      } else if (/\.(ts|tsx)$/.test(f)) {
+        files.push(full);
+      }
+    }
+    return files;
+  }
+
+  const prodFiles = walk(path.join(projectRoot, "src"));
+  assert.ok(prodFiles.length >= 20, `Expected at least 20 production files, got ${prodFiles.length}`);
+
+  // Static call pattern: t('key.path') or t("key.path"), followed by , or )
+  const staticRegex = /\bt\s*\(\s*["']([a-zA-Z0-9_.-]+)["']\s*[,)]/g;
+  const missingKeys = [];
+  const scannedKeys = new Set();
+
+  for (const file of prodFiles) {
+    const content = fs.readFileSync(file, "utf8");
+    let match;
+    while ((match = staticRegex.exec(content)) !== null) {
+      const key = match[1];
+      scannedKeys.add(key);
+      const enVal = getVal(en, key);
+      const thVal = getVal(th, key);
+      if (enVal === undefined || thVal === undefined) {
+        missingKeys.push({ file: path.relative(projectRoot, file), key, enVal, thVal });
+      }
+    }
+  }
+
+  assert.ok(scannedKeys.size >= 100, `Expected at least 100 unique static translation keys, got ${scannedKeys.size}`);
+  assert.deepEqual(
+    missingKeys,
+    [],
+    `Found ${missingKeys.length} static translation call(s) missing from dictionaries: ${JSON.stringify(missingKeys, null, 2)}`
+  );
+
+  // Dynamic template and concat calls: verify their namespace prefixes exist in en.json and th.json
+  const dynamicTemplateRegex = /\bt\s*\(\s*`([^`$]+)\${/g;
+  const dynamicConcatRegex = /\bt\s*\(\s*["']([a-zA-Z0-9_.-]+)["']\s*\+/g;
+
+  const dynamicPrefixes = new Set();
+  for (const file of prodFiles) {
+    const content = fs.readFileSync(file, "utf8");
+    let match;
+    while ((match = dynamicTemplateRegex.exec(content)) !== null) {
+      dynamicPrefixes.add(match[1]);
+    }
+    while ((match = dynamicConcatRegex.exec(content)) !== null) {
+      dynamicPrefixes.add(match[1]);
+    }
+  }
+
+  for (const prefix of dynamicPrefixes) {
+    const cleanPrefix = prefix.endsWith(".") ? prefix.slice(0, -1) : prefix;
+    const enParent = getVal(en, cleanPrefix);
+    const thParent = getVal(th, cleanPrefix);
+    assert.ok(
+      enParent && typeof enParent === "object",
+      `Dynamic key prefix "${prefix}" namespace missing from en.json`
+    );
+    assert.ok(
+      thParent && typeof thParent === "object",
+      `Dynamic key prefix "${prefix}" namespace missing from th.json`
+    );
+  }
+
+  // Explicit regression assertion: The four defective keys must fail if reintroduced
+  const recordModalContent = fs.readFileSync(
+    path.join(projectRoot, "src/components/planner/RecordModal.tsx"),
+    "utf8"
+  );
+  assert.ok(
+    !recordModalContent.includes("recordModal.newTitle"),
+    "RecordModal must not use unlocalized recordModal.newTitle (must use recordModal.createTitle)"
+  );
+  assert.ok(
+    !recordModalContent.includes("recordModal.closeAria"),
+    "RecordModal must not use unlocalized recordModal.closeAria (must use recordModal.close)"
+  );
+  assert.ok(
+    !recordModalContent.includes("recordModal.titleField"),
+    "RecordModal must not use unlocalized recordModal.titleField (must use recordModal.title)"
+  );
+
+  const refAccountsContent = fs.readFileSync(
+    path.join(projectRoot, "src/components/ideas/ReferenceAccountsView.tsx"),
+    "utf8"
+  );
+  assert.ok(
+    !refAccountsContent.includes('t("tasks.edit")') && !refAccountsContent.includes("t('tasks.edit')"),
+    "ReferenceAccountsView must not use non-existent tasks.edit (must use referenceAccounts.editAccount)"
+  );
 });

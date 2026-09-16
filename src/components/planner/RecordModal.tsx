@@ -522,13 +522,13 @@ function RecordModalForm({
                 ) : null}
               </span>
             ) : (
-              t('recordModal.newTitle')
+              t('recordModal.createTitle')
             )}
           </h2>
           <button
             type="button"
             onClick={handleRequestClose}
-            aria-label={t('recordModal.closeAria')}
+            aria-label={t('recordModal.close')}
             className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <IconX className="w-5 h-5" size={20} />
@@ -545,7 +545,7 @@ function RecordModalForm({
           {/* Title */}
           <div className="space-y-1">
             <label htmlFor="modal-title-input" className="text-xs font-semibold text-slate-700">
-              {t('recordModal.titleField')} <span className="text-rose-500">*</span>
+              {t('recordModal.title')} <span className="text-rose-500">*</span>
             </label>
             <input
               ref={titleInputRef}
@@ -619,7 +619,7 @@ function RecordModalForm({
                 <option value="">{t('recordModal.unassigned')}</option>
                 {ALL_FORMATS.map((fmt) => (
                   <option key={fmt} value={fmt}>
-                    {t(`formats.${fmt}`)}
+                    {t(`format.${fmt}`)}
                   </option>
                 ))}
               </select>
@@ -638,7 +638,7 @@ function RecordModalForm({
                 <option value="">{t('recordModal.unassigned')}</option>
                 {ALL_GOALS.map((gl) => (
                   <option key={gl} value={gl}>
-                    {t(`goals.${gl}`)}
+                    {t(`goal.${gl}`)}
                   </option>
                 ))}
               </select>

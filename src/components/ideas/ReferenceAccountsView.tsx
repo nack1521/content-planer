@@ -370,7 +370,7 @@ export function ReferenceAccountsView({
                     aria-label={t("referenceAccounts.editAccount")}
                     className="text-xs text-slate-500 hover:text-purple-600 p-1 rounded hover:bg-slate-50 transition-colors"
                   >
-                    {t("tasks.edit")}
+                    {t("referenceAccounts.editAccount")}
                   </button>
                 </div>
 

@@ -379,7 +379,8 @@
     "discardTitle": "Unsaved Changes",
     "discardMessage": "You have unsaved changes. Are you sure you want to discard them?",
     "discardConfirm": "Discard Changes",
-    "keepEditing": "Keep Editing"
+    "keepEditing": "Keep Editing",
+    "createTitle": "Create Content Record"
   },
   "planner": {
     "subtitle": "Plan, draft, and track multi-platform content from idea to publication",

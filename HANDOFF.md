@@ -10,6 +10,26 @@
 - **Hosted Supabase Status**: Clean and untouched. Zero hosted migrations or hosted imports were performed. Milestone 2 baseline remains on hosted Supabase without modification. All automated testing was executed strictly against the isolated local Supabase stack (`127.0.0.1:54321`).
 - **Media Uploads / Sprint 2**: Zero media upload features or Sprint 2 capabilities added; dormant `content_media` infrastructure left untouched.
 
+
+### 9. Milestone 6 Revision — Static Key Parity & Dynamic Prefix Alignment
+- **Discovered**:
+  - Four static translation calls were referencing non-existent keys:
+    1. `src/components/planner/RecordModal.tsx`: `recordModal.newTitle` (missing from dictionaries).
+    2. `src/components/planner/RecordModal.tsx`: `recordModal.closeAria` (missing; existing semantic key is `recordModal.close`).
+    3. `src/components/planner/RecordModal.tsx`: `recordModal.titleField` (missing; existing semantic key is `recordModal.title`).
+    4. `src/components/ideas/ReferenceAccountsView.tsx`: `tasks.edit` (missing; existing semantic key is `referenceAccounts.editAccount`).
+  - In `src/components/planner/RecordModal.tsx`, dynamic template calls used plural prefixes `formats.${fmt}` and `goals.${gl}`, whereas dictionaries define singular `format` and `goal`.
+- **Corrections Made**:
+  - Restored `recordModal.createTitle` ("Create Content Record" / "สร้างรายการคอนเทนต์ใหม่") in `src/messages/en.json` and `th.json`.
+  - Updated `RecordModal.tsx` to use `t('recordModal.createTitle')`, `t('recordModal.close')`, and `t('recordModal.title')`.
+  - Updated `ReferenceAccountsView.tsx` to use `t("referenceAccounts.editAccount")`.
+  - Updated `RecordModal.tsx` dynamic option lookups to use `t(\`format.${fmt}\`)` and `t(\`goal.${gl}\`)`.
+  - Added test 9 to `tests/release-quality-milestone6.test.mjs`:
+    1. Recursively scans all `.ts` and `.tsx` source files in `src/` for static `t('key.path')` and `t("key.path")` calls.
+    2. Asserts every static key exists in both `en.json` and `th.json` (0 missing keys across 375+ calls).
+    3. Handles dynamic template calls separately and validates all namespace prefixes (`platform.`, `format.`, `goal.`, `status.`, `review_status.`, `tasks.*`, `recordModal.linkTypes.`).
+    4. Enforces explicit negative regression guards failing the test if `recordModal.newTitle`, `recordModal.closeAria`, `recordModal.titleField`, or `tasks.edit` are reintroduced.
+
 ---
 
 ## Issues Discovered & Corrections Made
@@ -56,8 +76,8 @@
 ## Files Changed
 
 - `src/data/sampleContent.ts`: [DELETED] Removed dead sample mock data.
-- `src/messages/en.json`: Purged dead keys and placeholders; added `common.saving`; 354 keys verified.
-- `src/messages/th.json`: Purged dead keys and placeholders; added `common.saving`; 354 keys verified with 100% parity.
+- `src/messages/en.json`: Purged dead keys and placeholders; added `common.saving`; 355 keys verified.
+- `src/messages/th.json`: Purged dead keys and placeholders; added `common.saving`; 355 keys verified with 100% parity.
 - `src/components/planner/RecordModal.tsx`: Used `t(common.saving)` during `isPending`.
 - `src/components/tasks/TasksView.tsx`: Used `t(common.saving)` during `isPending`.
 - `src/components/ideas/ReferenceAccountsView.tsx`: Used `t(common.saving)` during `isPending`.
@@ -66,7 +86,7 @@
 - `src/app/globals.css`: Added `overflow-wrap: break-word; word-break: break-word;` to `html`.
 - `src/app/[locale]/settings/layout.tsx`: [NEW] Localized metadata layout for settings page.
 - `src/utils/date.ts`: Used `import type { Locale }` for cleaner ESM loader compilation.
-- `tests/release-quality-milestone6.test.mjs`: [NEW] 8 automated release quality and bilingual completion tests.
+- `tests/release-quality-milestone6.test.mjs`: [NEW] 9 automated release quality and bilingual completion tests.
 - `tests/run-tests.mjs`: Added suite 6d for Milestone 6 testing.
 - `TASKS.md`: Marked Milestone 5 accepted by Codex and Milestone 6 complete.
 - `HANDOFF.md`: Updated with complete Milestone 6 verification evidence.
@@ -140,19 +160,19 @@ Result:
 === 5. Running Production Importer CLI & Idempotency Suite ===
 ✔ 10/10 tests passed
 === 6. Running Authenticated Server Actions & Atomic Rollback Suite ===
-✔ 8/8 tests passed
+✔ 9/9 tests passed
 === 6b. Running Content Editor & Link Workspace Suite (Milestone 4) ===
 ✔ 17/17 tests passed
 === 6c. Running Calendar and Idea Bank Suite (Milestone 5) ===
 ✔ 13/13 tests passed
 === 6d. Running Bilingual Completion & Release Quality Suite (Milestone 6) ===
-✔ 8/8 tests passed
+✔ 9/9 tests passed
 === 7. Building Content Planner Application from Current Source ===
 ✓ Compiled successfully
 === 8. Running Live Server & HTTP Integration Suites ===
 ✔ 14/14 tests passed
 === [SUCCESS] ALL CLEAN-ENVIRONMENT CHECKS AND TEST SUITES PASSED ===
-Total: 182 tests passing cleanly across database, domain, accessibility, localization, importer, server actions, Milestone 4 editor, Milestone 5 calendar & ideas, Milestone 6 release quality, and live HTTP integration.
+Total: 183 tests passing cleanly across database, domain, accessibility, localization, importer, server actions, Milestone 4 editor, Milestone 5 calendar & ideas, Milestone 6 release quality, and live HTTP integration.
 ```
 
 ---

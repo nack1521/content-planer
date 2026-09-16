@@ -258,8 +258,11 @@ Status: Complete; awaiting Codex review
 - [x] Added localized button pending/saving states (`common.saving`) to replace raw '...' across all form modals.
 - [x] Added localized metadata for `/settings` via `src/app/[locale]/settings/layout.tsx`.
 - [x] Removed dead sample code (`src/data/sampleContent.ts`) and purged unresolved placeholders and orphaned translation keys.
-- [x] Added automated Milestone 6 test suite `tests/release-quality-milestone6.test.mjs` (8/8 tests passing).
-- [x] Run lint (0 errors, 0 warnings), all tests (182/182 passed), and production build successfully.
+- [x] Added automated Milestone 6 test suite `tests/release-quality-milestone6.test.mjs` (9/9 tests passing).
+- [x] Corrected static translation calls: restored `recordModal.createTitle`, used `recordModal.close`, `recordModal.title`, and `referenceAccounts.editAccount`.
+- [x] Aligned dynamic format and goal prefixes in `RecordModal.tsx` to canonical `format.` and `goal.`.
+- [x] Built automated static and dynamic translation call scanner with negative regression guards for missing keys.
+- [x] Run lint (0 errors, 0 warnings), all tests (183/183 passed), and production build successfully.
 
 Review checkpoint: Stop and request release review before Milestone 7.
 
