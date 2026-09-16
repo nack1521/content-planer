@@ -218,7 +218,7 @@ RLS: Enabled, owner-scoped (`auth.uid() = user_id`).
 - Use Supabase passwordless email login.
 - Create the owner's account, then disable public sign-up in production.
 - Protect authenticated routes at the server boundary via Next.js Proxy/Middleware (`src/proxy.ts` / `src/middleware.ts`).
-- Verify `ALLOWED_EMAIL` as an application-level guard.
+- Verify `ALLOWED_EMAILS` (with legacy `ALLOWED_EMAIL` fallback) as an application-level guard.
 - Every table has RLS enabled with policy `auth.uid() = user_id`.
 - The transactional function `public.upsert_content_item_with_links` has execute revoked from `PUBLIC` and `anon`, granted strictly to `authenticated`.
 

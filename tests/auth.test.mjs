@@ -2,47 +2,130 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { normalizeEmail, isAllowedEmail } from '../src/utils/auth/allowedEmail.ts';
+import { normalizeEmail, parseAllowedEmails, getAllowedEmails, hasAllowedEmailsConfigured, isAllowedEmail } from '../src/utils/auth/allowedEmail.ts';
 import { getAppOrigin } from '../src/utils/url/getOrigin.ts';
 import { NextResponse } from 'next/server.js';
 
 import { createRedirectResponse } from '../src/utils/supabase/redirect.ts';
 
-// 1. Email Normalization and Single-Owner Validation
-test('Allowed email normalization and authorization', () => {
+// 1. Email Normalization and Multi-Owner Authorization
+test('Allowed email normalization and multi-owner authorization', () => {
+  // Direct parser and normalization verification
+  assert.deepEqual(parseAllowedEmails('  a@test.com , B@TEST.COM, , '), ['a@test.com', 'b@test.com']);
+  assert.deepEqual(parseAllowedEmails(''), []);
+  assert.deepEqual(parseAllowedEmails(null), []);
+  assert.deepEqual(parseAllowedEmails(undefined), []);
+
+  // Normalization
   assert.equal(normalizeEmail(null), '');
   assert.equal(normalizeEmail(undefined), '');
   assert.equal(normalizeEmail('   '), '');
   assert.equal(normalizeEmail('  CREATOR@Example.COM  '), 'creator@example.com');
 
-  const originalAllowed = process.env.ALLOWED_EMAIL;
+  const origAllowedEmails = process.env.ALLOWED_EMAILS;
+  const origAllowedEmail = process.env.ALLOWED_EMAIL;
 
   try {
-    process.env.ALLOWED_EMAIL = 'owner@studio.test';
+    // 1. Multiple authorized emails with leading/trailing spaces and mixed casing
+    process.env.ALLOWED_EMAILS = '  admin1@studio.test , ADMIN2@STUDIO.TEST,   admin3@studio.test  ';
+    delete process.env.ALLOWED_EMAIL;
 
-    // Authorized tests
-    assert.equal(isAllowedEmail('owner@studio.test'), true);
-    assert.equal(isAllowedEmail('OWNER@STUDIO.TEST'), true);
-    assert.equal(isAllowedEmail('  owner@studio.test  '), true);
-    assert.equal(isAllowedEmail('  OWNER@studio.test  '), true);
+    assert.equal(hasAllowedEmailsConfigured(), true);
+    assert.deepEqual(getAllowedEmails(), [
+      'admin1@studio.test',
+      'admin2@studio.test',
+      'admin3@studio.test'
+    ]);
 
-    // Unauthorized tests
+    // Authorized tests (exact matches with case-insensitivity and whitespace tolerance on input)
+    assert.equal(isAllowedEmail('admin1@studio.test'), true);
+    assert.equal(isAllowedEmail('ADMIN1@STUDIO.TEST'), true);
+    assert.equal(isAllowedEmail('  admin1@studio.test  '), true);
+    assert.equal(isAllowedEmail('admin2@studio.test'), true);
+    assert.equal(isAllowedEmail('ADMIN2@STUDIO.TEST'), true);
+    assert.equal(isAllowedEmail('admin3@studio.test'), true);
+    assert.equal(isAllowedEmail('  Admin3@Studio.Test  '), true);
+
+    // 2. Empty entries handling (e.g. trailing commas, double commas, spaces-only commas)
+    process.env.ALLOWED_EMAILS = ' , admin1@studio.test, , , admin2@studio.test,  ,';
+    assert.deepEqual(getAllowedEmails(), [
+      'admin1@studio.test',
+      'admin2@studio.test'
+    ]);
+    assert.equal(isAllowedEmail('admin1@studio.test'), true);
+    assert.equal(isAllowedEmail('admin2@studio.test'), true);
+
+    // 3. Unauthorized addresses
     assert.equal(isAllowedEmail('attacker@studio.test'), false);
-    assert.equal(isAllowedEmail('owner@studio.testing'), false);
-    assert.equal(isAllowedEmail('sub.owner@studio.test'), false);
+    assert.equal(isAllowedEmail('admin4@studio.test'), false);
     assert.equal(isAllowedEmail(''), false);
+    assert.equal(isAllowedEmail('   '), false);
     assert.equal(isAllowedEmail(null), false);
     assert.equal(isAllowedEmail(undefined), false);
 
-    // When ALLOWED_EMAIL is unset or empty, all access must be denied
-    delete process.env.ALLOWED_EMAIL;
-    assert.equal(isAllowedEmail('owner@studio.test'), false);
+    // 4. Partial-match rejection (substring, domain-only, prefix/suffix, subdomain)
+    assert.equal(isAllowedEmail('admin1@studio.tes'), false);
+    assert.equal(isAllowedEmail('admin1@studio.testing'), false);
+    assert.equal(isAllowedEmail('admin1'), false);
+    assert.equal(isAllowedEmail('@studio.test'), false);
+    assert.equal(isAllowedEmail('studio.test'), false);
+    assert.equal(isAllowedEmail('sub.admin1@studio.test'), false);
+    assert.equal(isAllowedEmail('admin1@studio.test.attacker.com'), false);
+    assert.equal(isAllowedEmail('attacker+admin1@studio.test'), false);
+    assert.equal(isAllowedEmail('notadmin1@studio.test'), false);
 
+    // 5. Missing configuration (both ALLOWED_EMAILS and ALLOWED_EMAIL unset)
+    delete process.env.ALLOWED_EMAILS;
+    delete process.env.ALLOWED_EMAIL;
+    assert.equal(hasAllowedEmailsConfigured(), false);
+    assert.deepEqual(getAllowedEmails(), []);
+    assert.equal(isAllowedEmail('admin1@studio.test'), false);
+
+    // Empty configuration
+    process.env.ALLOWED_EMAILS = '';
+    assert.equal(hasAllowedEmailsConfigured(), false);
+    assert.deepEqual(getAllowedEmails(), []);
+    assert.equal(isAllowedEmail('admin1@studio.test'), false);
+
+    process.env.ALLOWED_EMAILS = '   ,   ,   ';
+    assert.equal(hasAllowedEmailsConfigured(), false);
+    assert.deepEqual(getAllowedEmails(), []);
+    assert.equal(isAllowedEmail('admin1@studio.test'), false);
+
+    // 6. Precedence: ALLOWED_EMAILS takes precedence over legacy ALLOWED_EMAIL
+    process.env.ALLOWED_EMAILS = 'active@studio.test';
+    process.env.ALLOWED_EMAIL = 'legacy@studio.test';
+    assert.deepEqual(getAllowedEmails(), ['active@studio.test']);
+    assert.equal(isAllowedEmail('active@studio.test'), true);
+    assert.equal(isAllowedEmail('legacy@studio.test'), false);
+
+    // Even if ALLOWED_EMAILS is defined but empty, it takes precedence (fails closed, does NOT fall back)
+    process.env.ALLOWED_EMAILS = '';
+    process.env.ALLOWED_EMAIL = 'legacy@studio.test';
+    assert.deepEqual(getAllowedEmails(), []);
+    assert.equal(isAllowedEmail('legacy@studio.test'), false);
+
+    // 7. Legacy ALLOWED_EMAIL fallback only when ALLOWED_EMAILS is absent (undefined)
+    delete process.env.ALLOWED_EMAILS;
+    process.env.ALLOWED_EMAIL = 'legacy@studio.test';
+    assert.deepEqual(getAllowedEmails(), ['legacy@studio.test']);
+    assert.equal(isAllowedEmail('legacy@studio.test'), true);
+    assert.equal(isAllowedEmail('LEGACY@STUDIO.TEST'), true);
+    assert.equal(isAllowedEmail('other@studio.test'), false);
+
+    // Legacy ALLOWED_EMAIL empty
+    delete process.env.ALLOWED_EMAILS;
     process.env.ALLOWED_EMAIL = '';
-    assert.equal(isAllowedEmail('owner@studio.test'), false);
+    assert.deepEqual(getAllowedEmails(), []);
+    assert.equal(isAllowedEmail('legacy@studio.test'), false);
   } finally {
-    if (originalAllowed !== undefined) {
-      process.env.ALLOWED_EMAIL = originalAllowed;
+    if (origAllowedEmails !== undefined) {
+      process.env.ALLOWED_EMAILS = origAllowedEmails;
+    } else {
+      delete process.env.ALLOWED_EMAILS;
+    }
+    if (origAllowedEmail !== undefined) {
+      process.env.ALLOWED_EMAIL = origAllowedEmail;
     } else {
       delete process.env.ALLOWED_EMAIL;
     }
@@ -189,7 +272,7 @@ test('Proxy contract adheres to Next.js 16 conventions and preserves cookies on 
   assert.ok(proxyTs.includes('export async function proxy'), 'src/proxy.ts must export named proxy function');
   assert.ok(proxyUtil.includes('getClaims()'), 'Proxy must validate session via getClaims()');
   assert.ok(proxyUtil.includes('createRedirectResponse'), 'Proxy must use createRedirectResponse to preserve cookies');
-  assert.ok(proxyUtil.includes('!supabaseUrl || !supabaseKey || !allowedEmail'), 'Proxy must fail closed when config missing');
+  assert.ok(proxyUtil.includes('!supabaseUrl || !supabaseKey || !hasAuthConfig'), 'Proxy must fail closed when config missing');
 
   // Verify cookie and header preservation behavior
   const sourceResponse = NextResponse.next();

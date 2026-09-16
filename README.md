@@ -27,7 +27,7 @@ Content Planner is a private bilingual workspace for planning social content fro
 - **Loading & Empty States**: Built-in skeletons and empty filter state with reset actions.
 
 ### Milestone 2 — Supabase Schema and Private Authentication
-- **Private Single-Owner Authentication**: Passwordless magic link email authentication restricted strictly to the configured `ALLOWED_EMAIL`.
+- **Private Multi-Owner Authentication**: Passwordless magic link email authentication restricted strictly to the configured server-side `ALLOWED_EMAILS` (with legacy `ALLOWED_EMAIL` fallback).
 - **User Enumeration Defense**: Any unauthorized email entering the login flow receives an identical neutral success confirmation without contacting Supabase or exposing registration state.
 - **Strict Row Level Security (RLS)**:
   - Enabled on all tables: `user_preferences`, `content_pillars`, `content_items`, `content_media`.
@@ -64,14 +64,15 @@ cp .env.example .env.local
 Required environment variables:
 - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL (`https://<project-ref>.supabase.co`).
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Your Supabase publishable/anon key.
-- `ALLOWED_EMAIL`: The exact authorized owner email address (e.g. `owner@example.com`).
+- `ALLOWED_EMAILS`: Comma-separated list of authorized owner email addresses (e.g. `owner1@example.com,owner2@example.com`).
+- `ALLOWED_EMAIL`: Legacy single-owner fallback (used only when `ALLOWED_EMAILS` is unset).
 
 > **Security Note**: Never commit `.env.local` or disclose publishable keys or private owner emails. No service-role key is required or permitted in application code.
 
 ### Owner Account Provisioning & Disabling Public Sign-ups
 
 1. **Initial Owner Sign-in**:
-   - Ensure `ALLOWED_EMAIL` in `.env.local` is set to the owner's email address.
+   - Ensure `ALLOWED_EMAILS` in `.env.local` is set to the comma-separated list of owner email addresses.
    - Start the development server (`npm run dev`) and navigate to `http://localhost:3000/th/login`.
    - Submit the owner email to receive a passwordless magic link.
    - Clicking the magic link triggers `/auth/callback`, establishing the authenticated session and triggering the `on_auth_user_created` profile provisioner.

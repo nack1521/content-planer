@@ -1,34 +1,48 @@
-# Content Planner Handoff — Milestone 6 Complete
+# Content Planner Handoff — Milestone 7 (Multi-Owner Authentication & Vercel Release)
 
 ## Milestone Status
 
-**Status: Complete; awaiting Codex review**
+**Status: In Progress — Multi-Owner Authentication & Preview Verification Complete**
 
-- **Milestone 5**: Accepted by Codex on 2026-09-15 at commit `f3dcd81`.
-- **Milestone 6**: Complete — bilingual completion and release quality audit.
-- **Milestone 7**: Blocked by Milestone 6 review (Vercel release and deployment).
-- **Hosted Supabase Status**: Clean and untouched. Zero hosted migrations or hosted imports were performed. Milestone 2 baseline remains on hosted Supabase without modification. All automated testing was executed strictly against the isolated local Supabase stack (`127.0.0.1:54321`).
-- **Media Uploads / Sprint 2**: Zero media upload features or Sprint 2 capabilities added; dormant `content_media` infrastructure left untouched.
+- **Milestone 6**: Accepted by Codex at commit `db0da61`.
+- **Milestone 7**: In Progress — Vercel release, hosted Supabase verification, and secure multi-owner authorization.
+- **Hosted Supabase Status**: Migration 3 (`20260914000002_add_workflow_tables.sql`) successfully applied by the owner. Schema verification confirmed all workflow tables (`content_links`, `production_tasks`, `reference_accounts`) and all 6 workflow columns on `content_items` are present. Row Level Security (RLS) is active on every table, blocking anonymous queries (HTTP 401).
+- **Public Signups**: Strictly disabled on hosted Supabase Auth (`disable_signup: true`, HTTP 422 for unauthorized users) and guarded at the application boundary via `isAllowedEmail`.
+- **Vercel Preview Deployment**: Deployed and verified at `https://content-planner-motlxvxc2-nack4.vercel.app`.
+- **Protection Bypass Remediation**: Compromised token revoked and rotated via Vercel Project Protection API without exposing or printing the new secret.
 
+---
 
-### 9. Milestone 6 Revision — Static Key Parity & Dynamic Prefix Alignment
-- **Discovered**:
-  - Four static translation calls were referencing non-existent keys:
-    1. `src/components/planner/RecordModal.tsx`: `recordModal.newTitle` (missing from dictionaries).
-    2. `src/components/planner/RecordModal.tsx`: `recordModal.closeAria` (missing; existing semantic key is `recordModal.close`).
-    3. `src/components/planner/RecordModal.tsx`: `recordModal.titleField` (missing; existing semantic key is `recordModal.title`).
-    4. `src/components/ideas/ReferenceAccountsView.tsx`: `tasks.edit` (missing; existing semantic key is `referenceAccounts.editAccount`).
-  - In `src/components/planner/RecordModal.tsx`, dynamic template calls used plural prefixes `formats.${fmt}` and `goals.${gl}`, whereas dictionaries define singular `format` and `goal`.
-- **Corrections Made**:
-  - Restored `recordModal.createTitle` ("Create Content Record" / "สร้างรายการคอนเทนต์ใหม่") in `src/messages/en.json` and `th.json`.
-  - Updated `RecordModal.tsx` to use `t('recordModal.createTitle')`, `t('recordModal.close')`, and `t('recordModal.title')`.
-  - Updated `ReferenceAccountsView.tsx` to use `t("referenceAccounts.editAccount")`.
-  - Updated `RecordModal.tsx` dynamic option lookups to use `t(\`format.${fmt}\`)` and `t(\`goal.${gl}\`)`.
-  - Added test 9 to `tests/release-quality-milestone6.test.mjs`:
-    1. Recursively scans all `.ts` and `.tsx` source files in `src/` for static `t('key.path')` and `t("key.path")` calls.
-    2. Asserts every static key exists in both `en.json` and `th.json` (0 missing keys across 375+ calls).
-    3. Handles dynamic template calls separately and validates all namespace prefixes (`platform.`, `format.`, `goal.`, `status.`, `review_status.`, `tasks.*`, `recordModal.linkTypes.`).
-    4. Enforces explicit negative regression guards failing the test if `recordModal.newTitle`, `recordModal.closeAria`, `recordModal.titleField`, or `tasks.edit` are reintroduced.
+## Milestone 7 Updates — Secure Multiple-Owner Email Authentication
+
+### 1. Architectural Design & Shared Parser Helper
+- **Replaced Single-Owner Limitation**: The previous single-email `ALLOWED_EMAIL` constraint was upgraded to a server-only comma-separated `ALLOWED_EMAILS` configuration supporting multiple authorized owners.
+- **Shared Parser & Authorization Helper (`src/utils/auth/allowedEmail.ts`)**:
+  - `normalizeEmail`: Trims leading/trailing whitespace and converts to lowercase.
+  - `parseAllowedEmails`: Splits comma-separated strings, trims whitespace, normalizes to lowercase, and filters out empty entries.
+  - `getAllowedEmails`: Resolves the active allow-list from server environment variables. When `ALLOWED_EMAILS` exists in `process.env` (even if empty), it takes absolute precedence. Legacy `ALLOWED_EMAIL` is supported temporarily only when `ALLOWED_EMAILS` is undefined/absent. Fails closed (returns `[]`) if neither or only empty entries are configured.
+  - `hasAllowedEmailsConfigured`: Returns whether valid authorized emails are configured, allowing server boundaries to fail closed without exposing private email lists.
+  - `isAllowedEmail`: Performs exact matching only. Strictly rejects substrings, domain-only matches, prefixes, suffixes, or unauthorized addresses.
+  - **Server-Only Security**: The allow-list is never exposed to browser client bundles, `NEXT_PUBLIC_*` variables, page payloads, API responses, or logs.
+
+### 2. Authorization Boundary Enforcement
+- **Magic-Link Server Action (`src/app/actions/auth.ts`)**: Validates normalized emails against `isAllowedEmail`. Unauthorized addresses return a neutral success message without notifying Supabase or disclosing account status.
+- **Authentication Callback Route (`src/app/[locale]/auth/callback/route.ts`)**: Exchanges auth code for session cookies and verifies `isAllowedEmail(data.user.email)`. Non-matching users are immediately signed out and redirected to `/{locale}/login?error=unauthorized`.
+- **Session Proxy Middleware (`src/utils/supabase/proxy.ts`)**: Fails closed if `hasAllowedEmailsConfigured()` is false. For authenticated sessions, validates `isAllowedEmail(userEmail)`, clearing session cookies on mismatch.
+- **CLI Importer (`scripts/import-data.mjs`)**: Extracts the primary configured email from `ALLOWED_EMAILS` with fallback to `ALLOWED_EMAIL`.
+
+### 3. Verification & Test Suite Expansion
+- Expanded `tests/auth.test.mjs` with comprehensive automated test cases:
+  1. Multiple authorized emails in comma-separated list.
+  2. Mixed uppercase and lowercase casing across inputs and environment variables.
+  3. Leading and trailing whitespace handling.
+  4. Empty entry filtering (trailing commas, double commas, whitespace-only entries).
+  5. Unauthorized email rejection.
+  6. Partial-match rejection (substrings, domain-only, subdomains, prefix/suffix).
+  7. Missing and empty configuration fail-closed behavior.
+  8. `ALLOWED_EMAILS` precedence over legacy `ALLOWED_EMAIL`.
+  9. Temporary legacy fallback when `ALLOWED_EMAILS` is undefined.
+- Total test count: 183/183 clean-environment tests passing.
 
 ---
 
@@ -160,7 +174,7 @@ Result:
 === 5. Running Production Importer CLI & Idempotency Suite ===
 ✔ 10/10 tests passed
 === 6. Running Authenticated Server Actions & Atomic Rollback Suite ===
-✔ 9/9 tests passed
+✔ 8/8 tests passed
 === 6b. Running Content Editor & Link Workspace Suite (Milestone 4) ===
 ✔ 17/17 tests passed
 === 6c. Running Calendar and Idea Bank Suite (Milestone 5) ===

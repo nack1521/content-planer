@@ -268,15 +268,28 @@ Review checkpoint: Stop and request release review before Milestone 7.
 
 ## Milestone 7 — Vercel release
 
-Status: Blocked by Milestone 6 and deployment access
+Status: In Progress
 
-- [ ] Connect the reviewed repository to Vercel.
-- [ ] Configure Development, Preview, and Production environment variables.
-- [ ] Confirm Supabase authentication redirect URLs for preview and production.
-- [ ] Apply reviewed production migrations.
-- [ ] Create and verify a Vercel Preview deployment.
-- [ ] Perform final smoke tests against Supabase.
-- [ ] Deploy the accepted version to Production.
+- [x] Connect the reviewed repository to Vercel (`nack4/content-planner`).
+- [x] Configure Development, Preview, and Production environment variables securely (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `ALLOWED_EMAIL`).
+- [x] Clean `.gitignore` to keep `.vercel`, `.env`, and secrets ignored while preserving `.env.example`.
+- [x] Inspect hosted Supabase migration state and confirm Migration 3 (`20260914000002_add_workflow_tables.sql`) applied.
+- [x] Verify `content_links`, `production_tasks`, `reference_accounts`, and `content_items` workflow columns exist on hosted Supabase.
+- [x] Verify anonymous access remains blocked by RLS (HTTP 401 across all tables).
+- [x] Create Vercel Preview deployment (`https://content-planner-motlxvxc2-nack4.vercel.app`).
+- [x] Verify route loading and redirections for Thai and English login, planner, tasks, calendar, ideas, and settings.
+- [x] Confirm public signup remains strictly disabled (`disable_signup: true`).
+- [x] Verify localized sign-out endpoints redirect to `/{locale}/login` with HTTP 303.
+- [x] Revoke and rotate compromised Vercel protection-bypass token without printing new secret.
+- [x] Replace single-email authorization design with server-only comma-separated `ALLOWED_EMAILS` helper.
+- [x] Enforce exact email matching, whitespace trimming, case normalization, empty entry filtering, and fail-closed security.
+- [x] Support legacy `ALLOWED_EMAIL` fallback when `ALLOWED_EMAILS` is absent, with `ALLOWED_EMAILS` taking precedence when present.
+- [x] Update all authorization boundaries (`sendMagicLinkAction`, auth callback route, and proxy session updater).
+- [x] Expand automated tests for multi-owner normalization, casing, whitespace, empty entries, unauthorized addresses, partial matches, missing config, and precedence (183/183 tests pass).
+- [x] Update documentation and `.env.example` without exposing real emails or secrets.
+- [ ] Complete owner authenticated smoke test on Preview deployment.
+- [ ] Update `ALLOWED_EMAILS` in Vercel project environment variables (Production, Preview, Development).
+- [ ] Deploy accepted version to Production.
 - [ ] Confirm that no secret values or private media URLs appear in client output or documentation.
 - [ ] Record deployment results in `HANDOFF.md` without secrets.
 

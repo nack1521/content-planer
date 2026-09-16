@@ -331,7 +331,17 @@ async function main() {
     process.exit(1);
   }
 
-  const targetEmail = options.email || process.env.LOCAL_IMPORT_EMAIL || envVars.ALLOWED_EMAIL || "testowner@example.com";
+  const firstConfiguredEmail = (process.env.ALLOWED_EMAILS || envVars.ALLOWED_EMAILS || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)[0];
+  const targetEmail =
+    options.email ||
+    process.env.LOCAL_IMPORT_EMAIL ||
+    firstConfiguredEmail ||
+    process.env.ALLOWED_EMAIL ||
+    envVars.ALLOWED_EMAIL ||
+    "testowner@example.com";
   const targetPassword = process.env.LOCAL_IMPORT_PASSWORD || randomUUID();
 
   // Admin client ensures local user exists with genuine credentials

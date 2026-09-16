@@ -20,7 +20,7 @@ function getSafeLocale(locale: unknown): Locale {
 
 /**
  * Server action to send a magic link sign-in email.
- * Strictly checks ALLOWED_EMAIL and returns a neutral response for unauthorized addresses
+ * Strictly checks ALLOWED_EMAILS (or legacy ALLOWED_EMAIL) and returns a neutral response for unauthorized addresses
  * to prevent user enumeration or public sign-ups.
  */
 export async function sendMagicLinkAction(
@@ -34,7 +34,7 @@ export async function sendMagicLinkAction(
     return { success: false, error: 'invalid_email' };
   }
 
-  // Security barrier: If the email is not the configured owner, return a neutral success
+  // Security barrier: If the email is not an authorized owner, return a neutral success
   // without notifying Supabase or disclosing account registration status.
   if (!isAllowedEmail(normalized)) {
     return { success: true };

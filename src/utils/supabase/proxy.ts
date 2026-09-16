@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { isAllowedEmail } from '@/utils/auth/allowedEmail';
+import { isAllowedEmail, hasAllowedEmailsConfigured } from '@/utils/auth/allowedEmail';
 import { createRedirectResponse } from './redirect';
 
 export { createRedirectResponse };
@@ -25,10 +25,10 @@ export async function updateSession(request: NextRequest) {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  const allowedEmail = process.env.ALLOWED_EMAIL;
+  const hasAuthConfig = hasAllowedEmailsConfigured();
 
   // FAIL CLOSED: If environment configuration is missing, protected routes must NEVER be exposed
-  if (!supabaseUrl || !supabaseKey || !allowedEmail) {
+  if (!supabaseUrl || !supabaseKey || !hasAuthConfig) {
     if (!isPublicAuthRoute && pathname !== '/') {
       if (localeSegment === 'th' || localeSegment === 'en') {
         const loginUrl = new URL(`/${locale}/login?error=service_error`, request.url);
