@@ -25,17 +25,21 @@
  * 6. Non-destructive Native Session Establishment:
  *    - Uses admin-generated magic link OTP to authenticate under auth.uid() = user_id.
  *    - Fails closed if OTP authentication fails; never modifies user passwords or Auth properties.
- * 7. Genuine Import-Level Atomicity & Safe Rollback:
- *    - Takes pre-import database snapshot of existing IDs across all tables per owner.
- *    - Tracks all newly created and updated records.
- *    - On ANY error during import across any owner (including test failure injection),
- *      restores all tables across all owners to their exact pre-import state.
+ * 7. Genuine Database-Side Transaction Atomicity:
+ *    - All mutations across all target owners and all 5 tables (content_items,
+ *      content_links, production_tasks, reference_accounts, content_pillars) are
+ *      executed inside a single PostgreSQL database transaction via public.import_controlled_batch.
+ *    - Uses database engine BEGIN, COMMIT, and automatic engine-level ROLLBACK.
+ *    - Performs authoritative in-transaction verification prior to committing.
+ *    - Any error, validation failure, or injected test failure aborts the transaction,
+ *      guaranteeing zero partial state and exact restoration of all pre-existing records,
+ *      values, relationships, links, and timestamps.
  * 8. Authoritative Post-Write Verification:
  *    - Directly queries database counts and properties from the database after mutations.
  *    - Verifies 158 content items, 419 links, 30 reference accounts, 16 tasks per owner.
  *    - Verifies 38 corrected dates and 22 null dates per owner.
  *    - Verifies every row belongs to the expected owner user_id.
- *    - Any discrepancy triggers full rollback.
+ *    - Any discrepancy aborts and rolls back the database transaction.
  * 9. Locked date policy:
  *    - Strictly enforces 38 corrected day/month reversals and 22 unscheduled records.
  *    - Rejects missing, extra, duplicate, or modified date decisions.
@@ -602,454 +606,240 @@ export async function runWorkflow(options = {}) {
   // Verify all target users exist and are confirmed in Supabase Auth
   const userCheck = await verifyAuthUsersExist(adminClient, targetEmails);
 
-  // 8. PRE-IMPORT DATABASE SNAPSHOT (FOR ATOMIC ROLLBACK GUARANTEE)
-  const preImportSnapshot = new Map();
-  for (const email of targetEmails) {
-    const userId = userCheck.userMap.get(email);
-    const [itemsRes, linksRes, tasksRes, accsRes, pillarsRes] = await Promise.all([
-      adminClient.from("content_items").select("id, source_number").eq("user_id", userId),
-      adminClient.from("content_links").select("id").eq("user_id", userId),
-      adminClient.from("production_tasks").select("id, import_key").eq("user_id", userId),
-      adminClient.from("reference_accounts").select("id, platform, url").eq("user_id", userId),
-      adminClient.from("content_pillars").select("id").eq("user_id", userId),
-    ]);
+  // 8. SINGLE-TRANSACTION ATOMIC BATCH IMPORT
+  // Prepare payload for database-side execution inside a genuine PostgreSQL transaction
+  const batchPayload = {
+    owners: [],
+    expected: {
+      content_items: EXPECTED_PER_ACCOUNT.content_items,
+      content_links: EXPECTED_PER_ACCOUNT.content_links,
+      production_tasks: EXPECTED_PER_ACCOUNT.production_tasks,
+      reference_accounts: EXPECTED_PER_ACCOUNT.reference_accounts,
+      corrected_date_decisions: EXPECTED_PER_ACCOUNT.corrected_date_decisions,
+      unscheduled_date_decisions: EXPECTED_PER_ACCOUNT.unscheduled_date_decisions,
+    },
+    date_decisions: [],
+  };
 
-    if (itemsRes.error || linksRes.error || tasksRes.error || accsRes.error || pillarsRes.error) {
-      throw new Error("[SNAPSHOT ERROR] Failed taking pre-import snapshot.");
-    }
+  if (options._injectFailureDuringOwner2AfterContent) {
+    batchPayload.fail_owner_index = 2;
+  }
 
-    preImportSnapshot.set(userId, {
-      items: itemsRes.data || [],
-      links: linksRes.data || [],
-      tasks: tasksRes.data || [],
-      accounts: accsRes.data || [],
-      pillars: pillarsRes.data || [],
+  for (const [srcNum, expDate] of decisionsMap.entries()) {
+    batchPayload.date_decisions.push({
+      source_number: srcNum,
+      publish_at: expDate,
     });
   }
 
-  // Mutation log tracking for compensating rollback
-  const mutationLog = {
-    created_items: [],
-    created_links: [],
-    created_tasks: [],
-    created_accounts: [],
-    created_pillars: [],
-  };
-
-  const rollbackAll = async (causeErr) => {
-    console.error(`[ROLLBACK TRIGGERED] Import failed: ${causeErr.message}. Executing rollback to exact pre-import state...`);
-    try {
-      for (const [userId, snap] of preImportSnapshot.entries()) {
-        // 1. Clean tasks created during this run
-        const preTaskIds = new Set(snap.tasks.map((t) => t.id));
-        const { data: curTasks } = await adminClient.from("production_tasks").select("id").eq("user_id", userId);
-        const tasksToDelete = (curTasks || []).map((t) => t.id).filter((id) => !preTaskIds.has(id));
-        for (let i = 0; i < tasksToDelete.length; i += 50) {
-          await adminClient.from("production_tasks").delete().in("id", tasksToDelete.slice(i, i + 50));
-        }
-
-        // 2. Clean content items (and cascading links) created during this run
-        const preItemIds = new Set(snap.items.map((it) => it.id));
-        const { data: curItems } = await adminClient.from("content_items").select("id").eq("user_id", userId);
-        const itemsToDelete = (curItems || []).map((it) => it.id).filter((id) => !preItemIds.has(id));
-        for (let i = 0; i < itemsToDelete.length; i += 50) {
-          await adminClient.from("content_items").delete().in("id", itemsToDelete.slice(i, i + 50));
-        }
-
-        // 3. Clean reference accounts created during this run
-        const preAccIds = new Set(snap.accounts.map((a) => a.id));
-        const { data: curAccs } = await adminClient.from("reference_accounts").select("id").eq("user_id", userId);
-        const accsToDelete = (curAccs || []).map((a) => a.id).filter((id) => !preAccIds.has(id));
-        for (let i = 0; i < accsToDelete.length; i += 50) {
-          await adminClient.from("reference_accounts").delete().in("id", accsToDelete.slice(i, i + 50));
-        }
-
-        // 4. Clean content pillars created during this run
-        const prePillarIds = new Set(snap.pillars.map((p) => p.id));
-        const { data: curPillars } = await adminClient.from("content_pillars").select("id").eq("user_id", userId);
-        const pillarsToDelete = (curPillars || []).map((p) => p.id).filter((id) => !prePillarIds.has(id));
-        for (let i = 0; i < pillarsToDelete.length; i += 50) {
-          await adminClient.from("content_pillars").delete().in("id", pillarsToDelete.slice(i, i + 50));
-        }
-      }
-
-      // Verify rollback reached pre-import counts
-      for (const [userId, snap] of preImportSnapshot.entries()) {
-        const [curItems, curTasks, curAccounts] = await Promise.all([
-          adminClient.from("content_items").select("id", { count: "exact", head: true }).eq("user_id", userId),
-          adminClient.from("production_tasks").select("id", { count: "exact", head: true }).eq("user_id", userId),
-          adminClient.from("reference_accounts").select("id", { count: "exact", head: true }).eq("user_id", userId),
-        ]);
-        if (curItems.count !== snap.items.length || curTasks.count !== snap.tasks.length || curAccounts.count !== snap.accounts.length) {
-          console.error(`[CRITICAL ROLLBACK WARNING] Post-rollback count mismatch for user ${userId}.`);
-        }
-      }
-      console.log("[ROLLBACK COMPLETE] All tables successfully restored to exact pre-import state.");
-    } catch (cleanupErr) {
-      console.error(`[FATAL ROLLBACK ERROR] Rollback encountered secondary failure: ${cleanupErr.message}`);
+  const linksBySourceNum = new Map();
+  for (const l of excel.all_links) {
+    if (!linksBySourceNum.has(l.source_number)) {
+      linksBySourceNum.set(l.source_number, []);
     }
-  };
-
-  // 9. MULTI-ACCOUNT CONTROLLED IMPORT EXECUTION
-  try {
-    const linksBySourceNum = new Map();
-    for (const l of excel.all_links) {
-      if (!linksBySourceNum.has(l.source_number)) {
-        linksBySourceNum.set(l.source_number, []);
-      }
-      linksBySourceNum.get(l.source_number).push(l);
-    }
-
-    const perAccountResults = [];
-    let totalItemsCreated = 0;
-    let totalItemsUpdated = 0;
-    let totalLinksCreated = 0;
-    let totalLinksUpdated = 0;
-    let totalTasksCreated = 0;
-    let totalTasksUpdated = 0;
-    let totalAccountsCreated = 0;
-    let totalAccountsUpdated = 0;
-
-    let ownerIndex = 0;
-    for (const email of targetEmails) {
-      ownerIndex++;
-      const targetUserId = userCheck.userMap.get(email);
-      const userClient = createClient(supabaseUrl, publishableKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      });
-
-      // Genuine user session via magic link OTP (non-destructive, zero password tampering)
-      const linkRes = await adminClient.auth.admin.generateLink({
-        type: "magiclink",
-        email,
-      });
-      if (linkRes.error || !linkRes.data?.properties?.email_otp) {
-        throw new Error(`[AUTH ERROR] Could not generate magic link OTP for target account.`);
-      }
-
-      const { data: verifyData, error: verifyErr } = await userClient.auth.verifyOtp({
-        email,
-        token: linkRes.data.properties.email_otp,
-        type: "email",
-      });
-      if (verifyErr || !verifyData?.session?.access_token) {
-        throw new Error(`[AUTH ERROR] Failed to authenticate target account via OTP: ${verifyErr?.message || "missing session"}`);
-      }
-
-      // Default pillar for this user
-      const { data: existingPillars, error: pillarErr } = await userClient
-        .from("content_pillars")
-        .select("id")
-        .eq("user_id", targetUserId);
-      if (pillarErr) throw new Error(`Querying pillars: ${pillarErr.message}`);
-
-      let pillarId;
-      if (existingPillars && existingPillars.length > 0) {
-        pillarId = existingPillars[0].id;
-      } else {
-        const { data: newPillar, error: createPillarErr } = await userClient
-          .from("content_pillars")
-          .insert({
-            user_id: targetUserId,
-            name_en: "General Knowledge",
-            name_th: "ความรู้ทั่วไปและสินค้า",
-            color: "#8b5cf6",
-            sort_order: 1,
-          })
-          .select("id")
-          .single();
-        if (createPillarErr) throw new Error(`Creating default pillar: ${createPillarErr.message}`);
-        pillarId = newPillar.id;
-        mutationLog.created_pillars.push(pillarId);
-      }
-
-      // Content Items & Links (Transactional RPC per item)
-      const { data: existingItems, error: itemsErr } = await userClient
-        .from("content_items")
-        .select("id, source_number")
-        .eq("user_id", targetUserId);
-      if (itemsErr) throw new Error(`Querying existing content items: ${itemsErr.message}`);
-
-      const sourceNumberToId = new Map();
-      for (const item of existingItems || []) {
-        if (item.source_number) sourceNumberToId.set(item.source_number, item.id);
-      }
-
-      let itemsCreated = 0;
-      let itemsUpdated = 0;
-      let linksCreated = 0;
-      let linksUpdated = 0;
-
-      for (const c of excel.auto_candidates) {
-        const candidateLinks = linksBySourceNum.get(c.source_number) || [];
-        const existingId = sourceNumberToId.get(c.source_number);
-        const isUpdate = Boolean(existingId);
-
-        let resolvedPublishAt = c.publish_at;
-        let resolvedPublishTimeKnown = Boolean(c.publish_time_known);
-
-        if (decisionsMap.has(c.source_number)) {
-          const decisionDate = decisionsMap.get(c.source_number);
-          if (decisionDate) {
-            resolvedPublishAt = `${decisionDate}T00:00:00+00:00`;
-            resolvedPublishTimeKnown = false;
-          } else {
-            resolvedPublishAt = null;
-            resolvedPublishTimeKnown = false;
-          }
-        }
-
-        const itemPayload = {
-          title: c.title,
-          platforms: c.platforms,
-          status: c.status || c.proposed_status || "idea",
-          source_number: c.source_number,
-          format: c.format,
-          goal: c.goal,
-          hook: c.hook,
-          objective: c.objective,
-          production_detail: c.production_detail,
-          cta: c.cta,
-          caption: null,
-          notes: c.notes,
-          progress: c.progress || 0,
-          publish_at: resolvedPublishAt,
-          publish_time_known: resolvedPublishTimeKnown,
-          review_status: c.review_status,
-          source_content_status: c.source_content_status,
-          content_pillar_id: pillarId,
-        };
-
-        if (isUpdate) itemPayload.id = existingId;
-
-        const formattedLinks = candidateLinks.map((l, idx) => ({
-          link_type: l.link_type,
-          platform: l.platform || null,
-          url: l.url,
-          label: l.label || null,
-          sort_order: idx,
-        }));
-
-        const { data: savedId, error: saveErr } = await userClient.rpc("upsert_content_item_with_links", {
-          p_item: itemPayload,
-          p_links: formattedLinks,
-        });
-
-        if (saveErr) throw new Error(`Saving content item #${c.source_number}: ${saveErr.message}`);
-
-        if (savedId) {
-          if (isUpdate) {
-            itemsUpdated++;
-            linksUpdated += formattedLinks.length;
-          } else {
-            itemsCreated++;
-            linksCreated += formattedLinks.length;
-            mutationLog.created_items.push(savedId);
-          }
-          sourceNumberToId.set(c.source_number, savedId);
-        }
-      }
-
-      // Optional failure injection testing hook: inject failure after content creation during owner 2
-      if (options._injectFailureDuringOwner2AfterContent && ownerIndex === 2) {
-        throw new Error("[TEST INJECTION] Simulated failure during owner 2 after content creation.");
-      }
-
-      // Production Tasks
-      const { data: existingTasks, error: tasksErr } = await userClient
-        .from("production_tasks")
-        .select("id, import_key")
-        .eq("user_id", targetUserId);
-      if (tasksErr) throw new Error(`Querying tasks: ${tasksErr.message}`);
-
-      const existingTasksByKey = new Map((existingTasks || []).map((t) => [t.import_key, t.id]));
-      const allTasks = [...csv.linked_tasks, ...csv.standalone_tasks];
-      let tasksCreated = 0;
-      let tasksUpdated = 0;
-
-      for (const t of allTasks) {
-        const linkedItemId = t.source_number ? sourceNumberToId.get(t.source_number) || null : null;
-        const taskData = {
-          user_id: targetUserId,
-          content_item_id: linkedItemId,
-          title: t.title,
-          status: t.status,
-          priority: t.priority,
-          task_type: t.task_type,
-          due_date: t.due_date,
-          description: t.description,
-          import_key: t.import_key,
-        };
-
-        const existingTaskId = existingTasksByKey.get(t.import_key);
-        if (existingTaskId) {
-          const { error: updateErr } = await userClient
-            .from("production_tasks")
-            .update(taskData)
-            .eq("id", existingTaskId);
-          if (updateErr) throw new Error(`Updating task: ${updateErr.message}`);
-          tasksUpdated++;
-        } else {
-          const { data: insertedTask, error: insertErr } = await userClient
-            .from("production_tasks")
-            .insert(taskData)
-            .select("id")
-            .single();
-          if (insertErr) throw new Error(`Inserting task: ${insertErr.message}`);
-          tasksCreated++;
-          if (insertedTask?.id) mutationLog.created_tasks.push(insertedTask.id);
-        }
-      }
-
-      // Reference Accounts
-      const { data: existingAccs, error: accsErr } = await userClient
-        .from("reference_accounts")
-        .select("id, platform, url")
-        .eq("user_id", targetUserId);
-      if (accsErr) throw new Error(`Querying reference accounts: ${accsErr.message}`);
-
-      const existingAccKeys = new Map((existingAccs || []).map((a) => [`${a.platform}:${a.url}`, a.id]));
-      let accountsCreated = 0;
-      let accountsUpdated = 0;
-
-      for (const acc of excel.reference_accounts) {
-        const key = `${acc.platform}:${acc.url}`;
-        const existingAccId = existingAccKeys.get(key);
-
-        const accData = {
-          user_id: targetUserId,
-          platform: acc.platform,
-          account_label: acc.account_label || acc.account_name || "Unnamed Account",
-          url: acc.url,
-          notes: acc.notes || null,
-        };
-
-        if (existingAccId) {
-          const { error: updateErr } = await userClient
-            .from("reference_accounts")
-            .update(accData)
-            .eq("id", existingAccId);
-          if (updateErr) throw new Error(`Updating reference account: ${updateErr.message}`);
-          accountsUpdated++;
-        } else {
-          const { data: insertedAcc, error: insertErr } = await userClient
-            .from("reference_accounts")
-            .insert(accData)
-            .select("id")
-            .single();
-          if (insertErr) throw new Error(`Inserting reference account: ${insertErr.message}`);
-          accountsCreated++;
-          if (insertedAcc?.id) mutationLog.created_accounts.push(insertedAcc.id);
-        }
-      }
-
-      perAccountResults.push({
-        content_items: { created: itemsCreated, updated: itemsUpdated, total: itemsCreated + itemsUpdated },
-        content_links: { created: linksCreated, updated: linksUpdated, total: linksCreated + linksUpdated },
-        production_tasks: { created: tasksCreated, updated: tasksUpdated, total: tasksCreated + tasksUpdated },
-        reference_accounts: { created: accountsCreated, updated: accountsUpdated, total: accountsCreated + accountsUpdated },
-      });
-
-      totalItemsCreated += itemsCreated;
-      totalItemsUpdated += itemsUpdated;
-      totalLinksCreated += linksCreated;
-      totalLinksUpdated += linksUpdated;
-      totalTasksCreated += tasksCreated;
-      totalTasksUpdated += tasksUpdated;
-      totalAccountsCreated += accountsCreated;
-      totalAccountsUpdated += accountsUpdated;
-    }
-
-    // 10. AUTHORITATIVE POST-WRITE DATABASE VERIFICATION
-    for (const email of targetEmails) {
-      const targetUserId = userCheck.userMap.get(email);
-      const userClient = createClient(supabaseUrl, publishableKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      });
-
-      // Connect as owner via OTP to verify under RLS
-      const linkRes = await adminClient.auth.admin.generateLink({ type: "magiclink", email });
-      if (!linkRes.data?.properties?.email_otp) throw new Error("[VERIFICATION ERROR] Could not verify owner session.");
-      await userClient.auth.verifyOtp({ email, token: linkRes.data.properties.email_otp, type: "email" });
-
-      const [itemsRes, linksRes, tasksRes, accsRes] = await Promise.all([
-        userClient.from("content_items").select("id, user_id, source_number, publish_at"),
-        userClient.from("content_links").select("id, user_id"),
-        userClient.from("production_tasks").select("id, user_id"),
-        userClient.from("reference_accounts").select("id, user_id"),
-      ]);
-
-      if (itemsRes.error || linksRes.error || tasksRes.error || accsRes.error) {
-        throw new Error("[VERIFICATION ERROR] Database query failed during post-write verification.");
-      }
-
-      const items = itemsRes.data || [];
-      const links = linksRes.data || [];
-      const tasks = tasksRes.data || [];
-      const accounts = accsRes.data || [];
-
-      // Verify counts
-      if (items.length !== EXPECTED_PER_ACCOUNT.content_items) {
-        throw new Error(`[VERIFICATION FAILED] Content items count mismatch: expected ${EXPECTED_PER_ACCOUNT.content_items}, found ${items.length}.`);
-      }
-      if (links.length !== EXPECTED_PER_ACCOUNT.content_links) {
-        throw new Error(`[VERIFICATION FAILED] Content links count mismatch: expected ${EXPECTED_PER_ACCOUNT.content_links}, found ${links.length}.`);
-      }
-      if (tasks.length !== EXPECTED_PER_ACCOUNT.production_tasks) {
-        throw new Error(`[VERIFICATION FAILED] Tasks count mismatch: expected ${EXPECTED_PER_ACCOUNT.production_tasks}, found ${tasks.length}.`);
-      }
-      if (accounts.length !== EXPECTED_PER_ACCOUNT.reference_accounts) {
-        throw new Error(`[VERIFICATION FAILED] Reference accounts count mismatch: expected ${EXPECTED_PER_ACCOUNT.reference_accounts}, found ${accounts.length}.`);
-      }
-
-      // Verify owner isolation for every single row
-      for (const i of items) if (i.user_id !== targetUserId) throw new Error("[ISOLATION FAILED] Content item belongs to incorrect owner.");
-      for (const l of links) if (l.user_id !== targetUserId) throw new Error("[ISOLATION FAILED] Content link belongs to incorrect owner.");
-      for (const t of tasks) if (t.user_id !== targetUserId) throw new Error("[ISOLATION FAILED] Production task belongs to incorrect owner.");
-      for (const a of accounts) if (a.user_id !== targetUserId) throw new Error("[ISOLATION FAILED] Reference account belongs to incorrect owner.");
-
-      // Verify exact date decision application in database
-      const itemsBySourceNum = new Map(items.map((i) => [i.source_number, i]));
-      let actualCorrected = 0;
-      let actualUnscheduled = 0;
-
-      for (const [srcNum, expectedDate] of decisionsMap.entries()) {
-        const item = itemsBySourceNum.get(srcNum);
-        if (!item) throw new Error(`[DATE DECISION FAILED] Item #${srcNum} missing from database.`);
-        if (expectedDate !== null) {
-          if (!item.publish_at || !item.publish_at.startsWith(expectedDate)) {
-            throw new Error(`[DATE DECISION FAILED] Item #${srcNum} publish_at (${item.publish_at}) did not match expected ${expectedDate}.`);
-          }
-          actualCorrected++;
-        } else {
-          if (item.publish_at !== null) {
-            throw new Error(`[DATE DECISION FAILED] Item #${srcNum} was expected to be unscheduled (null), got ${item.publish_at}.`);
-          }
-          actualUnscheduled++;
-        }
-      }
-
-      if (actualCorrected !== EXPECTED_PER_ACCOUNT.corrected_date_decisions || actualUnscheduled !== EXPECTED_PER_ACCOUNT.unscheduled_date_decisions) {
-        throw new Error(`[DATE DECISION FAILED] Date decision counts mismatch in database: ${actualCorrected} corrected, ${actualUnscheduled} unscheduled.`);
-      }
-    }
-
-    report.execution_results = {
-      per_account: perAccountResults,
-      totals: {
-        content_items: { created: totalItemsCreated, updated: totalItemsUpdated, total: totalItemsCreated + totalItemsUpdated },
-        content_links: { created: totalLinksCreated, updated: totalLinksUpdated, total: totalLinksCreated + totalLinksUpdated },
-        production_tasks: { created: totalTasksCreated, updated: totalTasksUpdated, total: totalTasksCreated + totalTasksUpdated },
-        reference_accounts: { created: totalAccountsCreated, updated: totalAccountsUpdated, total: totalAccountsCreated + totalAccountsUpdated },
-      },
-    };
-    report.database_writes_performed = totalItemsCreated + totalLinksCreated + totalTasksCreated + totalAccountsCreated;
-    report.verdict = "Commit mode and post-write verification completed successfully for all owner accounts.";
-    return report;
-  } catch (err) {
-    await rollbackAll(err);
-    throw err;
+    linksBySourceNum.get(l.source_number).push(l);
   }
+
+  const allTasks = [...csv.linked_tasks, ...csv.standalone_tasks];
+
+  for (const email of targetEmails) {
+    const targetUserId = userCheck.userMap.get(email);
+
+    const ownerItems = excel.auto_candidates.map((c) => {
+      let resolvedPublishAt = c.publish_at;
+      let resolvedPublishTimeKnown = Boolean(c.publish_time_known);
+
+      if (decisionsMap.has(c.source_number)) {
+        const decisionDate = decisionsMap.get(c.source_number);
+        if (decisionDate) {
+          resolvedPublishAt = `${decisionDate}T00:00:00+00:00`;
+          resolvedPublishTimeKnown = false;
+        } else {
+          resolvedPublishAt = null;
+          resolvedPublishTimeKnown = false;
+        }
+      }
+
+      const candidateLinks = linksBySourceNum.get(c.source_number) || [];
+      const formattedLinks = candidateLinks.map((l, idx) => ({
+        link_type: l.link_type,
+        platform: l.platform || null,
+        url: l.url,
+        label: l.label || null,
+        sort_order: idx,
+      }));
+
+      return {
+        source_number: c.source_number,
+        title: c.title,
+        platforms: c.platforms,
+        status: c.status || c.proposed_status || "idea",
+        format: c.format || null,
+        goal: c.goal || null,
+        hook: c.hook || null,
+        objective: c.objective || null,
+        production_detail: c.production_detail || null,
+        cta: c.cta || null,
+        caption: null,
+        notes: c.notes || null,
+        progress: c.progress || 0,
+        publish_at: resolvedPublishAt,
+        publish_time_known: resolvedPublishTimeKnown,
+        review_status: c.review_status || null,
+        source_content_status: c.source_content_status || null,
+        links: formattedLinks,
+      };
+    });
+
+    const ownerTasks = allTasks.map((t) => ({
+      import_key: t.import_key,
+      source_number: t.source_number || null,
+      title: t.title,
+      status: t.status,
+      priority: t.priority || null,
+      task_type: t.task_type || null,
+      due_date: t.due_date || null,
+      description: t.description || null,
+    }));
+
+    const ownerAccounts = excel.reference_accounts.map((acc) => ({
+      platform: acc.platform,
+      account_label: acc.account_label || acc.account_name || "Unnamed Account",
+      url: acc.url,
+      notes: acc.notes || null,
+    }));
+
+    batchPayload.owners.push({
+      user_id: targetUserId,
+      items: ownerItems,
+      tasks: ownerTasks,
+      reference_accounts: ownerAccounts,
+    });
+  }
+
+  // Execute genuine single PostgreSQL transaction via RPC
+  const { data: batchResult, error: batchErr } = await adminClient.rpc(
+    "import_controlled_batch",
+    { p_payload: batchPayload }
+  );
+
+  if (batchErr) {
+    // Database transaction automatically aborted and rolled back by PostgreSQL
+    throw new Error(`[TRANSACTION ABORTED] Single-transaction batch import failed: ${batchErr.message}`);
+  }
+
+  // 9. AUTHORITATIVE POST-COMMIT DATABASE VERIFICATION
+  for (const email of targetEmails) {
+    const targetUserId = userCheck.userMap.get(email);
+    const userClient = createClient(supabaseUrl, publishableKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // Connect as owner via OTP to verify under RLS
+    const linkRes = await adminClient.auth.admin.generateLink({ type: "magiclink", email });
+    if (!linkRes.data?.properties?.email_otp) throw new Error("[VERIFICATION ERROR] Could not verify owner session.");
+    await userClient.auth.verifyOtp({ email, token: linkRes.data.properties.email_otp, type: "email" });
+
+    const [itemsRes, linksRes, tasksRes, accsRes] = await Promise.all([
+      userClient.from("content_items").select("id, user_id, source_number, publish_at"),
+      userClient.from("content_links").select("id, user_id"),
+      userClient.from("production_tasks").select("id, user_id"),
+      userClient.from("reference_accounts").select("id, user_id"),
+    ]);
+
+    if (itemsRes.error || linksRes.error || tasksRes.error || accsRes.error) {
+      throw new Error("[VERIFICATION ERROR] Database query failed during post-commit verification.");
+    }
+
+    const items = itemsRes.data || [];
+    const links = linksRes.data || [];
+    const tasks = tasksRes.data || [];
+    const accounts = accsRes.data || [];
+
+    // Verify counts
+    if (items.length !== EXPECTED_PER_ACCOUNT.content_items) {
+      throw new Error(`[VERIFICATION FAILED] Content items count mismatch: expected ${EXPECTED_PER_ACCOUNT.content_items}, found ${items.length}.`);
+    }
+    if (links.length !== EXPECTED_PER_ACCOUNT.content_links) {
+      throw new Error(`[VERIFICATION FAILED] Content links count mismatch: expected ${EXPECTED_PER_ACCOUNT.content_links}, found ${links.length}.`);
+    }
+    if (tasks.length !== EXPECTED_PER_ACCOUNT.production_tasks) {
+      throw new Error(`[VERIFICATION FAILED] Tasks count mismatch: expected ${EXPECTED_PER_ACCOUNT.production_tasks}, found ${tasks.length}.`);
+    }
+    if (accounts.length !== EXPECTED_PER_ACCOUNT.reference_accounts) {
+      throw new Error(`[VERIFICATION FAILED] Reference accounts count mismatch: expected ${EXPECTED_PER_ACCOUNT.reference_accounts}, found ${accounts.length}.`);
+    }
+
+    // Verify owner isolation for every single row
+    for (const i of items) if (i.user_id !== targetUserId) throw new Error("[ISOLATION FAILED] Content item belongs to incorrect owner.");
+    for (const l of links) if (l.user_id !== targetUserId) throw new Error("[ISOLATION FAILED] Content link belongs to incorrect owner.");
+    for (const t of tasks) if (t.user_id !== targetUserId) throw new Error("[ISOLATION FAILED] Production task belongs to incorrect owner.");
+    for (const a of accounts) if (a.user_id !== targetUserId) throw new Error("[ISOLATION FAILED] Reference account belongs to incorrect owner.");
+
+    // Verify exact date decision application in database
+    const itemsBySourceNum = new Map(items.map((i) => [i.source_number, i]));
+    let actualCorrected = 0;
+    let actualUnscheduled = 0;
+
+    for (const [srcNum, expectedDate] of decisionsMap.entries()) {
+      const item = itemsBySourceNum.get(srcNum);
+      if (!item) throw new Error(`[DATE DECISION FAILED] Item #${srcNum} missing from database.`);
+      if (expectedDate !== null) {
+        if (!item.publish_at || !item.publish_at.startsWith(expectedDate)) {
+          throw new Error(`[DATE DECISION FAILED] Item #${srcNum} publish_at (${item.publish_at}) did not match expected ${expectedDate}.`);
+        }
+        actualCorrected++;
+      } else {
+        if (item.publish_at !== null) {
+          throw new Error(`[DATE DECISION FAILED] Item #${srcNum} was expected to be unscheduled (null), got ${item.publish_at}.`);
+        }
+        actualUnscheduled++;
+      }
+    }
+
+    if (actualCorrected !== EXPECTED_PER_ACCOUNT.corrected_date_decisions || actualUnscheduled !== EXPECTED_PER_ACCOUNT.unscheduled_date_decisions) {
+      throw new Error(`[DATE DECISION FAILED] Date decision counts mismatch in database: ${actualCorrected} corrected, ${actualUnscheduled} unscheduled.`);
+    }
+  }
+
+  report.execution_results = {
+    totals: {
+      content_items: {
+        created: batchResult.items_created,
+        updated: batchResult.items_updated,
+        total: batchResult.items_created + batchResult.items_updated,
+      },
+      content_links: {
+        created: batchResult.links_created,
+        updated: batchResult.links_updated,
+        total: batchResult.links_created + batchResult.links_updated,
+      },
+      production_tasks: {
+        created: batchResult.tasks_created,
+        updated: batchResult.tasks_updated,
+        total: batchResult.tasks_created + batchResult.tasks_updated,
+      },
+      reference_accounts: {
+        created: batchResult.accs_created,
+        updated: batchResult.accs_updated,
+        total: batchResult.accs_created + batchResult.accs_updated,
+      },
+      content_pillars: {
+        created: batchResult.pillars_created,
+      },
+    },
+  };
+  report.database_writes_performed =
+    batchResult.items_created +
+    batchResult.items_updated +
+    batchResult.links_created +
+    batchResult.links_updated +
+    batchResult.tasks_created +
+    batchResult.tasks_updated +
+    batchResult.accs_created +
+    batchResult.accs_updated;
+  report.verdict = "Single-transaction commit and post-write verification completed successfully for all owner accounts.";
+  return report;
 }
 
 // CLI Execution Entrypoint

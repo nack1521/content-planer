@@ -297,7 +297,15 @@ Status: In Progress
 - [x] Require all 3 target auth users to exist in Supabase Auth before allowing commit mode.
 - [x] Ensure strict multi-account planner isolation under `auth.uid() = user_id`, with non-destructive native OTP session establishment.
 - [x] Verify expected counts: 158 content items, 419 links, 30 reference accounts, 16 tasks per account; 474 items, 1,257 links, 90 reference accounts, 48 tasks total.
-- [x] Enforce atomic transactional rollback on link failures using `upsert_content_item_with_links`.
+- [x] Replace compensating-delete rollback with genuine database-side single PostgreSQL transaction (`public.import_controlled_batch`) covering all 3 owners and all 5 tables (`content_items`, `content_links`, `production_tasks`, `reference_accounts`, `content_pillars`).
+- [x] Implement real `BEGIN`, `COMMIT`, and engine-level `ROLLBACK` guarantees via PostgREST RPC, eliminating multiple HTTP mutation calls and client-side cleanup deletes.
+- [x] Complete all safe preflight checks before starting the transaction: source baselines, locked date decisions, exact target accounts, Auth users existence and confirmation, backup and execution flags.
+- [x] Implement authoritative in-transaction post-write verification before commit (counts, isolation, and exact 38/22 date decision application), rolling back completely on any failure.
+- [x] Remove misleading snapshot/rollback implementation and all claims that compensating deletion restores exact state.
+- [x] Strengthen atomicity test: seed pre-existing conflicting data across all 5 tables, take deep row-level snapshot, trigger failure during owner 2 after updates, assert exact deep equality before and after failure, verify successful commit with updates, and verify idempotent rerun.
+- [x] Check and propagate every database error; never claim rollback success unless restoration is proven.
+- [x] Keep hosted commit mode strictly disabled during this cycle; test only against isolated local Supabase.
+- [x] Preserve fully synthetic portable fixtures without private URLs, real emails, or confidential data.
 - [x] Enforce rerun idempotency: subsequent commit runs update existing records with 0 created and identical totals.
 - [x] Enforce zero secret, credential, or private source URL leakage in CLI stdout/stderr.
 - [x] Add comprehensive automated test suite (`tests/hosted-import-prep.test.mjs`, 14 tests) using fully synthetic portable fixtures and wire into `tests/run-tests.mjs` (197/197 tests pass).

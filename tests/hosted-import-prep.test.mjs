@@ -81,6 +81,31 @@ async function cleanSyntheticUsers(adminClient) {
   }
 }
 
+
+async function captureDatabaseSnapshot(adminClient, userIds) {
+  const [pillarsRes, itemsRes, linksRes, tasksRes, accsRes] = await Promise.all([
+    adminClient.from("content_pillars").select("*").in("user_id", userIds).order("id"),
+    adminClient.from("content_items").select("*").in("user_id", userIds).order("id"),
+    adminClient.from("content_links").select("*").in("user_id", userIds).order("id"),
+    adminClient.from("production_tasks").select("*").in("user_id", userIds).order("id"),
+    adminClient.from("reference_accounts").select("*").in("user_id", userIds).order("id"),
+  ]);
+
+  if (pillarsRes.error) throw pillarsRes.error;
+  if (itemsRes.error) throw itemsRes.error;
+  if (linksRes.error) throw linksRes.error;
+  if (tasksRes.error) throw tasksRes.error;
+  if (accsRes.error) throw accsRes.error;
+
+  return {
+    pillars: pillarsRes.data || [],
+    items: itemsRes.data || [],
+    links: linksRes.data || [],
+    tasks: tasksRes.data || [],
+    accounts: accsRes.data || [],
+  };
+}
+
 function runScript(args = [], env = {}) {
   return spawnSync(process.execPath, [SCRIPT_PATH, "--manifest", FIXTURE_MANIFEST, ...args], {
     encoding: "utf8",
@@ -335,17 +360,120 @@ test("Portable Fixture Privacy: workbook and task fixtures contain synthetic con
 });
 
 // -----------------------------------------------------------------------------
-// 6. GENUINE IMPORT-LEVEL ATOMICITY: FAILURE INJECTION & COMPENSATING ROLLBACK
+// 6. GENUINE IMPORT-LEVEL ATOMICITY: SEEDED CONFLICTS, FAILURE INJECTION, DEEP EQUALITY ROLLBACK, SUCCESSFUL COMMIT, & IDEMPOTENT RERUN
 // -----------------------------------------------------------------------------
-test("Import-Level Atomicity: Failure during second owner after content creation rolls back all tables across all owners to exact pre-import state", async () => {
-  const { adminClient } = getLocalAdminClient();
+test("Import-Level Atomicity: Seeded pre-existing records with conflicting values, failure injection during owner 2, deep equality restoration, successful commit, and idempotent rerun", async () => {
+  const { adminClient, supabaseUrl, publishableKey } = getLocalAdminClient();
 
   try {
     await ensureSyntheticUsersExist(adminClient, true);
     await cleanSyntheticUsers(adminClient);
     await ensureSyntheticUsersExist(adminClient, true);
 
-    // Execute with failure injection hook active
+    const { data: usersData } = await adminClient.auth.admin.listUsers();
+    const targetUsers = SYNTHETIC_TARGETS.map((email) => {
+      const u = usersData.users.find((user) => user.email?.toLowerCase() === email.toLowerCase());
+      assert.ok(u, `Target user ${email} must exist in auth.users`);
+      return u;
+    });
+    const userIds = targetUsers.map((u) => u.id);
+
+    const { excel, csv } = parseSourceDatasets(FIXTURE_EXCEL, FIXTURE_CSV);
+    const allTasks = [...csv.linked_tasks, ...csv.standalone_tasks];
+    const firstTaskKey = allTasks[0].import_key;
+    const firstAcc = excel.reference_accounts[0];
+
+    // Seed every target owner with pre-existing content items, links, tasks, pillars, and reference accounts
+    // containing values different from the import dataset
+    for (const u of targetUsers) {
+      // 1. Pre-existing pillar
+      const { data: pillar, error: pillarErr } = await adminClient
+        .from("content_pillars")
+        .insert({
+          user_id: u.id,
+          name_en: "Pre-existing Seed Pillar",
+          name_th: "หมวดเดิมสำหรับการทดสอบ",
+          color: "#e11d48",
+          sort_order: 99,
+        })
+        .select("id")
+        .single();
+      if (pillarErr) throw pillarErr;
+
+      // 2. Pre-existing content item (#1) with conflicting values
+      const { data: item, error: itemErr } = await adminClient
+        .from("content_items")
+        .insert({
+          user_id: u.id,
+          content_pillar_id: pillar.id,
+          source_number: 1,
+          title: "Pre-existing Conflicting Item Title",
+          status: "scripting",
+          platforms: ["facebook"],
+          format: "story",
+          goal: "growth",
+          hook: "Old Hook Value",
+          objective: "Old Objective Value",
+          production_detail: "Old Production Detail Value",
+          cta: "Old CTA Value",
+          caption: "Old Caption Value",
+          notes: "Old Seed Notes Value",
+          progress: 42,
+          publish_at: "2025-01-01T10:00:00Z",
+          publish_time_known: true,
+          review_status: "in_process",
+          source_content_status: "raw",
+        })
+        .select("id")
+        .single();
+      if (itemErr) throw itemErr;
+
+      // 3. Pre-existing content link attached to item #1
+      const { error: linkErr } = await adminClient.from("content_links").insert({
+        user_id: u.id,
+        content_item_id: item.id,
+        link_type: "idea_source",
+        platform: "facebook",
+        url: "https://pre-existing.example.test/old-link",
+        label: "Pre-existing Seed Link",
+        sort_order: 0,
+      });
+      if (linkErr) throw linkErr;
+
+      // 4. Pre-existing task with matching import_key but conflicting values
+      const { error: taskErr } = await adminClient.from("production_tasks").insert({
+        user_id: u.id,
+        content_item_id: item.id,
+        import_key: firstTaskKey,
+        title: "Pre-existing Conflicting Task Title",
+        status: "in_progress",
+        due_date: "2025-02-01",
+        priority: "low",
+        task_type: "video",
+        description: "Pre-existing conflicting task description",
+      });
+      if (taskErr) throw taskErr;
+
+      // 5. Pre-existing reference account with matching platform:url but conflicting label/notes
+      const { error: accErr } = await adminClient.from("reference_accounts").insert({
+        user_id: u.id,
+        platform: firstAcc.platform,
+        url: firstAcc.url,
+        account_label: "Pre-existing Conflicting Account Label",
+        notes: "Pre-existing conflicting account notes",
+      });
+      if (accErr) throw accErr;
+    }
+
+    // Capture complete row-level snapshot before failure attempt
+    const snapshotBefore = await captureDatabaseSnapshot(adminClient, userIds);
+    assert.equal(snapshotBefore.pillars.length, 3, "Expected 3 seeded pillars");
+    assert.equal(snapshotBefore.items.length, 3, "Expected 3 seeded items");
+    assert.equal(snapshotBefore.links.length, 3, "Expected 3 seeded links");
+    assert.equal(snapshotBefore.tasks.length, 3, "Expected 3 seeded tasks");
+    assert.equal(snapshotBefore.accounts.length, 3, "Expected 3 seeded accounts");
+
+    // Execute with failure injection hook active (triggers failure during owner 2 after content updates)
     let caughtErr = null;
     try {
       await runWorkflow({
@@ -365,24 +493,126 @@ test("Import-Level Atomicity: Failure during second owner after content creation
     assert.ok(caughtErr, "Workflow must fail on injected error");
     assert.match(caughtErr.message, /\[TEST INJECTION\] Simulated failure during owner 2 after content creation/);
 
-    // Verify all tables across ALL owners are in exact pre-import state (0 items, 0 links, 0 tasks, 0 accounts)
-    const { data: usersData } = await adminClient.auth.admin.listUsers();
-    for (const email of SYNTHETIC_TARGETS) {
-      const u = usersData.users.find((user) => user.email.toLowerCase() === email.toLowerCase());
-      assert.ok(u);
+    // Capture complete row-level snapshot after failure attempt
+    const snapshotAfterFailure = await captureDatabaseSnapshot(adminClient, userIds);
 
-      const [items, links, tasks, accs] = await Promise.all([
-        adminClient.from("content_items").select("*", { count: "exact", head: true }).eq("user_id", u.id),
-        adminClient.from("content_links").select("*", { count: "exact", head: true }).eq("user_id", u.id),
-        adminClient.from("production_tasks").select("*", { count: "exact", head: true }).eq("user_id", u.id),
-        adminClient.from("reference_accounts").select("*", { count: "exact", head: true }).eq("user_id", u.id),
+    // Assert exact deep equality between database before and after failure
+    assert.deepEqual(
+      snapshotAfterFailure,
+      snapshotBefore,
+      "Database state after transaction abort must be deeply equal to exact pre-import state across all tables and values"
+    );
+
+    // -------------------------------------------------------------------------
+    // Successful Commit & Authoritative Verification
+    // -------------------------------------------------------------------------
+    const res1 = await runWorkflow({
+      commit: true,
+      confirmBackup: true,
+      confirmExecution: true,
+      manifestPath: FIXTURE_MANIFEST,
+      excelPath: FIXTURE_EXCEL,
+      csvPath: FIXTURE_CSV,
+      decisionsPath: FIXTURE_DECISIONS,
+    });
+
+    assert.equal(res1.status, "success");
+    // Pre-existing item #1 was updated for all 3 owners; items 2..158 were created
+    assert.equal(res1.execution_results.totals.content_items.updated, 3);
+    assert.equal(res1.execution_results.totals.content_items.created, EXPECTED_TOTAL.content_items - 3);
+    assert.equal(res1.execution_results.totals.content_items.total, EXPECTED_TOTAL.content_items);
+
+    // Pre-existing task was updated for all 3 owners; other tasks created
+    assert.equal(res1.execution_results.totals.production_tasks.updated, 3);
+    assert.equal(res1.execution_results.totals.production_tasks.created, EXPECTED_TOTAL.production_tasks - 3);
+    assert.equal(res1.execution_results.totals.production_tasks.total, EXPECTED_TOTAL.production_tasks);
+
+    // Pre-existing reference account was updated for all 3 owners; other accounts created
+    assert.equal(res1.execution_results.totals.reference_accounts.updated, 3);
+    assert.equal(res1.execution_results.totals.reference_accounts.created, EXPECTED_TOTAL.reference_accounts - 3);
+    assert.equal(res1.execution_results.totals.reference_accounts.total, EXPECTED_TOTAL.reference_accounts);
+
+    // Content links were created
+    assert.equal(res1.execution_results.totals.content_links.total, EXPECTED_TOTAL.content_links);
+
+    // Authoritative check that database row counts per owner match expected totals under RLS
+    const decisionsData = JSON.parse(readFileSync(FIXTURE_DECISIONS, "utf8"));
+    for (const email of SYNTHETIC_TARGETS) {
+      const linkRes = await adminClient.auth.admin.generateLink({ type: "magiclink", email });
+      assert.ok(linkRes.data?.properties?.email_otp);
+      const userClient = createClient(supabaseUrl, publishableKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: authData } = await userClient.auth.verifyOtp({
+        email,
+        token: linkRes.data.properties.email_otp,
+        type: "email",
+      });
+      const userId = authData.user.id;
+
+      const [itemsRes, linksRes, tasksRes, accsRes] = await Promise.all([
+        userClient.from("content_items").select("id, user_id, source_number, publish_at"),
+        userClient.from("content_links").select("id, user_id"),
+        userClient.from("production_tasks").select("id, user_id"),
+        userClient.from("reference_accounts").select("id, user_id"),
       ]);
 
-      assert.equal(items.count, 0, `Owner ${email} content_items must be rolled back to 0`);
-      assert.equal(links.count, 0, `Owner ${email} content_links must be rolled back to 0`);
-      assert.equal(tasks.count, 0, `Owner ${email} production_tasks must be rolled back to 0`);
-      assert.equal(accs.count, 0, `Owner ${email} reference_accounts must be rolled back to 0`);
+      const items = itemsRes.data || [];
+      const links = linksRes.data || [];
+      const tasks = tasksRes.data || [];
+      const accounts = accsRes.data || [];
+
+      assert.equal(items.length, EXPECTED_PER_ACCOUNT.content_items);
+      assert.equal(links.length, EXPECTED_PER_ACCOUNT.content_links);
+      assert.equal(tasks.length, EXPECTED_PER_ACCOUNT.production_tasks);
+      assert.equal(accounts.length, EXPECTED_PER_ACCOUNT.reference_accounts);
+
+      for (const i of items) assert.equal(i.user_id, userId);
+      for (const l of links) assert.equal(l.user_id, userId);
+      for (const t of tasks) assert.equal(t.user_id, userId);
+      for (const a of accounts) assert.equal(a.user_id, userId);
+
+      // Verify date decisions in database
+      const itemsBySrc = new Map(items.map((i) => [i.source_number, i]));
+      let correctedCount = 0;
+      let unscheduledCount = 0;
+      for (const [srcStr, expDate] of Object.entries(decisionsData)) {
+        const item = itemsBySrc.get(Number(srcStr));
+        assert.ok(item, `Missing item #${srcStr}`);
+        if (expDate !== null) {
+          assert.ok(item.publish_at && item.publish_at.startsWith(expDate));
+          correctedCount++;
+        } else {
+          assert.equal(item.publish_at, null);
+          unscheduledCount++;
+        }
+      }
+      assert.equal(correctedCount, EXPECTED_PER_ACCOUNT.corrected_date_decisions);
+      assert.equal(unscheduledCount, EXPECTED_PER_ACCOUNT.unscheduled_date_decisions);
     }
+
+    // -------------------------------------------------------------------------
+    // Idempotent Rerun
+    // -------------------------------------------------------------------------
+    const res2 = await runWorkflow({
+      commit: true,
+      confirmBackup: true,
+      confirmExecution: true,
+      manifestPath: FIXTURE_MANIFEST,
+      excelPath: FIXTURE_EXCEL,
+      csvPath: FIXTURE_CSV,
+      decisionsPath: FIXTURE_DECISIONS,
+    });
+
+    assert.equal(res2.status, "success");
+    assert.equal(res2.execution_results.totals.content_items.created, 0);
+    assert.equal(res2.execution_results.totals.content_items.updated, EXPECTED_TOTAL.content_items);
+    assert.equal(res2.execution_results.totals.content_links.created, 0);
+    assert.equal(res2.execution_results.totals.content_links.updated, EXPECTED_TOTAL.content_links);
+    assert.equal(res2.execution_results.totals.production_tasks.created, 0);
+    assert.equal(res2.execution_results.totals.production_tasks.updated, EXPECTED_TOTAL.production_tasks);
+    assert.equal(res2.execution_results.totals.reference_accounts.created, 0);
+    assert.equal(res2.execution_results.totals.reference_accounts.updated, EXPECTED_TOTAL.reference_accounts);
   } finally {
     await cleanSyntheticUsers(adminClient);
   }
