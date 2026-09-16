@@ -317,6 +317,7 @@ Status: In Progress
 - [x] Ensure safe reruns do not add back imported link URLs changed or removed by the user in the website, preserving existing link IDs and user-added links.
 - [x] Expand automated tests (`tests/hosted-import-prep.test.mjs`, 18 tests) covering lost response outcome, default CLI safe rerun preserving website records & dates, and link change/deletion preservation (201/201 tests pass).
 - [x] Implement read-only preflight source-number collision check across all target accounts: do not treat "any content exists" as proof of previous import; verify candidate set coverage, cross-account parity, and canonical title identity; halt before writing on any unidentified collision. Expand tests to 19 tests (202/202 tests pass).
+- [x] Add read-only hosted preflight mode (`--preflight`) checking all 3 target accounts and reporting collision results without requiring commit flags or enabling hosted writes. Enforce reliable import provenance (rejecting "at least one matching title" as proof); verify valid prior import with website-edited titles and reject full set of 158 records with only 1 matching title. Expand automated tests to 21 tests (204/204 tests pass).
 - [ ] Verify hosted Supabase target auth users are created and confirmed before import execution.
 - [ ] Obtain verified database backup confirmation and explicit execution confirmation before hosted commit.
 - [ ] Complete owner authenticated smoke test on Preview deployment (`https://content-planner-otp300zpj-nack4.vercel.app/th/login`) verifying private planner isolation per owner.

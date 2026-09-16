@@ -289,15 +289,36 @@ export async function checkSourceNumberCollisions(
           titleMatches++;
         }
       }
+      acc.titleMatches = titleMatches;
+      acc.titleMatchRatio = acc.collidingItems.length > 0 ? titleMatches / acc.collidingItems.length : 0;
 
-      if (titleMatches === 0) {
-        const sampleItem = acc.collidingItems[0];
+      // Reliable Import Provenance:
+      // Do NOT use "at least one matching title" as proof of a previous import.
+      // If only 1 title matches, or match ratio is below threshold, check secondary task provenance.
+      let provenanceEstablished = false;
+      if (acc.titleMatchRatio >= 0.50 && titleMatches > 1) {
+        provenanceEstablished = true;
+      } else if (titleMatches > 1) {
+        // Moderate title agreement: check for imported task keys
+        const { count: tasksCount } = await adminClient
+          .from("production_tasks")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", acc.userId)
+          .not("import_key", "is", null);
+        if ((tasksCount || 0) > 0) {
+          provenanceEstablished = true;
+        }
+      }
+
+      if (!provenanceEstablished) {
+        const sampleItem = acc.collidingItems.find((i) => candidateMap.get(i.source_number)?.title !== i.title) || acc.collidingItems[0];
         const expectedCandidate = candidateMap.get(sampleItem.source_number);
         throw new PreflightCollisionError(
-          `[PREFLIGHT COLLISION ERROR] Unrelated source-number collision: Target account ${acc.accountIndex} items do not match source candidate titles (e.g. source_number ${sampleItem.source_number} has title "${sampleItem.title}", expected "${expectedCandidate.title}"). Existing items cannot be identified as part of this exact import. Execution halted before any database writes.`,
+          `[PREFLIGHT COLLISION ERROR] Unproven import provenance: Target account ${acc.accountIndex} contains ${acc.collidingItems.length} colliding items, but only ${titleMatches} title(s) match the source candidates and reliable import provenance cannot be established (e.g. source_number ${sampleItem.source_number} has title "${sampleItem.title}", expected "${expectedCandidate.title}"). Execution halted before any database writes.`,
           { accountReports }
         );
       }
+      acc.provenanceVerified = true;
     }
   }
 
@@ -627,6 +648,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     json: false,
     allowOverwrite: false,
     isRerun: false,
+    preflight: false,
   };
 
   const allowedFlags = new Set([
@@ -642,6 +664,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     "--json",
     "--allow-overwrite",
     "--rerun",
+    "--preflight",
     "--help",
     "-h",
   ]);
@@ -676,6 +699,8 @@ export function parseArgs(argv = process.argv.slice(2)) {
       options.allowOverwrite = true;
     } else if (arg === "--rerun") {
       options.isRerun = true;
+    } else if (arg === "--preflight") {
+      options.preflight = true;
     } else if (arg === "--help" || arg === "-h") {
       console.log(`
 Usage: node scripts/prepare-hosted-import.mjs [options]
@@ -691,6 +716,7 @@ Options:
   --target-emails <list>   Comma-separated list of target emails (must match approved manifest targets)
   --allow-overwrite        Explicitly approve overwriting existing content (default: false, preserves user edits)
   --rerun                  Explicitly indicate a rerun (auto-detected if records exist; safe rerun preserves edits)
+  --preflight              Run read-only preflight check against target Supabase to check target accounts and report collisions without writing
   --local                  Assert execution must resolve strictly to 127.0.0.1 or localhost
   --json                   Output structured JSON report
   --help, -h               Show this help message
@@ -797,7 +823,86 @@ export async function runWorkflow(options = {}) {
     },
   };
 
-  // 6. DRY-RUN MODE (DEFAULT)
+  // 6a. READ-ONLY PREFLIGHT MODE (--preflight)
+  if (options.preflight) {
+    let serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (isLocalHost && !serviceKey) {
+      try {
+        const statusProc = spawnSync("npx", ["supabase", "status", "-o", "json"], { encoding: "utf8" });
+        if (statusProc.status === 0 && statusProc.stdout) {
+          const statusJson = JSON.parse(statusProc.stdout);
+          serviceKey = statusJson.SERVICE_ROLE_KEY;
+        }
+      } catch {}
+    }
+
+    if (!serviceKey) {
+      throw new Error("[DB ERROR] Missing Supabase service key for read-only preflight check.");
+    }
+
+    const adminClient = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // Verify all target users exist and are confirmed in Supabase Auth
+    const userCheck = await verifyAuthUsersExist(adminClient, targetEmails);
+
+    // Run read-only collision preflight check across all target accounts
+    let collisionResult;
+    let collisionError = null;
+    try {
+      collisionResult = await checkSourceNumberCollisions(
+        adminClient,
+        targetEmails,
+        userCheck.userMap,
+        excel.auto_candidates,
+        options
+      );
+    } catch (err) {
+      if (err instanceof PreflightCollisionError) {
+        collisionError = err;
+        collisionResult = err.details || {};
+      } else {
+        throw err;
+      }
+    }
+
+    report.mode = "preflight-only";
+    report.database_writes_performed = 0;
+    report.target_host = parsedUrl.hostname;
+    report.auth_users_confirmed = true;
+    report.collision_check = {
+      has_collisions: collisionResult?.hasCollisions ?? Boolean(collisionError),
+      is_valid_prior_import: collisionResult?.isRerun ?? false,
+      can_proceed_to_import: !collisionError,
+      error: collisionError ? collisionError.message : null,
+      account_summaries: collisionResult?.accountReports?.map((a) => ({
+        account_index: a.accountIndex,
+        total_items: a.totalItems,
+        items_with_source_number: a.itemsWithSourceNumber,
+        colliding_items_count: a.collidingItems.length,
+        title_matches: a.titleMatches || 0,
+        provenance_verified: a.provenanceVerified || false,
+      })) || [],
+    };
+
+    if (collisionError) {
+      report.status = "collision_halt";
+      report.verdict = `Preflight collision check failed: ${collisionError.message}. Zero database writes performed.`;
+    } else if (collisionResult?.isRerun) {
+      report.verdict = `Read-only preflight completed successfully. All 3 target accounts contain a verified prior import of this exact dataset. Zero database writes performed.`;
+    } else {
+      report.verdict = `Read-only preflight completed successfully. Zero source-number collisions found across all 3 target accounts. Ready for initial import. Zero database writes performed.`;
+    }
+
+    if (collisionError && !options.json) {
+      throw collisionError;
+    }
+
+    return report;
+  }
+
+  // 6b. DRY-RUN MODE (DEFAULT)
   if (!options.commit) {
     report.verdict = "Dry-run verification completed successfully. Zero database writes performed.";
     report.database_writes_performed = 0;

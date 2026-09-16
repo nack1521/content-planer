@@ -1410,3 +1410,210 @@ test("Preflight Collision: Unrelated item with colliding source number halts ini
     await cleanSyntheticUsers(adminClient);
   }
 });
+
+// -----------------------------------------------------------------------------
+// 13. READ-ONLY HOSTED PREFLIGHT: VALID PRIOR IMPORT WITH WEBSITE-EDITED TITLES
+// -----------------------------------------------------------------------------
+test("Preflight Collision Provenance: Valid prior import with website-edited titles is recognized as proven in read-only preflight mode", async () => {
+  const { adminClient } = getLocalAdminClient();
+
+  try {
+    await ensureSyntheticUsersExist(adminClient, true);
+    await cleanSyntheticUsers(adminClient);
+    await ensureSyntheticUsersExist(adminClient, true);
+
+    // 1. Initial Import
+    const initRes = await runWorkflow({
+      commit: true,
+      confirmBackup: true,
+      confirmExecution: true,
+      manifestPath: FIXTURE_MANIFEST,
+      excelPath: FIXTURE_EXCEL,
+      csvPath: FIXTURE_CSV,
+      decisionsPath: FIXTURE_DECISIONS,
+    });
+    assert.equal(initRes.status, "success");
+
+    const { data: usersData } = await adminClient.auth.admin.listUsers();
+    const owner1 = usersData.users.find((u) => u.email?.toLowerCase() === SYNTHETIC_TARGETS[0].toLowerCase());
+    const owner2 = usersData.users.find((u) => u.email?.toLowerCase() === SYNTHETIC_TARGETS[1].toLowerCase());
+    assert.ok(owner1 && owner2);
+
+    // 2. User edits titles on website:
+    // Owner 1 edits 5 titles
+    for (let s = 1; s <= 5; s++) {
+      const { error: editErr1 } = await adminClient
+        .from("content_items")
+        .update({ title: `Owner 1 Web Edited Post #${s}` })
+        .eq("user_id", owner1.id)
+        .eq("source_number", s);
+      assert.ifError(editErr1);
+    }
+    // Owner 2 edits 3 titles
+    for (let s = 1; s <= 3; s++) {
+      const { error: editErr2 } = await adminClient
+        .from("content_items")
+        .update({ title: `Owner 2 Web Edited Post #${s}` })
+        .eq("user_id", owner2.id)
+        .eq("source_number", s);
+      assert.ifError(editErr2);
+    }
+
+    // 3. Run read-only preflight mode (without commit flags, without enabling writes)
+    const preflightReport = await runWorkflow({
+      preflight: true,
+      manifestPath: FIXTURE_MANIFEST,
+      excelPath: FIXTURE_EXCEL,
+      csvPath: FIXTURE_CSV,
+      decisionsPath: FIXTURE_DECISIONS,
+    });
+
+    assert.equal(preflightReport.mode, "preflight-only");
+    assert.equal(preflightReport.database_writes_performed, 0);
+    assert.equal(preflightReport.collision_check.can_proceed_to_import, true);
+    assert.equal(preflightReport.collision_check.is_valid_prior_import, true);
+    assert.match(preflightReport.verdict, /verified prior import/);
+
+    // 4. Test CLI --preflight with --json output
+    const cliProc = spawnSync(
+      "node",
+      [
+        SCRIPT_PATH,
+        "--preflight",
+        "--manifest", FIXTURE_MANIFEST,
+        "--excel", FIXTURE_EXCEL,
+        "--csv", FIXTURE_CSV,
+        "--decisions", FIXTURE_DECISIONS,
+        "--json",
+      ],
+      { encoding: "utf8" }
+    );
+    assert.equal(cliProc.status, 0, `CLI preflight failed: ${cliProc.stderr || cliProc.stdout}`);
+    const cliReport = JSON.parse(cliProc.stdout);
+    assert.equal(cliReport.mode, "preflight-only");
+    assert.equal(cliReport.collision_check.is_valid_prior_import, true);
+    assert.equal(cliReport.database_writes_performed, 0);
+  } finally {
+    await cleanSyntheticUsers(adminClient);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 14. READ-ONLY HOSTED PREFLIGHT: FULL SET OF UNRELATED RECORDS WITH ONLY ONE MATCHING TITLE
+// -----------------------------------------------------------------------------
+test("Preflight Collision Provenance: Full set of 158 colliding records with only one matching title is rejected without writing", async () => {
+  const { adminClient } = getLocalAdminClient();
+
+  try {
+    await ensureSyntheticUsersExist(adminClient, true);
+    await cleanSyntheticUsers(adminClient);
+    await ensureSyntheticUsersExist(adminClient, true);
+
+    const { data: usersData } = await adminClient.auth.admin.listUsers();
+    const targetUsers = SYNTHETIC_TARGETS.map((email) => {
+      const u = usersData.users.find((user) => user.email?.toLowerCase() === email.toLowerCase());
+      assert.ok(u);
+      return u;
+    });
+
+    const { excel } = parseSourceDatasets(FIXTURE_EXCEL, FIXTURE_CSV);
+    const candidate1Title = excel.auto_candidates[0].title;
+
+    // Seed every target user with a full set of 158 records:
+    // Item #1 matches candidate 1 title
+    // Items #2 to #158 have completely unrelated titles
+    // No tasks with import_keys, no links
+    for (const u of targetUsers) {
+      const itemsToInsert = [];
+      for (let s = 1; s <= 158; s++) {
+        itemsToInsert.push({
+          user_id: u.id,
+          source_number: s,
+          title: s === 1 ? candidate1Title : `Completely Unrelated Alien Record #${s}`,
+          status: "idea",
+          platforms: ["tiktok"],
+        });
+      }
+      const { error: seedErr } = await adminClient.from("content_items").insert(itemsToInsert);
+      assert.ifError(seedErr);
+    }
+
+    // 1. Run read-only preflight mode via runWorkflow with json: true
+    const preflightReport = await runWorkflow({
+      preflight: true,
+      json: true,
+      manifestPath: FIXTURE_MANIFEST,
+      excelPath: FIXTURE_EXCEL,
+      csvPath: FIXTURE_CSV,
+      decisionsPath: FIXTURE_DECISIONS,
+    });
+
+    assert.equal(preflightReport.mode, "preflight-only");
+    assert.equal(preflightReport.database_writes_performed, 0);
+    assert.equal(preflightReport.collision_check.can_proceed_to_import, false);
+    assert.equal(preflightReport.status, "collision_halt");
+    assert.match(preflightReport.collision_check.error, /Unproven import provenance/);
+    assert.match(preflightReport.collision_check.error, /only 1 title\(s\) match/);
+
+    // 2. Run read-only preflight via CLI without --json (must exit with non-zero error)
+    const cliProc = spawnSync(
+      "node",
+      [
+        SCRIPT_PATH,
+        "--preflight",
+        "--manifest", FIXTURE_MANIFEST,
+        "--excel", FIXTURE_EXCEL,
+        "--csv", FIXTURE_CSV,
+        "--decisions", FIXTURE_DECISIONS,
+      ],
+      { encoding: "utf8" }
+    );
+    assert.notEqual(cliProc.status, 0, "CLI preflight must exit with non-zero error when identity cannot be proven");
+    assert.match(cliProc.stderr, /\[PREFLIGHT COLLISION ERROR\]/);
+    assert.match(cliProc.stderr, /Unproven import provenance/);
+
+    // 3. Attempting commit import without overwrite must also halt before writing
+    let commitErr = null;
+    try {
+      await runWorkflow({
+        commit: true,
+        confirmBackup: true,
+        confirmExecution: true,
+        manifestPath: FIXTURE_MANIFEST,
+        excelPath: FIXTURE_EXCEL,
+        csvPath: FIXTURE_CSV,
+        decisionsPath: FIXTURE_DECISIONS,
+      });
+    } catch (err) {
+      commitErr = err;
+    }
+    assert.ok(commitErr);
+    assert.ok(commitErr instanceof PreflightCollisionError);
+    assert.match(commitErr.message, /Unproven import provenance/);
+
+    // 4. Verify database state is untouched (zero writes performed)
+    for (const u of targetUsers) {
+      const { count: tasksCount } = await adminClient
+        .from("production_tasks")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", u.id);
+      assert.equal(tasksCount, 0, "Zero tasks must be written");
+
+      const { count: linksCount } = await adminClient
+        .from("content_links")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", u.id);
+      assert.equal(linksCount, 0, "Zero links must be written");
+
+      const { data: item2 } = await adminClient
+        .from("content_items")
+        .select("title")
+        .eq("user_id", u.id)
+        .eq("source_number", 2)
+        .single();
+      assert.equal(item2.title, "Completely Unrelated Alien Record #2");
+    }
+  } finally {
+    await cleanSyntheticUsers(adminClient);
+  }
+});
