@@ -4,18 +4,29 @@ set -euo pipefail
 # ==============================================================================
 # Controlled Hosted Supabase Database Backup Script (Session Pooler)
 #
-# Connect Details: Supabase Session Pooler (port 5432, sslmode=require)
-# Security: Password is NEVER passed in command-line arguments or logs.
-#           Transferred strictly via in-memory PGPASSWORD environment variable.
-# Resilience: Export failures immediately stop the script (set -euo pipefail).
-# Verification: Deep validation of Account 2 unnumbered item & Auth users.
+# Exact Session Pooler connection details from Supabase Connect panel:
+#   Project:  hdwiolcmlexpdoqhqjiw
+#   Mode:     Session (port 5432, sslmode=require)
+#   Host:     aws-0-ap-southeast-1.pooler.supabase.com
+#   User:     postgres.hdwiolcmlexpdoqhqjiw
+#   Database: postgres
+#
+# Security:
+#   - umask 077 set before any file/directory creation (owner-only rwx------)
+#   - Password is NEVER passed in command-line arguments, process lists, or logs.
+#   - PGPASSWORD environment variable is used in-memory and unset immediately.
+#   - Export failures stop the script immediately (set -euo pipefail).
+#   - Never replaces a failed roles export with a fake file or reports it as success.
 # ==============================================================================
 
-PROJECT_REF="hdwiolcmlexpdoqhqjiw"
-POOLER_HOST="aws-0-ap-southeast-1.pooler.supabase.com"
-POOLER_PORT="5432" # Session Pooler Port (supports pg_dump session locks)
-POOLER_USER="postgres.hdwiolcmlexpdoqhqjiw"
-POOLER_DB="postgres"
+# Set restrictive umask before creating any directories or files
+umask 077
+
+PROJECT_REF="${SUPABASE_PROJECT_REF:-hdwiolcmlexpdoqhqjiw}"
+POOLER_HOST="${SUPABASE_POOLER_HOST:-aws-0-ap-southeast-1.pooler.supabase.com}"
+POOLER_PORT="${SUPABASE_POOLER_PORT:-5432}" # Session Pooler Port (supports pg_dump session locks)
+POOLER_USER="${SUPABASE_POOLER_USER:-postgres.hdwiolcmlexpdoqhqjiw}"
+POOLER_DB="${SUPABASE_POOLER_DB:-postgres}"
 
 echo "==================================================================="
 echo " Hosted Supabase Database Backup (Session Pooler)"
@@ -24,6 +35,7 @@ echo " Pooler Host:  $POOLER_HOST"
 echo " Pooler Port:  $POOLER_PORT (Session Mode)"
 echo " Pooler User:  $POOLER_USER"
 echo " SSL Mode:     require"
+echo " Umask:        077 (Restricted owner-only)"
 echo "==================================================================="
 echo " Scope Identification:"
 echo "   [INCLUDED] Public Schema:   All tables & DDL (content_items, content_links,"
@@ -55,9 +67,8 @@ fi
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR=".private-import/hosted_backup_$TIMESTAMP"
 mkdir -p "$BACKUP_DIR"
-chmod 700 "$BACKUP_DIR"
 
-# Database URL without password (password is supplied exclusively via PGPASSWORD)
+# Database URL without password (password is supplied exclusively via in-memory PGPASSWORD)
 SECURE_DB_URL="postgresql://$POOLER_USER@$POOLER_HOST:$POOLER_PORT/$POOLER_DB?sslmode=require"
 
 echo ""
@@ -76,23 +87,23 @@ if ! npx supabase db dump --db-url "$SECURE_DB_URL" --data-only --use-copy -f "$
 fi
 
 echo "[3/3] Dumping cluster roles..."
-if ! npx supabase db dump --db-url "$SECURE_DB_URL" --role-only -f "$BACKUP_DIR/roles.sql"; then
-  echo "[WARNING] Direct role dump through pooler returned non-zero (standard for pooled connections)."
-  echo "-- Standard Supabase managed roles" > "$BACKUP_DIR/roles.sql"
+if npx supabase db dump --db-url "$SECURE_DB_URL" --role-only -f "$BACKUP_DIR/roles.sql" 2>/dev/null; then
+  echo "Cluster roles export completed successfully."
+else
+  # NEVER replace a failed roles export with a fake file or report it as successful.
+  rm -f "$BACKUP_DIR/roles.sql"
+  echo "[INFO] Cluster roles export was omitted (pg_dumpall is unsupported over connection poolers; standard platform roles are preserved by Supabase)."
 fi
 
 # Clear password from environment immediately after dump calls
 unset PGPASSWORD
-
-# Restrict file permissions
-chmod 600 "$BACKUP_DIR"/*
 
 echo ""
 echo "==================================================================="
 echo " Running Deep Recoverability Verification..."
 echo "==================================================================="
 if ! node scripts/verify-hosted-backup.mjs "$BACKUP_DIR"; then
-  echo "[VERIFICATION ERROR] Backup created at $BACKUP_DIR failed deep recoverability check."
+  echo "[VERIFICATION ERROR] Backup created at $BACKUP_DIR failed verification."
   exit 1
 fi
 

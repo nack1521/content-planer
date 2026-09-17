@@ -4,11 +4,10 @@ import { createHash } from "node:crypto";
 
 /**
  * Parses PostgreSQL COPY blocks from a data dump file.
- * Returns an array of row objects for the specified table.
  */
 function parseCopyTable(sqlContent, schemaName, tableName) {
   const pattern = new RegExp(
-    `COPY\\s+"?` + schemaName + `"?\\."?` + tableName + `"?\\s*\\(([^)]+)\\)\\s*FROM\\s+stdin;([\\s\\S]*?)\\n\\\\\\.`,
+    `COPY\\s+"?${schemaName}"?\\."?${tableName}"?\\s*\\(([^)]+)\\)\\s*FROM\\s+stdin;([\\s\\S]*?)\\n\\\\\\.`,
     "g"
   );
   const rows = [];
@@ -37,7 +36,7 @@ function parseCopyTable(sqlContent, schemaName, tableName) {
  */
 function parseInsertTable(sqlContent, schemaName, tableName) {
   const pattern = new RegExp(
-    `INSERT\\s+INTO\\s+"?` + schemaName + `"?\\."?` + tableName + `"?\\s*\\(([^)]+)\\)\\s*VALUES\\s*\\((.+?)\\);?`,
+    `INSERT\\s+INTO\\s+"?${schemaName}"?\\."?${tableName}"?\\s*\\(([^)]+)\\)\\s*VALUES\\s*\\((.+?)\\);?`,
     "g"
   );
   const rows = [];
@@ -46,7 +45,6 @@ function parseInsertTable(sqlContent, schemaName, tableName) {
     const columns = match[1]
       .split(",")
       .map((c) => c.trim().replace(/^"|"$/g, ""));
-    // Simple SQL CSV parser for INSERT values
     const rawValues = match[2];
     const values = [];
     let cur = "";
@@ -112,10 +110,16 @@ export function verifyBackup(backupDir, options = {}) {
 
   const files = readdirSync(backupDir);
   const report = {
-    verified: false,
     timestamp: new Date().toISOString(),
     backup_dir: backupDir,
     connection_mode: "Session Pooler (port 5432, sslmode=require)",
+    // Clearly distinguish "dump contents checked" from "restore tested"
+    verification: {
+      dump_contents_checked: false,
+      restore_tested: Boolean(options.restoreTested),
+      restore_test_details: options.restoreTestDetails ||
+        "NOT EXECUTED. Static inspection of SQL dump contents only. Live restore was not performed.",
+    },
     files: {},
     schema_verification: {},
     data_verification: {},
@@ -142,7 +146,11 @@ export function verifyBackup(backupDir, options = {}) {
         objects_table: true,
         binary_blobs_excluded: true,
         binary_blobs_reason:
-          "S3-backed file contents are stored in object storage, not in PostgreSQL table columns.",
+          "S3-backed file contents reside in object storage, not in PostgreSQL table rows.",
+      },
+      roles_export: {
+        exported: false,
+        reason: "pg_dumpall is unsupported over session pooler; standard platform roles are preserved by Supabase.",
       },
       excluded_schemas: [
         "information_schema",
@@ -163,9 +171,9 @@ export function verifyBackup(backupDir, options = {}) {
       triggers_disabled_for_restore: false,
     },
     limitations: [
-      "Logical SQL dump taken via pg_dump / Session Pooler; point-in-time recovery (PITR) requires Supabase dashboard snapshot.",
-      "Binary files in content-media storage bucket live in cloud object storage, not in database dump.",
-      "Restoration must run with session_replication_role = replica to avoid foreign key and trigger recursion.",
+      "Logical SQL dump taken via pg_dump / Session Pooler; Point-in-Time Recovery (PITR) requires Supabase dashboard snapshot.",
+      "Binary objects in storage buckets live in S3-compatible cloud storage, not in database dump.",
+      "Restoring requires database admin credentials and session_replication_role = replica to avoid trigger recursion.",
     ],
     errors: [],
   };
@@ -175,13 +183,23 @@ export function verifyBackup(backupDir, options = {}) {
     if (!f.endsWith(".sql")) continue;
     const filePath = join(backupDir, f);
     const stat = statSync(filePath);
-    const content = readFileSync(filePath, "utf8");
-    const sha256 = createHash("sha256").update(content).digest("hex");
+    const sqlContent = readFileSync(filePath, "utf8");
+    const sha256 = createHash("sha256").update(sqlContent).digest("hex");
     report.files[f] = {
       size_bytes: stat.size,
-      lines_count: content.split("\n").length,
+      lines_count: sqlContent.split("\n").length,
       sha256,
     };
+  }
+
+  // Check roles file (never fake)
+  const rolesFile = files.find((f) => f.toLowerCase().includes("roles") && f.endsWith(".sql"));
+  if (rolesFile && report.files[rolesFile].size_bytes > 0) {
+    const rolesContent = readFileSync(join(backupDir, rolesFile), "utf8");
+    if (!rolesContent.includes("-- Standard Supabase managed roles")) {
+      report.scope.roles_export.exported = true;
+      report.scope.roles_export.reason = "Roles successfully exported.";
+    }
   }
 
   // 2. Schema Verification (schema.sql)
@@ -239,7 +257,11 @@ export function verifyBackup(backupDir, options = {}) {
       const email = normalizedTargets[idx];
       const u = userMap.get(email);
       if (u) {
-        const isConfirmed = u.email_confirmed_at !== null && u.email_confirmed_at !== undefined && u.email_confirmed_at !== "";
+        const isConfirmed =
+          u.email_confirmed_at !== null &&
+          u.email_confirmed_at !== undefined &&
+          u.email_confirmed_at !== "" &&
+          u.email_confirmed_at !== "\\N";
         if (isConfirmed) {
           confirmedTargetsCount++;
           targetUserIds[idx] = u.id;
@@ -259,64 +281,74 @@ export function verifyBackup(backupDir, options = {}) {
       report.recoverability.auth_users_recoverable = true;
     }
 
-    // B. Parse and verify public.content_items
+    // B. Parse and verify public.content_items specifically by owner ID
     const contentItems = parseTableRows(dataSql, "public", "content_items");
 
-    // Account 2 unnumbered item check:
-    // Exactly 1 item must exist with source_number IS NULL
-    const unnumberedItems = contentItems.filter(
+    const account1UserId = targetUserIds[0];
+    const account2UserId = targetUserIds[1];
+    const account3UserId = targetUserIds[2];
+
+    const account1Items = account1UserId ? contentItems.filter((i) => i.user_id === account1UserId) : [];
+    const account2Items = account2UserId ? contentItems.filter((i) => i.user_id === account2UserId) : [];
+    const account3Items = account3UserId ? contentItems.filter((i) => i.user_id === account3UserId) : [];
+
+    const acc2Unnumbered = account2Items.filter(
       (i) => i.source_number === null || i.source_number === undefined || i.source_number === ""
     );
-    const numberedItems = contentItems.filter(
+    const acc2Numbered = account2Items.filter(
       (i) => i.source_number !== null && i.source_number !== undefined && i.source_number !== ""
     );
 
     report.data_verification = {
       file: dataFile,
       total_content_items: contentItems.length,
-      numbered_content_items: numberedItems.length,
-      unnumbered_content_items: unnumberedItems.length,
+      account_1_items_count: account1Items.length,
+      account_2_items_count: account2Items.length,
+      account_2_unnumbered_count: acc2Unnumbered.length,
+      account_2_numbered_count: acc2Numbered.length,
+      account_3_items_count: account3Items.length,
     };
 
-    if (numberedItems.length > 0) {
-      report.errors.push(
-        `Unexpected source-number collision: backup contains ${numberedItems.length} numbered content items prior to import.`
-      );
-    }
-
-    if (unnumberedItems.length === 1) {
-      const acc2Item = unnumberedItems[0];
-      const account2UserId = targetUserIds[1]; // Index 1 is Account 2
-
-      const hasValidTitle = Boolean(acc2Item.title && acc2Item.title.trim().length > 0);
-      const hasValidStatus = Boolean(acc2Item.status);
-      const hasValidId = Boolean(acc2Item.id);
-
-      let userIdMatches = true;
-      if (account2UserId) {
-        userIdMatches = acc2Item.user_id === account2UserId;
-      }
-
-      report.recoverability.account_2_existing_item_recoverable =
-        hasValidTitle && hasValidStatus && hasValidId;
-      report.recoverability.account_2_user_id_matches_auth = userIdMatches;
-
-      if (!userIdMatches) {
+    // Check Account 2 specifically by its owner ID:
+    if (account2UserId) {
+      if (acc2Numbered.length > 0) {
         report.errors.push(
-          "Account 2 unnumbered item user_id does not match Account 2 auth.users ID in backup."
+          `Unexpected source-number collision: Account 2 (owner ${account2UserId}) already has ${acc2Numbered.length} numbered content items prior to import.`
         );
       }
-      if (!hasValidTitle || !hasValidStatus || !hasValidId) {
-        report.errors.push("Account 2 unnumbered item is malformed or missing required columns in dump.");
+
+      if (acc2Unnumbered.length === 1) {
+        const item = acc2Unnumbered[0];
+        const hasValidTitle = Boolean(item.title && item.title.trim().length > 0);
+        const hasValidStatus = Boolean(item.status);
+        const hasValidId = Boolean(item.id);
+
+        report.recoverability.account_2_existing_item_recoverable =
+          hasValidTitle && hasValidStatus && hasValidId;
+        report.recoverability.account_2_user_id_matches_auth = item.user_id === account2UserId;
+
+        if (!hasValidTitle || !hasValidStatus || !hasValidId) {
+          report.errors.push("Account 2 unnumbered item is malformed or missing required columns in dump.");
+        }
+      } else {
+        report.errors.push(
+          `Expected Account 2 (owner ID ${account2UserId}) to have exactly 1 unnumbered item in backup, found ${acc2Unnumbered.length}.`
+        );
       }
-    } else {
-      report.errors.push(
-        `Expected exactly 1 pre-existing unnumbered item (for Account 2) in backup, found ${unnumberedItems.length}.`
-      );
+    }
+
+    // Check Account 1 and Account 3 by owner ID (should have 0 numbered items prior to import)
+    const acc1Numbered = account1Items.filter((i) => i.source_number !== null && i.source_number !== undefined && i.source_number !== "");
+    const acc3Numbered = account3Items.filter((i) => i.source_number !== null && i.source_number !== undefined && i.source_number !== "");
+    if (acc1Numbered.length > 0) {
+      report.errors.push(`Unexpected source-number collision: Account 1 has ${acc1Numbered.length} numbered items prior to import.`);
+    }
+    if (acc3Numbered.length > 0) {
+      report.errors.push(`Unexpected source-number collision: Account 3 has ${acc3Numbered.length} numbered items prior to import.`);
     }
   }
 
-  report.verified =
+  report.verification.dump_contents_checked =
     report.errors.length === 0 &&
     report.recoverability.ddl_executable_syntax &&
     report.recoverability.account_2_existing_item_recoverable &&
@@ -336,7 +368,7 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.
   try {
     const rep = verifyBackup(targetDir);
     console.log(JSON.stringify(rep, null, 2));
-    process.exit(rep.verified ? 0 : 1);
+    process.exit(rep.verification.dump_contents_checked ? 0 : 1);
   } catch (err) {
     console.error("Verification error:", err.message);
     process.exit(1);
