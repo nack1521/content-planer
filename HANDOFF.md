@@ -4,7 +4,7 @@
 
 **Status: In Progress — Controlled Hosted Supabase Import Prepared & Validated; Awaiting Codex Review Before Hosted Execution**
 
-**Resume point (2026-09-16):** Follow `HOSTED_IMPORT_FINISH_PLAN.md`. The user completed a read-only hosted preflight successfully; no hosted import has run. The next step is a verified private backup, followed by separate explicit user approval before any hosted migration or import. This documentation-only update does not change application behavior or database state.
+**Resume point (2026-09-17):** Implemented and locally tested the truthful `--acknowledge-no-backup` guard per `HOSTED_IMPORT_FINISH_PLAN.md` (Step 1). The importer now requires exactly one of `--confirm-backup` or `--acknowledge-no-backup`, and still requires `--confirm-execution`. Mutually exclusive options and missing confirmations fail closed with clear error messages. 23/23 tests pass in `tests/hosted-import-prep.test.mjs` (212/212 tests total across all test suites + 6/6 backup tests). Next step is Codex review and read-only preflight check before obtaining explicit final user approval for any hosted migration or import. No database password requested; no hosted migration, backup, or import executed.
 
 - **Milestone 6**: Accepted by Codex at commit `db0da61`.
 - **Milestone 7**: In Progress — Vercel release, hosted Supabase verification, and secure multi-owner authorization.
@@ -81,7 +81,7 @@
 - **Strict Separation**: `scripts/import-data.mjs` remains strictly untouched and preserved as the local-only importer.
 - **Default Mode**: Strictly DRY-RUN. Zero database records are written by default.
 - **Hosted Write Authorization Guard**: Checked against `.private-import/import-manifest.json` (`hosted_write_authorized: false`). Attempts to commit against hosted Supabase are immediately blocked unless explicitly authorized in the manifest.
-- **Two-Stage Operator Confirmation**: Commit mode requires `--confirm-backup` (database snapshot verified) and `--confirm-execution` (final operator approval).
+- **Two-Stage Operator Confirmation & Backup Waiver**: Commit mode requires exactly one of `--confirm-backup` (database snapshot verified) or `--acknowledge-no-backup` (explicit acknowledgement of owner's decision to proceed without a backup), plus `--confirm-execution` (final operator approval). Providing both flags or neither flag fails closed immediately.
 - **Target Account Enforcement**: Validates and strictly accepts only the 3 approved owner accounts specified in the private manifest.
   Rejects extra accounts, missing accounts, duplicate entries, or malformed emails. Synthetic addresses (e.g. `owner1@example.test`) are used for automated test isolation.
 - **Supabase Auth User Existence Guard**: Confirms all 3 target users exist in `auth.users` before allowing commit mode.
@@ -108,7 +108,7 @@ Created comprehensive automated test suite covering:
 1. **Target Enforcement**: Exact 3 approved accounts accepted; rejects extra, missing, duplicate, or malformed emails.
 2. **CLI Target Arguments**: Rejects unauthorized or extra target email arguments.
 3. **Date Policy Enforcement**: Rejects missing, extra, invalid calendar dates (e.g. `2026-02-30`), or deviations from the 38/22 policy.
-4. **Safety Guards**: Commit mode strictly requires `--confirm-backup` and `--confirm-execution`.
+4. **Safety Guards**: Commit mode strictly requires either `--confirm-backup` or `--acknowledge-no-backup` (mutually exclusive), and still requires `--confirm-execution`.
 5. **Hosted Write Guard**: Non-local commit halted when manifest has `hosted_write_authorized: false`.
 6. **Auth User Verification**: Halts if any target user does not exist in `auth.users`.
 7. **Dry-Run Safety**: Default CLI mode performs zero database writes.
@@ -118,6 +118,7 @@ Created comprehensive automated test suite covering:
 11. **Multi-Account Isolation & Expected Counts**: Full local execution on isolated Supabase stack imports exactly 158/419/30/16 per account, 474/1257/90/48 total, strictly isolated under RLS.
 12. **Safe Rerun Preservation**: Proves user edits made in the website, extra user-added links, and original link IDs survive reruns without deletion or recreation.
 13. **Error Differentiation**: Verifies in-transaction failure reports rollback while post-commit failure reports verification incomplete with committed data intact.
+14. **No-Backup Acknowledgement**: Verifies successful synthetic local commit run and safe rerun with `--acknowledge-no-backup` and `--confirm-execution`, ensuring correct record creation, isolation, and banner reporting (`Backup Policy: No backup acknowledged by owner`).
 
 ---
 
@@ -261,7 +262,7 @@ Result:
 === 5. Running Production Importer CLI & Idempotency Suite ===
 ✔ 10/10 tests passed
 === 5b. Running Controlled Hosted Import Preparation Suite ===
-✔ 16/16 tests passed
+✔ 23/23 tests passed
 === 6. Running Authenticated Server Actions & Atomic Rollback Suite ===
 ✔ 8/8 tests passed
 === 6b. Running Content Editor & Link Workspace Suite (Milestone 4) ===
@@ -275,7 +276,7 @@ Result:
 === 8. Running Live Server & HTTP Integration Suites ===
 ✔ 14/14 tests passed
 === [SUCCESS] ALL CLEAN-ENVIRONMENT CHECKS AND TEST SUITES PASSED ===
-Total: 211 tests passing cleanly across pgTAP database suite (85 tests) and application test suites (126 tests: domain validation 15, accessibility 7, localization scanner 5, local importer 10, hosted import preparation 22, hosted backup verification 6, server actions 8, Milestone 4 editor 17, Milestone 5 calendar & ideas 13, Milestone 6 release quality 9, and live HTTP integration 14).
+Total: 212 tests passing cleanly across pgTAP database suite (85 tests) and application test suites (127 tests: domain validation 15, accessibility 7, localization scanner 5, local importer 10, hosted import preparation 23, server actions 8, Milestone 4 editor 17, Milestone 5 calendar & ideas 13, Milestone 6 release quality 9, and live HTTP integration 14; plus 6 hosted backup verification tests).
 ```
 
 ---
@@ -319,7 +320,7 @@ Total: 211 tests passing cleanly across pgTAP database suite (85 tests) and appl
 - **Hosted Supabase Untouched**: Zero hosted database writes or imports were performed in this cycle. The hosted Supabase database remains in its clean, post-Migration 3 state.
 - **Hosted Import Execution Preconditions**:
   1. The 3 approved owner accounts specified in the private manifest must exist and be confirmed in hosted Supabase Auth (`auth.users`).
-  2. A verified hosted database backup snapshot must be taken and confirmed (`--confirm-backup`).
+  2. The owner declined a backup on 2026-09-17. A distinct, truthful no-backup acknowledgement path must be implemented and tested; do not use `--confirm-backup` falsely.
   3. Final operator authorization must be confirmed (`--confirm-execution`).
   4. Explicit authorization in `.private-import/import-manifest.json` (`hosted_write_authorized: true`) is required before non-local execution.
   5. Operator and Codex review is required before executing the hosted write.

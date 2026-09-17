@@ -265,14 +265,26 @@ test("Date Policy Enforcement: Locked decisions required, rejects missing, extra
 // -----------------------------------------------------------------------------
 // 4. SAFETY GUARDS: BACKUP, CONFIRMATION, & AUTH PREFLIGHT
 // -----------------------------------------------------------------------------
-test("Safety Guards: Commit mode strictly requires --confirm-backup and --confirm-execution", () => {
+test("Safety Guards: Commit mode strictly requires either --confirm-backup or --acknowledge-no-backup, plus --confirm-execution", () => {
+  // Missing both
   const res1 = runScript(["--commit"]);
   assert.equal(res1.status, 1);
-  assert.match(res1.stderr, /Commit mode requires explicit backup confirmation flag: --confirm-backup/);
+  assert.match(res1.stderr, /Commit mode requires explicit backup authorization: provide either --confirm-backup or --acknowledge-no-backup/);
 
+  // Backup confirmed but missing execution
   const res2 = runScript(["--commit", "--confirm-backup"]);
   assert.equal(res2.status, 1);
   assert.match(res2.stderr, /Commit mode requires explicit final execution confirmation flag: --confirm-execution/);
+
+  // No-backup acknowledged but missing execution
+  const res3 = runScript(["--commit", "--acknowledge-no-backup"]);
+  assert.equal(res3.status, 1);
+  assert.match(res3.stderr, /Commit mode requires explicit final execution confirmation flag: --confirm-execution/);
+
+  // Both flags provided together (conflicting)
+  const resBoth = runScript(["--commit", "--confirm-backup", "--acknowledge-no-backup", "--confirm-execution"]);
+  assert.equal(resBoth.status, 1);
+  assert.match(resBoth.stderr, /Conflicting backup options provided: cannot specify both --confirm-backup and --acknowledge-no-backup/);
 });
 
 test("Auth Preflight: Commit mode halts if target user is missing or email is unconfirmed", async () => {
@@ -290,6 +302,74 @@ test("Auth Preflight: Commit mode halts if target user is missing or email is un
     const resUnconfirmed = runScript(["--commit", "--confirm-backup", "--confirm-execution"]);
     assert.equal(resUnconfirmed.status, 1);
     assert.match(resUnconfirmed.stderr, /Target user email\(s\) not confirmed in Supabase Auth/);
+  } finally {
+    await cleanSyntheticUsers(adminClient);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 12. NO-BACKUP ACKNOWLEDGEMENT: SUCCESSFUL SYNTHETIC LOCAL COMMIT RUN
+// -----------------------------------------------------------------------------
+test("No-Backup Acknowledgement: Successful synthetic local commit run with --acknowledge-no-backup", async () => {
+  const { adminClient } = getLocalAdminClient();
+  await cleanSyntheticUsers(adminClient);
+  await ensureSyntheticUsersExist(adminClient, true);
+
+  try {
+    // 1. Run with --json output
+    const jsonProc = spawnSync(
+      process.execPath,
+      [
+        SCRIPT_PATH,
+        "--commit",
+        "--acknowledge-no-backup",
+        "--confirm-execution",
+        "--manifest", FIXTURE_MANIFEST,
+        "--excel", FIXTURE_EXCEL,
+        "--csv", FIXTURE_CSV,
+        "--decisions", FIXTURE_DECISIONS,
+        "--local",
+        "--json",
+      ],
+      {
+        encoding: "utf8",
+        env: process.env,
+      }
+    );
+
+    assert.equal(jsonProc.status, 0, "CLI execution failed: " + jsonProc.stderr);
+    const report = JSON.parse(jsonProc.stdout);
+    assert.equal(report.status, "success");
+    assert.equal(report.backup_authorization, "no_backup_acknowledged");
+    assert.equal(report.target_count, 3);
+    assert.equal(report.execution_results.totals.content_items.created, EXPECTED_TOTAL.content_items);
+    assert.equal(report.execution_results.totals.content_links.created, EXPECTED_TOTAL.content_links);
+    assert.equal(report.execution_results.totals.production_tasks.created, EXPECTED_TOTAL.production_tasks);
+    assert.equal(report.execution_results.totals.reference_accounts.created, EXPECTED_TOTAL.reference_accounts);
+
+    // 2. Run with standard console output on safe rerun to verify human-readable banner
+    const stdoutProc = spawnSync(
+      process.execPath,
+      [
+        SCRIPT_PATH,
+        "--commit",
+        "--acknowledge-no-backup",
+        "--confirm-execution",
+        "--manifest", FIXTURE_MANIFEST,
+        "--excel", FIXTURE_EXCEL,
+        "--csv", FIXTURE_CSV,
+        "--decisions", FIXTURE_DECISIONS,
+        "--local",
+      ],
+      {
+        encoding: "utf8",
+        env: process.env,
+      }
+    );
+
+    assert.equal(stdoutProc.status, 0, "CLI rerun failed: " + stdoutProc.stderr);
+    assert.match(stdoutProc.stdout, /Backup Policy:\s+No backup acknowledged by owner/);
+    assert.match(stdoutProc.stdout, /Single-transaction commit/);
   } finally {
     await cleanSyntheticUsers(adminClient);
   }

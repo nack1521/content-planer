@@ -270,7 +270,7 @@ Review checkpoint: Stop and request release review before Milestone 7.
 
 Status: In Progress
 
-The agreed backup → approval → controlled import → verification sequence is recorded in `HOSTED_IMPORT_FINISH_PLAN.md`. Hosted writes remain paused until the backup is verified and the user gives explicit final approval.
+The owner declined a backup on 2026-09-17. The revised no-backup acknowledgement → read-only preflight → explicit final approval → controlled import → verification sequence is recorded in `HOSTED_IMPORT_FINISH_PLAN.md`. Hosted writes remain paused; do not falsely use `--confirm-backup`.
 
 - [x] Connect the reviewed repository to Vercel (`nack4/content-planner`).
 - [x] Configure Development, Preview, and Production environment variables securely (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `ALLOWED_EMAIL`).
@@ -323,7 +323,7 @@ The agreed backup → approval → controlled import → verification sequence i
 - [x] Preserve pre-existing unnumbered items on initial import: verify exactly 158 newly imported numbered items per account rather than requiring exactly 158 total items, allowing accounts with existing unnumbered items (e.g. account 2 with 1 unnumbered idea ending with 159 total items, accounts 1 and 3 with 158 total items) to import safely. Expand tests to 22 tests (205/205 tests pass).
 - [x] Prepare and test Session Pooler backup scripts (`scripts/create-hosted-backup.sh`, `scripts/verify-hosted-backup.mjs`, `tests/hosted-backup-verification.test.mjs`): keep password out of CLI arguments and logs via in-memory PGPASSWORD; halt on export errors; explicitly define public, Auth, and Storage scope; enforce deep recoverability verification for Account 2 unnumbered item and confirmed Auth users (211/211 tests pass).
 - [ ] Verify hosted Supabase target auth users are created and confirmed before import execution.
-- [ ] Obtain verified database backup confirmation and explicit execution confirmation before hosted commit.
+- [x] Implement and locally test truthful no-backup acknowledgement path (`--acknowledge-no-backup` mutually exclusive with `--confirm-backup`, requiring `--confirm-execution`, with 23/23 tests passing); preserve Account 2's existing unnumbered item and await explicit final execution approval before hosted migration or import.
 - [ ] Complete owner authenticated smoke test on Preview deployment (`https://content-planner-otp300zpj-nack4.vercel.app/th/login`) verifying private planner isolation per owner.
 - [ ] Deploy accepted version to Production.
 - [ ] Confirm that no secret values or private media URLs appear in client output or documentation.

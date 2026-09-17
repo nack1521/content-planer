@@ -642,6 +642,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     manifestPath: null,
     commit: false,
     confirmBackup: false,
+    acknowledgeNoBackup: false,
     confirmExecution: false,
     isLocal: false,
     targetEmails: null,
@@ -658,6 +659,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     "--manifest",
     "--commit",
     "--confirm-backup",
+    "--acknowledge-no-backup",
     "--confirm-execution",
     "--local",
     "--target-emails",
@@ -687,6 +689,8 @@ export function parseArgs(argv = process.argv.slice(2)) {
       options.commit = true;
     } else if (arg === "--confirm-backup") {
       options.confirmBackup = true;
+    } else if (arg === "--acknowledge-no-backup") {
+      options.acknowledgeNoBackup = true;
     } else if (arg === "--confirm-execution") {
       options.confirmExecution = true;
     } else if (arg === "--local") {
@@ -711,7 +715,8 @@ Options:
   --decisions <path>       Path to approved-date-decisions.json
   --manifest <path>        Path to import-manifest.json
   --commit                 Request commit mode (DRY-RUN is default)
-  --confirm-backup         Explicit confirmation of database backup
+  --confirm-backup         Explicit confirmation of verified database backup
+  --acknowledge-no-backup  Explicit acknowledgement of owner decision to proceed without a backup
   --confirm-execution      Explicit confirmation of final import execution
   --target-emails <list>   Comma-separated list of target emails (must match approved manifest targets)
   --allow-overwrite        Explicitly approve overwriting existing content (default: false, preserves user edits)
@@ -800,6 +805,10 @@ export async function runWorkflow(options = {}) {
   }
   const decisionsMap = decisionsValidation.decisionsMap;
 
+  const backupAuthorization = options.confirmBackup
+    ? "backup_confirmed"
+    : (options.acknowledgeNoBackup ? "no_backup_acknowledged" : "none");
+
   const report = {
     mode: options.commit ? "commit" : "dry-run",
     status: "success",
@@ -807,6 +816,7 @@ export async function runWorkflow(options = {}) {
     manifest_path: basename(manifestPath),
     target_count: targetEmails.length,
     is_local: isLocalHost,
+    backup_authorization: backupAuthorization,
     sources: {
       excel_filename: basename(excelPath),
       csv_filename: basename(csvPath),
@@ -910,10 +920,20 @@ export async function runWorkflow(options = {}) {
   }
 
   // 7. COMMIT MODE SAFETY GUARDS
-  if (!options.confirmBackup) {
+  const hasConfirmBackup = Boolean(options.confirmBackup);
+  const hasAcknowledgeNoBackup = Boolean(options.acknowledgeNoBackup);
+
+  if (hasConfirmBackup && hasAcknowledgeNoBackup) {
     throw new Error(
-      "[SAFETY HALT] Commit mode requires explicit backup confirmation flag: --confirm-backup.\n" +
-      "A confirmed snapshot/backup of the database must be verified before writing."
+      "[SAFETY HALT] Conflicting backup options provided: cannot specify both --confirm-backup and --acknowledge-no-backup.\n" +
+      "Choose exactly one: confirm that a verified backup exists, or explicitly acknowledge proceeding without a backup."
+    );
+  }
+
+  if (!hasConfirmBackup && !hasAcknowledgeNoBackup) {
+    throw new Error(
+      "[SAFETY HALT] Commit mode requires explicit backup authorization: provide either --confirm-backup or --acknowledge-no-backup.\n" +
+      "A confirmed database backup must be verified, or the owner must explicitly acknowledge proceeding without a backup."
     );
   }
 
@@ -1325,6 +1345,7 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.
       console.log("     HOSTED SUPABASE IMPORT PREPARATION & VALIDATION WORKFLOW   ");
       console.log("================================================================");
       console.log(`Execution Mode:      ${result.mode.toUpperCase()}`);
+      console.log(`Backup Policy:       ${result.backup_authorization === "backup_confirmed" ? "Backup confirmed" : (result.backup_authorization === "no_backup_acknowledged" ? "No backup acknowledged by owner" : "None (dry-run)")}`);
       console.log(`Target Accounts:     ${result.target_count} verified owner accounts [redacted for privacy]`);
       console.log(`Sources Verified:    Excel, Notion CSV, and Approved Decisions`);
       console.log(`Date Policy:         ${result.verification.date_decisions_corrected} corrected reversals, ${result.verification.date_decisions_unscheduled} unscheduled records`);
