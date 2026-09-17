@@ -270,6 +270,8 @@ Review checkpoint: Stop and request release review before Milestone 7.
 
 Status: In Progress
 
+The agreed backup → approval → controlled import → verification sequence is recorded in `HOSTED_IMPORT_FINISH_PLAN.md`. Hosted writes remain paused until the backup is verified and the user gives explicit final approval.
+
 - [x] Connect the reviewed repository to Vercel (`nack4/content-planner`).
 - [x] Configure Development, Preview, and Production environment variables securely (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `ALLOWED_EMAIL`).
 - [x] Clean `.gitignore` to keep `.vercel`, `.env`, and secrets ignored while preserving `.env.example`.
@@ -319,6 +321,7 @@ Status: In Progress
 - [x] Implement read-only preflight source-number collision check across all target accounts: do not treat "any content exists" as proof of previous import; verify candidate set coverage, cross-account parity, and canonical title identity; halt before writing on any unidentified collision. Expand tests to 19 tests (202/202 tests pass).
 - [x] Add read-only hosted preflight mode (`--preflight`) checking all 3 target accounts and reporting collision results without requiring commit flags or enabling hosted writes. Enforce reliable import provenance (rejecting "at least one matching title" as proof); verify valid prior import with website-edited titles and reject full set of 158 records with only 1 matching title. Expand automated tests to 21 tests (204/204 tests pass).
 - [x] Preserve pre-existing unnumbered items on initial import: verify exactly 158 newly imported numbered items per account rather than requiring exactly 158 total items, allowing accounts with existing unnumbered items (e.g. account 2 with 1 unnumbered idea ending with 159 total items, accounts 1 and 3 with 158 total items) to import safely. Expand tests to 22 tests (205/205 tests pass).
+- [x] Prepare and test Session Pooler backup scripts (`scripts/create-hosted-backup.sh`, `scripts/verify-hosted-backup.mjs`, `tests/hosted-backup-verification.test.mjs`): keep password out of CLI arguments and logs via in-memory PGPASSWORD; halt on export errors; explicitly define public, Auth, and Storage scope; enforce deep recoverability verification for Account 2 unnumbered item and confirmed Auth users (211/211 tests pass).
 - [ ] Verify hosted Supabase target auth users are created and confirmed before import execution.
 - [ ] Obtain verified database backup confirmation and explicit execution confirmation before hosted commit.
 - [ ] Complete owner authenticated smoke test on Preview deployment (`https://content-planner-otp300zpj-nack4.vercel.app/th/login`) verifying private planner isolation per owner.

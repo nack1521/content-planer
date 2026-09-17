@@ -4,6 +4,8 @@
 
 **Status: In Progress — Controlled Hosted Supabase Import Prepared & Validated; Awaiting Codex Review Before Hosted Execution**
 
+**Resume point (2026-09-16):** Follow `HOSTED_IMPORT_FINISH_PLAN.md`. The user completed a read-only hosted preflight successfully; no hosted import has run. The next step is a verified private backup, followed by separate explicit user approval before any hosted migration or import. This documentation-only update does not change application behavior or database state.
+
 - **Milestone 6**: Accepted by Codex at commit `db0da61`.
 - **Milestone 7**: In Progress — Vercel release, hosted Supabase verification, and secure multi-owner authorization.
 - **Hosted Supabase Status**: Migration 3 (`20260914000002_add_workflow_tables.sql`) successfully applied by the owner. Schema verification confirmed all workflow tables (`content_links`, `production_tasks`, `reference_accounts`) and all 6 workflow columns on `content_items` are present. Row Level Security (RLS) is active on every table, blocking anonymous queries (HTTP 401).
@@ -273,7 +275,7 @@ Result:
 === 8. Running Live Server & HTTP Integration Suites ===
 ✔ 14/14 tests passed
 === [SUCCESS] ALL CLEAN-ENVIRONMENT CHECKS AND TEST SUITES PASSED ===
-Total: 205 tests passing cleanly across pgTAP database suite (85 tests) and application test suites (120 tests: domain validation 15, accessibility 7, localization scanner 5, local importer 10, hosted import preparation 22, server actions 8, Milestone 4 editor 17, Milestone 5 calendar & ideas 13, Milestone 6 release quality 9, and live HTTP integration 14).
+Total: 211 tests passing cleanly across pgTAP database suite (85 tests) and application test suites (126 tests: domain validation 15, accessibility 7, localization scanner 5, local importer 10, hosted import preparation 22, hosted backup verification 6, server actions 8, Milestone 4 editor 17, Milestone 5 calendar & ideas 13, Milestone 6 release quality 9, and live HTTP integration 14).
 ```
 
 ---

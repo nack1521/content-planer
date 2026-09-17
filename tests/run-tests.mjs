@@ -84,6 +84,9 @@ async function main() {
   console.log("\n=== 5b. Running Controlled Hosted Import Preparation Suite ===");
   runCommand(process.execPath, ["tests/hosted-import-prep.test.mjs"]);
 
+  console.log("\n=== 5c. Running Hosted Backup & Deep Recoverability Suite ===");
+  runCommand(process.execPath, ["tests/hosted-backup-verification.test.mjs"]);
+
   console.log("\n=== 6. Running Authenticated Server Actions & Atomic Rollback Suite ===");
   runCommand(process.execPath, ["--loader", "./tests/test-loader.mjs", "tests/actions.test.mjs"]);
 
