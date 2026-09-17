@@ -34,6 +34,7 @@ import {
   IconSearch,
   IconSparkles,
 } from '@/components/common/Icons';
+import { getTaskPage, sortTasks, toggleTaskSort, resolveMobileTaskSort, type TaskSort, type TaskSortKey } from '@/utils/taskList';
 
 const ALL_STATUSES: TaskStatus[] = ['not_started', 'in_progress', 'done'];
 const ALL_PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
@@ -111,11 +112,16 @@ export function TasksView({
   }, [initialTasks, initialError]);
 
   // Filters
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [dueDateFilter, setDueDateFilter] = useState<string>('all');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [dueDateFilter, setDueDateFilter] = useState<string>("all");
+
+  const [sort, setSort] = useState<TaskSort | null>(null);
+  const [requestedPage, setRequestedPage] = useState(1);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
 
   // Task Dialog State
   const [modalOpen, setModalOpen] = useState(false);
@@ -352,6 +358,44 @@ export function TasksView({
     });
   }, [tasks, search, statusFilter, priorityFilter, typeFilter, dueDateFilter]);
 
+  const sortedTasks = useMemo(() => sortTasks(filteredTasks, sort, locale), [filteredTasks, sort, locale]);
+  const pageData = getTaskPage(sortedTasks, requestedPage);
+
+
+  const handleSort = (key: TaskSortKey) => {
+    setSort((current) => toggleTaskSort(current, key));
+    setRequestedPage(1);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setRequestedPage(newPage);
+    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const sortButton = (key: TaskSortKey, label: string) => {
+    const active = sort?.key === key;
+    const nextDirection = active && sort.direction === "asc" ? "desc" : "asc";
+    return (
+      <button
+        type="button"
+        onClick={() => handleSort(key)}
+        aria-label={t("table.sortBy", {
+          column: label,
+          direction: nextDirection === "asc" ? t("table.sortAscending") : t("table.sortDescending"),
+        })}
+        className="inline-flex min-h-9 items-center gap-1.5 text-left hover:text-purple-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 cursor-pointer"
+      >
+        <span>{label}</span>
+        <span aria-hidden="true" className={active ? "text-purple-700" : "text-slate-400"}>
+          {active ? (sort.direction === "asc" ? "↑" : "↓") : "↕"}
+        </span>
+      </button>
+    );
+  };
+
+  const ariaSort = (key: TaskSortKey): "ascending" | "descending" | undefined =>
+    sort?.key === key ? (sort.direction === "asc" ? "ascending" : "descending") : undefined;
+
   return (
     <div className="space-y-6">
       {/* Header Bar */}
@@ -389,7 +433,7 @@ export function TasksView({
               id="task-search-input"
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setRequestedPage(1); }}
               placeholder={t('filters.searchPlaceholder')}
               className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
@@ -403,7 +447,7 @@ export function TasksView({
             <select
               id="task-status-filter"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => { setStatusFilter(e.target.value); setRequestedPage(1); }}
               className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="all">{t('tasks.allStatuses')}</option>
@@ -421,7 +465,7 @@ export function TasksView({
             <select
               id="task-priority-filter"
               value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
+              onChange={(e) => { setPriorityFilter(e.target.value); setRequestedPage(1); }}
               className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="all">{t('tasks.allPriorities')}</option>
@@ -439,7 +483,7 @@ export function TasksView({
             <select
               id="task-type-filter"
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
+              onChange={(e) => { setTypeFilter(e.target.value); setRequestedPage(1); }}
               className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="all">{t('tasks.allTypes')}</option>
@@ -457,7 +501,7 @@ export function TasksView({
             <select
               id="task-due-date-filter"
               value={dueDateFilter}
-              onChange={(e) => setDueDateFilter(e.target.value)}
+              onChange={(e) => { setDueDateFilter(e.target.value); setRequestedPage(1); }}
               className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="all">{t('tasks.filterDue.all')}</option>
@@ -533,211 +577,295 @@ export function TasksView({
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div ref={resultsRef} className="space-y-4">
+          <div className="flex items-center justify-between text-sm text-slate-600 px-1">
+            <span>
+              {t('tasks.pageRange', { start: pageData.start, end: pageData.end, total: filteredTasks.length })}
+            </span>
+          </div>
+
           {/* Desktop Table */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
-                  <th className="py-3 px-4 w-10"></th>
-                  <th className="py-3 px-4">{t('tasks.fields.title')}</th>
-                  <th className="py-3 px-4">{t('tasks.fields.status')}</th>
-                  <th className="py-3 px-4">{t('tasks.fields.priority')}</th>
-                  <th className="py-3 px-4">{t('tasks.fields.taskType')}</th>
-                  <th className="py-3 px-4">{t('tasks.fields.dueDate')}</th>
-                  <th className="py-3 px-4">{t('tasks.fields.linkedContent')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredTasks.map((task) => {
-                  const isDone = task.status === 'done';
-                  return (
-                    <tr
-                      key={task.id}
-                      className={`hover:bg-slate-50/70 transition-colors ${
-                        isDone ? 'opacity-60 bg-slate-50/30' : ''
-                      }`}
-                    >
-                      <td className="py-3 px-4">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleDone(task)}
-                          aria-label={isDone ? t('tasks.markIncomplete') : t('tasks.markComplete')}
-                          className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors cursor-pointer ${
-                            isDone
-                              ? 'bg-emerald-600 border-emerald-600 text-white'
-                              : 'border-slate-300 hover:border-slate-400 bg-white'
-                          }`}
-                        >
-                          {isDone && <IconCheck className="w-3.5 h-3.5" size={14} />}
-                        </button>
-                      </td>
-                      <td className="py-3 px-4 font-medium text-slate-900">
+          <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
+                    <th scope="col" className="py-3 px-4 w-10">
+                      <span className="sr-only">{t('tasks.fields.status')}</span>
+                    </th>
+                    <th scope="col" aria-sort={ariaSort('title')} className="py-3 px-4">
+                      {sortButton('title', t('tasks.fields.title'))}
+                    </th>
+                    <th scope="col" aria-sort={ariaSort('status')} className="py-3 px-4">
+                      {sortButton('status', t('tasks.fields.status'))}
+                    </th>
+                    <th scope="col" aria-sort={ariaSort('priority')} className="py-3 px-4">
+                      {sortButton('priority', t('tasks.fields.priority'))}
+                    </th>
+                    <th scope="col" aria-sort={ariaSort('type')} className="py-3 px-4">
+                      {sortButton('type', t('tasks.fields.taskType'))}
+                    </th>
+                    <th scope="col" aria-sort={ariaSort('dueDate')} className="py-3 px-4">
+                      {sortButton('dueDate', t('tasks.fields.dueDate'))}
+                    </th>
+                    <th scope="col" aria-sort={ariaSort('content')} className="py-3 px-4">
+                      {sortButton('content', t('tasks.fields.linkedContent'))}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {pageData.tasks.map((task) => {
+                    const isDone = task.status === 'done';
+                    return (
+                      <tr
+                        key={task.id}
+                        className={`hover:bg-slate-50/70 transition-colors ${
+                          isDone ? 'opacity-60 bg-slate-50/30' : ''
+                        }`}
+                      >
+                        <td className="py-3 px-4">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleDone(task)}
+                            aria-label={isDone ? t('tasks.markIncomplete') : t('tasks.markComplete')}
+                            className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors cursor-pointer ${
+                              isDone
+                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                : 'border-slate-300 hover:border-slate-400 bg-white'
+                            }`}
+                          >
+                            {isDone && <IconCheck className="w-3.5 h-3.5" size={14} />}
+                          </button>
+                        </td>
+                        <td className="py-3 px-4 font-medium text-slate-900">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(task)}
+                            className="text-left font-medium text-slate-900 hover:text-purple-600 transition-colors cursor-pointer"
+                          >
+                            <span className={isDone ? 'line-through text-slate-500' : ''}>
+                              {task.title}
+                            </span>
+                          </button>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                              task.status === 'done'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : task.status === 'in_progress'
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : 'bg-slate-100 text-slate-700 border border-slate-200'
+                            }`}
+                          >
+                            {t(`tasks.status.${task.status}`)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          {task.priority ? (
+                            <span
+                              className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                                task.priority === 'high'
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                : task.priority === 'medium'
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                : 'bg-slate-50 text-slate-600 border border-slate-200'
+                              }`}
+                            >
+                              {t(`tasks.priority.${task.priority}`)}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">&mdash;</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-slate-600">
+                          {task.task_type ? t(`tasks.type.${task.task_type}`) : '—'}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-slate-600">
+                          {task.due_date || '—'}
+                        </td>
+                        <td className="py-3 px-4">
+                          {task.content_item ? (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenContentRecord(task.content_item!.id)}
+                              title={t('tasks.openContent')}
+                              className="inline-flex items-center gap-1.5 text-xs text-purple-700 bg-purple-50 hover:bg-purple-100 px-2 py-1 rounded-md border border-purple-200 transition-colors cursor-pointer max-w-[220px] truncate"
+                            >
+                              {task.content_item.source_number ? (
+                                <span className="font-mono font-bold">
+                                  #{task.content_item.source_number}
+                                </span>
+                              ) : null}
+                              <span className="truncate">{task.content_item.title}</span>
+                            </button>
+                          ) : (
+                            <span className="text-slate-400">{t('tasks.standalone')}</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="block md:hidden">
+            <div className="flex items-end gap-2 mb-3">
+              <div className="flex-1">
+                <label htmlFor="tasks-mobile-sort" className="block text-sm font-semibold text-slate-700 mb-1">
+                  {t('table.sortLabel')}
+                </label>
+                <select
+                  id="tasks-mobile-sort"
+                  value={sort?.key ?? 'default'}
+                  onChange={(event) => {
+                    setSort(resolveMobileTaskSort(event.target.value));
+                    setRequestedPage(1);
+                  }}
+                  className="w-full min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800 focus-visible:outline-2 focus-visible:outline-purple-600"
+                >
+                  <option value="default">{t('table.defaultOrder')}</option>
+                  <option value="title">{t('tasks.fields.title')}</option>
+                  <option value="status">{t('tasks.fields.status')}</option>
+                  <option value="priority">{t('tasks.fields.priority')}</option>
+                  <option value="type">{t('tasks.fields.taskType')}</option>
+                  <option value="dueDate">{t('tasks.fields.dueDate')}</option>
+                  <option value="content">{t('tasks.fields.linkedContent')}</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                disabled={!sort}
+                onClick={() => sort && handleSort(sort.key)}
+                aria-label={t('table.reverseSort')}
+                className="min-h-10 min-w-10 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer disabled:cursor-not-allowed"
+              >
+                <span aria-hidden="true">{sort?.direction === 'desc' ? '↓' : '↑'}</span>
+              </button>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden divide-y divide-slate-100">
+              {pageData.tasks.map((task) => {
+                const isDone = task.status === 'done';
+                return (
+                  <div
+                    key={task.id}
+                    className={`p-4 space-y-2.5 ${isDone ? 'opacity-60 bg-slate-50/40' : ''}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleDone(task)}
+                        aria-label={isDone ? t('tasks.markIncomplete') : t('tasks.markComplete')}
+                        className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 cursor-pointer ${
+                          isDone
+                            ? 'bg-emerald-600 border-emerald-600 text-white'
+                            : 'border-slate-300 bg-white'
+                        }`}
+                      >
+                        {isDone && <IconCheck className="w-3.5 h-3.5" size={14} />}
+                      </button>
+                      <div className="flex-1 min-w-0">
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(task)}
-                          className="text-left font-medium text-slate-900 hover:text-purple-600 transition-colors cursor-pointer"
+                          className="text-left font-semibold text-sm text-slate-900 hover:text-purple-600 transition-colors cursor-pointer"
                         >
                           <span className={isDone ? 'line-through text-slate-500' : ''}>
                             {task.title}
                           </span>
                         </button>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                            task.status === 'done'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : task.status === 'in_progress'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                              : 'bg-slate-100 text-slate-700 border border-slate-200'
-                          }`}
-                        >
-                          {t(`tasks.status.${task.status}`)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        {task.priority ? (
-                          <span
-                            className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                              task.priority === 'high'
-                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                : task.priority === 'medium'
-                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                : 'bg-slate-50 text-slate-600 border border-slate-200'
-                            }`}
-                          >
-                            {t(`tasks.priority.${task.priority}`)}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400">&mdash;</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-slate-600">
-                        {task.task_type ? t(`tasks.type.${task.task_type}`) : '—'}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-slate-600">
-                        {task.due_date || '—'}
-                      </td>
-                      <td className="py-3 px-4">
-                        {task.content_item ? (
-                          <button
-                            type="button"
-                            onClick={() => handleOpenContentRecord(task.content_item!.id)}
-                            title={t('tasks.openContent')}
-                            className="inline-flex items-center gap-1.5 text-xs text-purple-700 bg-purple-50 hover:bg-purple-100 px-2 py-1 rounded-md border border-purple-200 transition-colors cursor-pointer max-w-[220px] truncate"
-                          >
-                            {task.content_item.source_number ? (
-                              <span className="font-mono font-bold">
-                                #{task.content_item.source_number}
-                              </span>
-                            ) : null}
-                            <span className="truncate">{task.content_item.title}</span>
-                          </button>
-                        ) : (
-                          <span className="text-slate-400">{t('tasks.standalone')}</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Cards */}
-          <div className="block md:hidden divide-y divide-slate-100">
-            {filteredTasks.map((task) => {
-              const isDone = task.status === 'done';
-              return (
-                <div
-                  key={task.id}
-                  className={`p-4 space-y-2.5 ${isDone ? 'opacity-60 bg-slate-50/40' : ''}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleDone(task)}
-                      aria-label={isDone ? t('tasks.markIncomplete') : t('tasks.markComplete')}
-                      className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 cursor-pointer ${
-                        isDone
-                          ? 'bg-emerald-600 border-emerald-600 text-white'
-                          : 'border-slate-300 bg-white'
-                      }`}
-                    >
-                      {isDone && <IconCheck className="w-3.5 h-3.5" size={14} />}
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEdit(task)}
-                        className="text-left font-semibold text-sm text-slate-900 hover:text-purple-600 transition-colors"
-                      >
-                        <span className={isDone ? 'line-through text-slate-500' : ''}>
-                          {task.title}
-                        </span>
-                      </button>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex flex-wrap items-center gap-1.5 pl-8 text-xs">
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                        task.status === 'done'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : task.status === 'in_progress'
-                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                          : 'bg-slate-100 text-slate-700 border border-slate-200'
-                      }`}
-                    >
-                      {t(`tasks.status.${task.status}`)}
-                    </span>
-
-                    {task.priority && (
+                    <div className="flex flex-wrap items-center gap-1.5 pl-8 text-xs">
                       <span
                         className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                          task.priority === 'high'
-                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                            : task.priority === 'medium'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : 'bg-slate-50 text-slate-600 border border-slate-200'
+                          task.status === 'done'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : task.status === 'in_progress'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                            : 'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}
                       >
-                        {t(`tasks.priority.${task.priority}`)}
+                        {t(`tasks.status.${task.status}`)}
                       </span>
-                    )}
 
-                    {task.task_type && (
-                      <span className="text-[11px] text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                        {t(`tasks.type.${task.task_type}`)}
-                      </span>
-                    )}
+                      {task.priority && (
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            task.priority === 'high'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : task.priority === 'medium'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-slate-50 text-slate-600 border border-slate-200'
+                          }`}
+                        >
+                          {t(`tasks.priority.${task.priority}`)}
+                        </span>
+                      )}
 
-                    {task.due_date && (
-                      <span className="text-[11px] font-mono text-slate-500">
-                        {task.due_date}
-                      </span>
+                      {task.task_type && (
+                        <span className="text-[11px] text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                          {t(`tasks.type.${task.task_type}`)}
+                        </span>
+                      )}
+
+                      {task.due_date && (
+                        <span className="text-[11px] font-mono text-slate-500">
+                          {task.due_date}
+                        </span>
+                      )}
+                    </div>
+
+                    {task.content_item && (
+                      <div className="pl-8 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenContentRecord(task.content_item!.id)}
+                          className="inline-flex items-center gap-1 text-xs text-purple-700 bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded border border-purple-200 transition-colors cursor-pointer"
+                        >
+                          <span className="font-bold">
+                            #{task.content_item.source_number || ''}
+                          </span>
+                          <span className="truncate max-w-[200px]">{task.content_item.title}</span>
+                        </button>
+                      </div>
                     )}
                   </div>
-
-                  {task.content_item && (
-                    <div className="pl-8 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenContentRecord(task.content_item!.id)}
-                        className="inline-flex items-center gap-1 text-xs text-purple-700 bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded border border-purple-200 transition-colors"
-                      >
-                        <span className="font-bold">
-                          #{task.content_item.source_number || ''}
-                        </span>
-                        <span className="truncate max-w-[200px]">{task.content_item.title}</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
+
+          {pageData.totalPages > 1 && (
+            <nav aria-label={t('tasks.pagination')} className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+              <span aria-live="polite" className="text-sm text-slate-600">
+                {t('tasks.pageOf', { page: pageData.page, totalPages: pageData.totalPages })}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={pageData.page === 1}
+                  onClick={() => handlePageChange(pageData.page - 1)}
+                  className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {t('tasks.previousPage')}
+                </button>
+                <button
+                  type="button"
+                  disabled={pageData.page === pageData.totalPages}
+                  onClick={() => handlePageChange(pageData.page + 1)}
+                  className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {t('tasks.nextPage')}
+                </button>
+              </div>
+            </nav>
+          )}
         </div>
       )}
 

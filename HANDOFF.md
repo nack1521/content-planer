@@ -1,10 +1,139 @@
 # Content Planner Handoff — Milestone 7 (Controlled Hosted Supabase Import Preparation & Vercel Release)
 
+### Production Release: Planner & Tasks Column Sorting, 25-Items-Per-Page, and Password Sign-In (2026-09-17)
+
+- **Status:** Successfully deployed to **Vercel Production** (`--prod`) and verified.
+- **Production URL:** `https://content-planner-zeta-dusky.vercel.app` (Direct: `https://content-planner-4jssu5w7d-nack4.vercel.app`)
+- **Deployment ID:** `dpl_3hAts3gde56AMxvkN9ZKZcZ52DZc`
+- **Target:** Production
+
+#### Features Included in Release
+1. **Tasks Page Sorting & Pagination**:
+   - **Desktop Sortable Data Columns**: Title (numeric-aware), Status (enum order), Priority (enum order), Type (enum order), Due Date (timestamp order), and Linked Content (localized title). Checkbox and Action columns are non-sortable. Accessible sort buttons with `aria-sort` and keyboard navigation.
+   - **Mobile Sort & Direction Controls**: Mobile sort selector (`<select id="tasks-mobile-sort">`) and direction toggle button for responsive cards.
+   - **Pipeline**: Filters applied first -> entire matching task set sorted -> paginated at 25 tasks per page.
+   - **Order Stability & Toggle**: Default server order is preserved until a sort is explicitly chosen. Repeated clicks on any column header switch between ascending and descending (matching Planner) and never clear to null. The mobile direction button toggles both ways; only selecting "Default order" in the dropdown clears the sort. Missing values sort last in both directions.
+   - **Page Reset & Deletion Clamping**: Resets to page 1 on filter/sort changes; clamps to last valid page if tasks are deleted from the last page.
+   - **Localization**: Full Thai and English translations (`tasks.pageRange`, `tasks.pagination`, `tasks.pageOf`, `tasks.previousPage`, `tasks.nextPage`) with 100% dictionary parity.
+2. **Planner Page Sorting & Pagination** (Previously previewed and owner-accepted):
+   - All 7 desktop columns sortable by header clicks; mobile sort selector and toggle; 25 items per page; range indicators and page navigation.
+3. **Password Sign-In** (Previously previewed and owner-accepted):
+   - Direct email/password authentication via Supabase Auth with magic-link fallback.
+   - Local administrator password provisioning tool (`scripts/set-owner-password.mjs`, 8-char minimum) with zero secrets logged.
+
+#### Actual Files Changed for This Release
+- `src/utils/taskList.ts` (NEW: Task sort, toggleTaskSort, resolveMobileTaskSort, & pagination helpers)
+- `src/components/tasks/TasksView.tsx` (MODIFIED: Sortable desktop headers, mobile controls, 25-per-page navigation)
+- `src/messages/en.json` (MODIFIED: English tasks pagination copy)
+- `src/messages/th.json` (MODIFIED: Thai tasks pagination copy)
+- `tests/task-list.test.mjs` (NEW: Task sorting & pagination unit tests)
+- `tests/run-tests.mjs` (MODIFIED: Test runner integration)
+- `.vercelignore` (NEW: Strict release snapshot exclusion list)
+- Previously reviewed files in this release snapshot:
+  - `src/app/actions/auth.ts`
+  - `src/components/auth/LoginForm.tsx`
+  - `src/utils/plannerList.ts`
+  - `src/components/planner/PlannerTable.tsx`
+  - `src/components/planner/PlannerView.tsx`
+  - `scripts/set-owner-password.mjs`
+  - `PASSWORD_LOGIN_SETUP.md`
+  - `tests/password-auth.test.mjs`
+  - `tests/planner-list.test.mjs`
+  - `TASKS.md` & `HANDOFF.md`
+
+#### Automated Verification & Quality Checks
+- `npm run lint`: clean (0 errors, 0 warnings).
+- `npm run build`: clean Next.js 16 production compilation (17/17 SSG pages).
+- Focused unit tests:
+  - `tests/task-list.test.mjs`: 6/6 passed (including toggling and mobile direction regression tests).
+  - `tests/planner-list.test.mjs`: 4/4 passed.
+  - `tests/auth.test.mjs`: 8/8 passed.
+  - `tests/release-quality-milestone6.test.mjs`: 9/9 passed.
+  - `tests/password-auth.test.mjs`: 3/3 passed.
+- Full test suite (`npm test`): 223/223 passed cleanly across local database, importer, server actions, editor, calendar, ideas, release quality, and live HTTP integration.
+- Clean release snapshot: `.vercelignore` strictly excluded `.env*.local`, `.env`, `/.private-import/`, `tests/**`, `scripts/**`, `supabase/**`, `ref/**`, and docs. Vercel deployment payload contained exactly 94 runtime files, 0 local env files, 0 private import materials, 0 secrets.
+
+#### Production Deployment Verification
+- Public routes:
+  - `/th/login`: HTTP 200, `<title>เข้าสู่ระบบ — Content Planner</title>`, bundle contains `LoginForm` with password auth.
+  - `/en/login`: HTTP 200, `<title>Sign In — Content Planner</title>`, bundle contains `LoginForm` with password auth.
+- Protected routes:
+  - `/th/planner`, `/en/planner`, `/th/tasks`, `/en/tasks`: verified HTTP 307 redirecting unauthenticated visitors to localized `/login`.
+- Security & privacy:
+  - Zero secrets, zero service-role keys, and zero passwords in client bundles.
+  - Public login and protected-route behavior verified without using anyone's password.
+  - No database migrations, user creations, password resets, or imports were run.
+
+#### Remaining Risks & Known Limitations
+- **Three-Account Isolation Status**: The owner confirmed the observed Preview behavior (password login, Planner sorting, 25/page), but did **not** report a complete three-account isolation smoke test. That test must **not** be claimed as performed. The owner should verify that each account sees only its separate records (158 / 159 / 158 total items) in Production.
+- **CLI Migration Reconciliation**: The controlled-import migration (`20260914000003_add_controlled_batch_import.sql`) was applied through Supabase Dashboard SQL Editor; CLI migration history (`supabase_migrations.schema_migrations`) should be reconciled prior to any future `supabase db push`.
+- **Sprint 1 Link-Only Scope**: Asset storage relies completely on external links (`content_links`). Direct media uploads, signed viewing URLs, and storage quotas are deferred to Sprint 2.
+- **Browser Subagent Note**: Antigravity browser subagent initialization failed due to Playwright CDN 404 for `playwright-1.57.0-mac-arm64.zip`; verification was performed via live HTTP requests, HTML parsing, script chunk audits, and static asset verification.
+
+### New Preview Deployment with Password Sign-In & Planner Controls (2026-09-17)
+
+- **Milestone attempted and status:** Milestone 7 password-login and planner usability improvement; successfully deployed to a new Vercel Preview. Ready for owner manual acceptance using privately set passwords. Production untouched.
+- **Preview Deployment:**
+  - **URL:** `https://content-planner-hlconh0uw-nack4.vercel.app`
+  - **Deployment ID:** `dpl_4fP1cGBYvf2DCGm4U2LwensSHRvR`
+  - **Target:** Preview (isolated)
+- **Deployment Security & Privacy Controls:**
+  - `.vercelignore` strictly configured: `.env*.local`, `.env`, `/.private-import/`, `tests/**`, `scripts/**`, `supabase/**`, `ref/**`, and docs excluded.
+  - Vercel dry-run and deployment audit verified zero local env files, zero private import manifests, and zero service-role keys in uploaded assets or client bundles.
+  - Existing Vercel environment variables (`ALLOWED_EMAILS`, `ALLOWED_EMAIL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) remain securely configured.
+- **Verified Route Behavior on Preview:**
+  - `/th/login`: HTTP 200, localized title `เข้าสู่ระบบ — Content Planner`, bundle contains Thai password auth strings.
+  - `/en/login`: HTTP 200, localized title `Sign In — Content Planner`, bundle contains English password auth strings.
+  - Protected routes redirect unauthenticated visitors via HTTP 307: `/th/planner`, `/en/planner`, `/th/tasks`, `/th/calendar`, `/th/ideas`, `/th/settings`.
+- **Automated Verification:**
+  - `npm run lint`: clean (0 errors, 0 warnings).
+  - `npm run build`: clean Next.js 16 production compilation (17/17 SSG pages).
+  - `node --test tests/planner-list.test.mjs tests/auth.test.mjs`: 12/12 passed.
+  - `node --loader ./tests/test-loader.mjs tests/password-auth.test.mjs`: 3/3 passed.
+  - Full `npm test` suite: 219/219 passed.
+- **Owner Manual Checklist (Do NOT share passwords):**
+  1. Open `https://content-planner-hlconh0uw-nack4.vercel.app/th/login` (or `/en/login`).
+  2. Select **Password** (default) and sign in to Account 1 with its private password:
+     - Verify planner loads with **158** total items.
+     - Verify 25 items per page (7 pages total: 25 on pages 1-6, 8 on page 7).
+     - Test sorting by clicking column headers.
+     - Click Sign Out.
+  3. Sign in to Account 2 with its private password:
+     - Verify planner loads with **159** total items (including preserved unnumbered item).
+     - Verify 25 items per page (7 pages total: 25 on pages 1-6, 9 on page 7).
+     - Verify Account 2 sees only its own records.
+     - Click Sign Out.
+  4. Sign in to Account 3 with its private password:
+     - Verify planner loads with **158** total items.
+     - Verify Account 3 sees only its own records.
+     - Click Sign Out.
+
 ## Milestone Status
 
-**Status: In Progress — Controlled Hosted Supabase Import Prepared & Validated; Awaiting Codex Review Before Hosted Execution**
+**Status: In Progress — Hosted Import Independently Verified; Awaiting Preview Owner Smoke Tests**
 
-**Resume point (2026-09-17):** Implemented and locally tested the truthful `--acknowledge-no-backup` guard per `HOSTED_IMPORT_FINISH_PLAN.md` (Step 1). The importer now requires exactly one of `--confirm-backup` or `--acknowledge-no-backup`, and still requires `--confirm-execution`. Mutually exclusive options and missing confirmations fail closed with clear error messages. 23/23 tests pass in `tests/hosted-import-prep.test.mjs` (212/212 tests total across all test suites + 6/6 backup tests). Next step is Codex review and read-only preflight check before obtaining explicit final user approval for any hosted migration or import. No database password requested; no hosted migration, backup, or import executed.
+**Resume point (2026-09-17):** Step 4 executed once after the owner ran `20260914000003_add_controlled_batch_import.sql` in the Supabase Dashboard SQL Editor. The importer used `--commit --acknowledge-no-backup --confirm-execution`; the private write guard is back to `hosted_write_authorized: false`. Codex independently reran hosted read-only preflight and queried all three accounts: Account 1 has 158 numbered items, 419 links, 16 tasks, 30 reference accounts; Account 2 has 159 total items (158 numbered plus its pre-existing unnumbered `recording` item), 419 links, 16 tasks, 30 reference accounts; Account 3 has 158 numbered items, 419 links, 16 tasks, 30 reference accounts. Each account's 38 corrected and 22 unscheduled date decisions match. `npm run lint` and `npm run build` pass. Next: owner Preview sign-in and isolation smoke tests; do not promote to Production yet. Dashboard SQL execution left CLI migration-history status unverified, so reconcile it before a future `supabase db push`.
+
+### Existing-account password login transition (2026-09-17)
+
+- **Owner-requested password policy adjustment:** The one-time setup tool now accepts passwords of at least 8 characters instead of the initially chosen 16. `PASSWORD_LOGIN_SETUP.md` recommends unique passwords without imposing a longer requirement. No hosted password or account was changed by this adjustment. `node --check scripts/set-owner-password.mjs`, `git diff --check`, `npm run lint`, `npm run build`, and the focused local password-auth suite (3/3) passed after the change. Manual review: run the tool privately for one approved account, enter an 8-character unique password twice, and verify password sign-in on a newly deployed Preview before repeating for the other accounts.
+- **Milestone attempted and status:** Milestone 7 authentication improvement, implemented and locally verified; not yet deployed or activated on hosted accounts. The current Vercel Preview still uses the previous email-link login and Supabase's built-in sender has returned `email rate limit exceeded` in runtime logs.
+- **Behavior:** Login now defaults to email/password while retaining a clearly selectable email-link fallback. A server action permits password sign-in only for an exact server-side allow-listed email and returns the same invalid-credentials response for unknown owners and wrong passwords. Successful sign-in uses the existing Supabase Auth user and cookie session; no new user, table, or RLS change is made. Thai and English UI strings were added.
+- **Private setup:** `scripts/set-owner-password.mjs` is a one-time, local-only operator tool using an existing `.env.local` service-role key. It validates the allow-list, hosted project URL, and confirmed existing Auth user before an explicit `SET` confirmation and two hidden password prompts. It updates that user's password by ID and confirms the returned ID/email. Passwords are never accepted on the command line, printed, committed, or sent to Vercel. The owner-facing procedure is in `PASSWORD_LOGIN_SETUP.md`.
+- **Files changed:** `src/app/actions/auth.ts`, `src/components/auth/LoginForm.tsx`, `src/messages/en.json`, `src/messages/th.json`, `scripts/set-owner-password.mjs`, `tests/password-auth.test.mjs`, `tests/test-loader.mjs`, `tests/run-tests.mjs`, `tests/auth.test.mjs`, `PROJECT.md`, `ARCHITECTURE.md`, `README.md`, `PASSWORD_LOGIN_SETUP.md`, `TASKS.md`, and this handoff. Existing unrelated dirty changes were preserved.
+- **Checks:** `node --check scripts/set-owner-password.mjs`, focused password tests 3/3, `npm run lint`, `npm run build`, `git diff --check`, and the complete `npm test` clean-environment suite passed. Tests used isolated local Supabase. The password integration test proves admin password assignment keeps the original user ID and the server action signs into that ID; wrong/unauthorized credentials do not establish a session.
+- **Assumptions / deviations:** The user's approval to switch login supersedes the older passwordless-only product decision. The email-link path remains during the transition to avoid lockout. Existing imported planners stay separate because their `auth.users.id` values do not change. No hosted password was set, no hosted database write occurred, and no new Preview or Production deployment was made in this cycle.
+- **Unresolved risk / next reviewer step:** Review the diff, then deploy only the reviewed login files to a new Preview. The owner privately runs the setup tool once per existing approved account and tests sign-in, account-specific planner counts, sign-out, and Thai/English behavior. Keep public signup disabled and retain email-link fallback until all accounts work. A forgotten password can be reset with the same local tool without consuming Auth email quota. Reconcile CLI migration history separately before any future `supabase db push`.
+
+### Planner sorting and pagination handoff (2026-09-17)
+
+- **Milestone attempted:** Milestone 7 planner usability addition; implemented and deployed to a new Vercel Preview, pending owner authenticated browser acceptance. Existing release tasks remain open.
+- **Behavior:** Seven desktop data headers are clickable and toggle ascending/descending ordering across the entire filtered result set. The Actions column remains unsortable. Mobile cards have an equivalent sort selector and direction control. Both views show up to 25 items per page, a visible item range, page count, and Previous/Next controls. Filter and sort changes reset to page 1; deletion clamps an out-of-range page. The initial order remains the server's existing fetched order until the user selects a sort.
+- **Files:** `src/utils/plannerList.ts`, `src/components/planner/PlannerTable.tsx`, `src/components/planner/PlannerView.tsx`, `src/messages/en.json`, `src/messages/th.json`, `tests/planner-list.test.mjs`, `tests/run-tests.mjs`, `TASKS.md`, and this handoff.
+- **Checks:** Focused planner tests 4/4 passed, translation release-quality suite 9/9 passed after changing a dynamic translation lookup to static keys, `npm run lint` passed, `npm run build` passed, `git diff --check` passed, and the full `npm test` suite passed against isolated local Supabase. Hosted Supabase was not changed by these checks.
+- **Assumption:** Client-side sorting/pagination is appropriate for the current approximately 159-record planner. All records are already loaded for the current filtering behavior; server-side pagination can be considered if the collection grows substantially. No database schema, hosted data, or authentication behavior changed.
+- **Preview deployment:** `https://content-planner-aroy1i3ds-nack4.vercel.app` (`dpl_H93fscY8CxL4dBgUBZA9dFgjEMKx`, READY). Built from an isolated copy of HEAD plus only the five planner runtime files changed for this feature, excluding unrelated import-script edits, `.env.local`, and `.private-import`. Vercel build passed. `/th/login` returned HTTP 200 and unauthenticated `/th/planner` redirected to `/th/login` with HTTP 307. Production was not changed.
+- **Manual review / blocker:** The owner must allow this exact Preview origin in Supabase Authentication → URL Configuration → Redirect URLs (for example `https://content-planner-aroy1i3ds-nack4.vercel.app/**`) unless an existing wildcard already covers it. Then sign in and, in both Thai and English, click each table header twice and confirm ascending/descending indicators and global order; check 25 rows on page 1, 25 on page 2, and 9 on page 7 for the 159-item account. On mobile, verify the sort selector, direction button, cards, and pagination. Filter while on a later page and confirm it returns to page 1. Authenticated smoke testing has not yet been completed.
 
 - **Milestone 6**: Accepted by Codex at commit `db0da61`.
 - **Milestone 7**: In Progress — Vercel release, hosted Supabase verification, and secure multi-owner authorization.

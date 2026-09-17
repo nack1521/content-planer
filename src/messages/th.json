@@ -92,6 +92,12 @@
     "headerStatus": "สถานะการผลิต",
     "headerProgress": "ความคืบหน้า",
     "headerActions": "การจัดการ",
+    "sortBy": "เรียงตาม{column} จาก{direction}",
+    "sortAscending": "น้อยไปมาก",
+    "sortDescending": "มากไปน้อย",
+    "sortLabel": "เรียงตาม",
+    "defaultOrder": "ลำดับเดิม",
+    "reverseSort": "สลับทิศทางการเรียง",
     "unscheduled": "ยังไม่กำหนดวัน",
     "openMenu": "เปิดเมนูจัดการ",
     "copyHook": "คัดลอกฮุก",
@@ -207,6 +213,15 @@
     "loginSubtitle": "เข้าสู่สตูดิโอวางแผนคอนเทนต์ส่วนตัวของคุณ",
     "emailLabel": "ที่อยู่อีเมล",
     "emailPlaceholder": "owner@example.com",
+    "signInMethod": "วิธีเข้าสู่ระบบ",
+    "passwordMethod": "รหัสผ่าน",
+    "emailLinkMethod": "ลิงก์ทางอีเมล",
+    "passwordLabel": "รหัสผ่าน",
+    "passwordRequired": "กรุณากรอกรหัสผ่าน",
+    "signInWithPassword": "เข้าสู่ระบบ",
+    "signingIn": "กำลังเข้าสู่ระบบ...",
+    "invalidCredentials": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+    "passwordErrorGeneric": "ไม่สามารถเข้าสู่ระบบได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง",
     "sendMagicLink": "ส่งลิงก์เข้าสู่ระบบ",
     "sending": "กำลังส่งลิงก์...",
     "magicLinkSentTitle": "ตรวจสอบกล่องข้อความอีเมลของคุณ",
@@ -287,7 +302,12 @@
     },
     "errors": {
       "titleRequired": "กรุณากรอกชื่องานโปรดักชัน"
-    }
+    },
+    "pageRange": "แสดง {start}–{end} จาก {total} งาน",
+    "pagination": "หน้ารายการงานผลิต",
+    "pageOf": "หน้า {page} จาก {totalPages} · หน้าละ 25 งาน",
+    "previousPage": "ก่อนหน้า",
+    "nextPage": "ถัดไป"
   },
   "recordModal": {
     "editTitle": "แก้ไขรายการคอนเทนต์",
@@ -387,6 +407,11 @@
     "createPost": "สร้างโพสต์ใหม่",
     "loading": "กำลังโหลดพื้นที่ทำงานคอนเทนต์...",
     "totalCount": "แสดงทั้งหมด {count} รายการ",
+    "pageRange": "แสดง {start}–{end} จาก {total} รายการ",
+    "pagination": "หน้ารายการคอนเทนต์",
+    "pageOf": "หน้า {page} จาก {totalPages} · หน้าละ 25 รายการ",
+    "previousPage": "ก่อนหน้า",
+    "nextPage": "ถัดไป",
     "allPlatforms": "ทุกแพลตฟอร์ม"
   },
   "referenceAccounts": {

@@ -3,7 +3,7 @@
 ## Product Roadmap & Execution Rules
 
 The project roadmap is structured into two phases:
-- **Sprint 1 (Milestones 1–7)**: Complete private MVP for one owner. **Link-only scope**: collects and organizes external URLs (idea sources, assets, notes, and published posts). Direct media uploads, subscriptions, public sign-up, multi-user SaaS functionality, and automatic social publishing are deferred to Sprint 2.
+- **Sprint 1 (Milestones 1–7)**: Complete private MVP for a small allow-listed set of separate personal accounts. **Link-only scope**: collects and organizes external URLs (idea sources, assets, notes, and published posts). Direct media uploads, subscriptions, public sign-up, shared workspaces, and automatic social publishing are deferred to Sprint 2.
 - **Dormant Infrastructure**: The `public.content_media` table (defined in `supabase/migrations/20260914000000_create_mvp_schema.sql`) and private `content-media` storage bucket (defined in `supabase/migrations/20260914000001_create_storage_and_user_trigger.sql`) were established in Milestone 2 and remain dormant in Sprint 1; they are not exposed in the interface.
 - **Sprint 2 Backlog**: Media upload pipeline, resumable large files, storage quotas, billing/subscriptions, public accounts, multi-user SaaS workspaces, and platform API integrations.
 
@@ -270,7 +270,7 @@ Review checkpoint: Stop and request release review before Milestone 7.
 
 Status: In Progress
 
-The owner declined a backup on 2026-09-17. The revised no-backup acknowledgement → read-only preflight → explicit final approval → controlled import → verification sequence is recorded in `HOSTED_IMPORT_FINISH_PLAN.md`. Hosted writes remain paused; do not falsely use `--confirm-backup`.
+The owner declined a backup on 2026-09-17 and explicitly approved the bounded hosted migration and one-time import after the fresh read-only preflight passed. The execution and verification sequence is recorded in `HOSTED_IMPORT_FINISH_PLAN.md`. Do not falsely use `--confirm-backup` or run an unreviewed rerun.
 
 - [x] Connect the reviewed repository to Vercel (`nack4/content-planner`).
 - [x] Configure Development, Preview, and Production environment variables securely (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `ALLOWED_EMAIL`).
@@ -322,12 +322,21 @@ The owner declined a backup on 2026-09-17. The revised no-backup acknowledgement
 - [x] Add read-only hosted preflight mode (`--preflight`) checking all 3 target accounts and reporting collision results without requiring commit flags or enabling hosted writes. Enforce reliable import provenance (rejecting "at least one matching title" as proof); verify valid prior import with website-edited titles and reject full set of 158 records with only 1 matching title. Expand automated tests to 21 tests (204/204 tests pass).
 - [x] Preserve pre-existing unnumbered items on initial import: verify exactly 158 newly imported numbered items per account rather than requiring exactly 158 total items, allowing accounts with existing unnumbered items (e.g. account 2 with 1 unnumbered idea ending with 159 total items, accounts 1 and 3 with 158 total items) to import safely. Expand tests to 22 tests (205/205 tests pass).
 - [x] Prepare and test Session Pooler backup scripts (`scripts/create-hosted-backup.sh`, `scripts/verify-hosted-backup.mjs`, `tests/hosted-backup-verification.test.mjs`): keep password out of CLI arguments and logs via in-memory PGPASSWORD; halt on export errors; explicitly define public, Auth, and Storage scope; enforce deep recoverability verification for Account 2 unnumbered item and confirmed Auth users (211/211 tests pass).
-- [ ] Verify hosted Supabase target auth users are created and confirmed before import execution.
-- [x] Implement and locally test truthful no-backup acknowledgement path (`--acknowledge-no-backup` mutually exclusive with `--confirm-backup`, requiring `--confirm-execution`, with 23/23 tests passing); preserve Account 2's existing unnumbered item and await explicit final execution approval before hosted migration or import.
-- [ ] Complete owner authenticated smoke test on Preview deployment (`https://content-planner-otp300zpj-nack4.vercel.app/th/login`) verifying private planner isolation per owner.
-- [ ] Deploy accepted version to Production.
-- [ ] Confirm that no secret values or private media URLs appear in client output or documentation.
-- [ ] Record deployment results in `HANDOFF.md` without secrets.
+- [x] Verify hosted Supabase target auth users are created and confirmed before import execution (fresh read-only preflight on 2026-09-17; repeat immediately before execution).
+- [x] Implement and locally test truthful no-backup acknowledgement path (`--acknowledge-no-backup` mutually exclusive with `--confirm-backup`, requiring `--confirm-execution`, with 23/23 tests passing); preserve Account 2's existing unnumbered item. Owner gave separate explicit no-backup execution approval after the fresh preflight.
+- [x] Apply only the controlled-import migration, repeat hosted read-only preflight, perform the one-time guarded import, restore the private manifest write lock, and return redacted results for Codex review.
+- [x] Independently verify the hosted import read-only: 158/159/158 total items, 158 numbered items per account, 419 links, 16 tasks, 30 reference accounts per account, Account 2's existing item preserved, and 38 corrected/22 unscheduled date decisions per account. Codex confirmed these on 2026-09-17; lint and build passed.
+- [x] Make all seven planner data columns sortable by clicking their headers, and paginate the filtered results at 25 items per page on desktop and mobile. Preserve the existing fetched order until a sort is selected; keep sorting and pagination client-side for the current small dataset. Add Thai/English controls and focused tests.
+- [x] Deploy the planner sorting and pagination update to an isolated Vercel Preview (`https://content-planner-aroy1i3ds-nack4.vercel.app`), excluding unrelated import edits and private files; verify Vercel build and public login/protected-route behavior. Await owner sign-in and UI acceptance before Production.
+- [x] Add email/password sign-in for existing allow-listed Supabase users, preserving their user IDs and separate RLS data. Keep magic links as a temporary fallback; add Thai/English UI and a local, hidden-input administrator setup tool. Test wrong/unauthorized credentials and existing-ID sign-in against isolated local Supabase.
+- [x] Adjust the local password setup tool to an 8-character minimum at the owner's request; 16 characters was an overly strict operator choice, not a product requirement.
+- [x] Provision passwords privately for approved existing accounts using `PASSWORD_LOGIN_SETUP.md`, deploy reviewed password-login version to new Vercel Preview (`https://content-planner-hlconh0uw-nack4.vercel.app`), and verify Thai/English login routes and protected redirect behavior. Owner manual verification across accounts (totals 158/159/158, sorting, pagination, sign-out) pending.
+- [x] Owner accepted the observed password sign-in, Planner sorting, and 25-per-page behavior on the new Preview. The owner waived a further manual sign-off round for this release; a complete three-account isolation smoke test was not reported and must not be claimed as performed.
+- [x] Extend the Planner's sortable-header and 25-items-per-page pattern to the Tasks page. Sort all meaningful desktop task data columns (title, status, priority, type, due date, linked content), not the completion checkbox/actions; provide equivalent mobile sort controls. Sort the complete filtered task set before pagination, preserve existing order until a sort is chosen, reset to page 1 when filters/sort change, clamp after deletion, and keep Thai/English and keyboard behavior consistent.
+- [x] After implementing the Tasks update, publish the reviewed Planner/password/Tasks release to Vercel Production as requested by the owner. Do not require another owner manual testing round, but still run repository-required lint/build and relevant automated checks; stop and report any failed check. Exclude secrets, private import data, and unrelated dirty work; verify the Production deployment and report its URL/deployment ID. Do not run database migrations or imports as part of this UI release.
+- [ ] Reconcile CLI migration history for the import migration applied through Supabase Dashboard before any future `supabase db push`.
+- [x] Confirm that no secret values or private media URLs appear in client output or documentation.
+- [x] Record deployment results in `HANDOFF.md` without secrets.
 
 Acceptance criteria:
 

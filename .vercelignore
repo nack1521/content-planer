@@ -1,0 +1,9 @@
+.env*.local
+.env
+.private-import
+.private-import/**
+tests/**
+scripts/**
+supabase/**
+*.md
+ref/**

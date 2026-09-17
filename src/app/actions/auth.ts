@@ -4,11 +4,47 @@ import { createClient } from '@/utils/supabase/server';
 import { isAllowedEmail, normalizeEmail } from '@/utils/auth/allowedEmail';
 import { getAppOrigin } from '@/utils/url/getOrigin';
 import { redirect } from 'next/navigation';
-import { Locale } from '@/types/planner';
+import type { Locale } from '@/types/planner';
 
 export interface AuthActionResult {
   success: boolean;
   error?: string;
+}
+
+/**
+ * Sign in an existing, allow-listed owner without sending an email. This uses
+ * the same Supabase user ID as magic-link sign-in, so RLS ownership is unchanged.
+ */
+export async function signInWithPasswordAction(
+  email: string,
+  password: string
+): Promise<AuthActionResult> {
+  const normalized = normalizeEmail(email);
+
+  // Return the same response for an unknown owner and a wrong password.
+  if (!normalized || !normalized.includes('@') || normalized.length > 254 ||
+      typeof password !== 'string' || password.length === 0 || password.length > 1024 ||
+      !isAllowedEmail(normalized)) {
+    return { success: false, error: 'invalid_credentials' };
+  }
+
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: normalized,
+      password,
+    });
+
+    if (error || !data.user || !isAllowedEmail(data.user.email)) {
+      if (data.session) await supabase.auth.signOut();
+      return { success: false, error: 'invalid_credentials' };
+    }
+
+    return { success: true };
+  } catch {
+    // Do not log passwords, attempted emails, or raw provider responses.
+    return { success: false, error: 'service_error' };
+  }
 }
 
 /**

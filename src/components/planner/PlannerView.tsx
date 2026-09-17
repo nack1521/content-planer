@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { PlannerFilterState, ContentItem, ContentPillar, Platform } from '@/types/planner';
 import { useLocale } from '@/context/LocaleContext';
 import { getLocalizedErrorMessage } from '@/utils/errors';
@@ -11,6 +11,7 @@ import { PlannerCards } from './PlannerCards';
 import { EmptyState } from './EmptyState';
 import { RecordModal } from './RecordModal';
 import { IconPlus } from '@/components/common/Icons';
+import { getPlannerPage, sortPlannerItems, type PlannerSort, type PlannerSortKey } from '@/utils/plannerList';
 import {
   getContentItemsAction,
   getContentPillarsAction,
@@ -38,6 +39,9 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
 
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [sort, setSort] = useState<PlannerSort | null>(null);
+  const [requestedPage, setRequestedPage] = useState(1);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -94,6 +98,7 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
 
   const handleFilterChange = (newFilters: Partial<PlannerFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
+    setRequestedPage(1);
   };
 
   const handleResetFilters = () => {
@@ -105,6 +110,20 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
       format: 'all',
       goal: 'all',
     });
+    setRequestedPage(1);
+  };
+
+  const handleSort = (key: PlannerSortKey) => {
+    setSort((current) => ({
+      key,
+      direction: current?.key === key && current.direction === 'asc' ? 'desc' : 'asc',
+    }));
+    setRequestedPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setRequestedPage(page);
+    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   // Filtered Items
@@ -162,6 +181,9 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
       return true;
     });
   }, [items, filters]);
+
+  const sortedItems = useMemo(() => sortPlannerItems(filteredItems, sort, locale), [filteredItems, sort, locale]);
+  const pageData = getPlannerPage(sortedItems, requestedPage);
 
   const handleOpenCreate = () => {
     setSelectedItem(null);
@@ -271,20 +293,81 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
       ) : filteredItems.length === 0 ? (
         <EmptyState type="filtered" onResetFilters={handleResetFilters} />
       ) : (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+        <div ref={resultsRef} className="space-y-4">
+          <div className="flex items-center justify-between text-sm text-slate-600 px-1">
             <span>
-              {t('planner.totalCount').replace('{count}', String(filteredItems.length))}
+              {t('planner.pageRange', { start: pageData.start, end: pageData.end, total: filteredItems.length })}
             </span>
           </div>
 
           <div className="hidden lg:block">
-            <PlannerTable items={filteredItems} onSelectItem={handleOpenEdit} />
+            <PlannerTable items={pageData.items} onSelectItem={handleOpenEdit} sort={sort} onSort={handleSort} />
           </div>
 
           <div className="block lg:hidden">
-            <PlannerCards items={filteredItems} onSelectItem={handleOpenEdit} />
+            <div className="flex items-end gap-2 mb-3">
+              <div className="flex-1">
+                <label htmlFor="planner-mobile-sort" className="block text-sm font-semibold text-slate-700 mb-1">
+                  {t('table.sortLabel')}
+                </label>
+                <select
+                  id="planner-mobile-sort"
+                  value={sort?.key ?? 'default'}
+                  onChange={(event) => {
+                    const key = event.target.value;
+                    setSort(key === 'default' ? null : { key: key as PlannerSortKey, direction: 'asc' });
+                    setRequestedPage(1);
+                  }}
+                  className="w-full min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800 focus-visible:outline-2 focus-visible:outline-purple-600"
+                >
+                  <option value="default">{t('table.defaultOrder')}</option>
+                  <option value="title">{t('table.headerTitle')}</option>
+                  <option value="platform">{t('table.headerPlatform')}</option>
+                  <option value="pillar">{t('table.headerPillar')}</option>
+                  <option value="formatGoal">{t('table.headerFormatGoal')}</option>
+                  <option value="schedule">{t('table.headerSchedule')}</option>
+                  <option value="status">{t('table.headerStatus')}</option>
+                  <option value="progress">{t('table.headerProgress')}</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                disabled={!sort}
+                onClick={() => sort && handleSort(sort.key)}
+                aria-label={t('table.reverseSort')}
+                className="min-h-10 min-w-10 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer disabled:cursor-not-allowed"
+              >
+                <span aria-hidden="true">{sort?.direction === 'desc' ? '↓' : '↑'}</span>
+              </button>
+            </div>
+            <PlannerCards items={pageData.items} onSelectItem={handleOpenEdit} />
           </div>
+
+          {pageData.totalPages > 1 && (
+            <nav aria-label={t('planner.pagination')} className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+              <span aria-live="polite" className="text-sm text-slate-600">
+                {t('planner.pageOf', { page: pageData.page, totalPages: pageData.totalPages })}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={pageData.page === 1}
+                  onClick={() => handlePageChange(pageData.page - 1)}
+                  className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {t('planner.previousPage')}
+                </button>
+                <button
+                  type="button"
+                  disabled={pageData.page === pageData.totalPages}
+                  onClick={() => handlePageChange(pageData.page + 1)}
+                  className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {t('planner.nextPage')}
+                </button>
+              </div>
+            </nav>
+          )}
         </div>
       )}
 

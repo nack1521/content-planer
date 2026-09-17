@@ -7,15 +7,39 @@ import { PlatformBadge } from './PlatformBadge';
 import { PillarBadge } from './PillarBadge';
 import { ProgressBar } from './ProgressBar';
 import { IconClock, IconCopy, IconCheck, IconMoreHorizontal } from '@/components/common/Icons';
+import type { PlannerSort, PlannerSortKey } from '@/utils/plannerList';
 
 interface PlannerTableProps {
   items: ContentItem[];
   onSelectItem?: (item: ContentItem) => void;
+  sort: PlannerSort | null;
+  onSort: (key: PlannerSortKey) => void;
 }
 
-export function PlannerTable({ items, onSelectItem }: PlannerTableProps) {
+export function PlannerTable({ items, onSelectItem, sort, onSort }: PlannerTableProps) {
   const { t, locale } = useLocale();
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const sortButton = (key: PlannerSortKey, label: string) => {
+    const active = sort?.key === key;
+    const nextDirection = active && sort.direction === 'asc' ? 'desc' : 'asc';
+    return (
+      <button
+        type="button"
+        onClick={() => onSort(key)}
+        aria-label={t('table.sortBy', { column: label, direction: nextDirection === 'asc' ? t('table.sortAscending') : t('table.sortDescending') })}
+        className="inline-flex min-h-9 items-center gap-1.5 text-left hover:text-purple-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 cursor-pointer"
+      >
+        <span>{label}</span>
+        <span aria-hidden="true" className={active ? 'text-purple-700' : 'text-slate-400'}>
+          {active ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'}
+        </span>
+      </button>
+    );
+  };
+
+  const ariaSort = (key: PlannerSortKey): 'ascending' | 'descending' | undefined =>
+    sort?.key === key ? (sort.direction === 'asc' ? 'ascending' : 'descending') : undefined;
 
   const handleCopyHook = (e: React.MouseEvent, item: ContentItem) => {
     e.stopPropagation();
@@ -31,26 +55,26 @@ export function PlannerTable({ items, onSelectItem }: PlannerTableProps) {
         <table className="w-full text-left border-collapse min-w-[980px]">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/75 text-xs font-bold uppercase tracking-wider text-slate-600">
-              <th scope="col" className="py-3 px-4 w-[34%]">
-                {t('table.headerTitle')}
+              <th scope="col" aria-sort={ariaSort('title')} className="py-3 px-4 w-[34%]">
+                {sortButton('title', t('table.headerTitle'))}
               </th>
-              <th scope="col" className="py-3 px-3 w-[11%]">
-                {t('table.headerPlatform')}
+              <th scope="col" aria-sort={ariaSort('platform')} className="py-3 px-3 w-[11%]">
+                {sortButton('platform', t('table.headerPlatform'))}
               </th>
-              <th scope="col" className="py-3 px-3 w-[12%]">
-                {t('table.headerPillar')}
+              <th scope="col" aria-sort={ariaSort('pillar')} className="py-3 px-3 w-[12%]">
+                {sortButton('pillar', t('table.headerPillar'))}
               </th>
-              <th scope="col" className="py-3 px-3 w-[14%]">
-                {t('table.headerFormatGoal')}
+              <th scope="col" aria-sort={ariaSort('formatGoal')} className="py-3 px-3 w-[14%]">
+                {sortButton('formatGoal', t('table.headerFormatGoal'))}
               </th>
-              <th scope="col" className="py-3 px-3 w-[13%]">
-                {t('table.headerSchedule')}
+              <th scope="col" aria-sort={ariaSort('schedule')} className="py-3 px-3 w-[13%]">
+                {sortButton('schedule', t('table.headerSchedule'))}
               </th>
-              <th scope="col" className="py-3 px-3 w-[10%]">
-                {t('table.headerStatus')}
+              <th scope="col" aria-sort={ariaSort('status')} className="py-3 px-3 w-[10%]">
+                {sortButton('status', t('table.headerStatus'))}
               </th>
-              <th scope="col" className="py-3 px-3 w-[12%]">
-                {t('table.headerProgress')}
+              <th scope="col" aria-sort={ariaSort('progress')} className="py-3 px-3 w-[12%]">
+                {sortButton('progress', t('table.headerProgress'))}
               </th>
               <th scope="col" className="py-3 px-3 text-right w-[4%]">
                 <span className="sr-only">{t('table.headerActions')}</span>

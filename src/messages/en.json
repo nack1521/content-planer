@@ -92,6 +92,12 @@
     "headerStatus": "Workflow Status",
     "headerProgress": "Progress",
     "headerActions": "Actions",
+    "sortBy": "Sort by {column}, {direction}",
+    "sortAscending": "ascending",
+    "sortDescending": "descending",
+    "sortLabel": "Sort by",
+    "defaultOrder": "Default order",
+    "reverseSort": "Reverse sort direction",
     "unscheduled": "Unscheduled",
     "openMenu": "Open options menu",
     "copyHook": "Copy hook",
@@ -207,6 +213,15 @@
     "loginSubtitle": "Access your personal content planning studio",
     "emailLabel": "Email Address",
     "emailPlaceholder": "owner@example.com",
+    "signInMethod": "Sign-in method",
+    "passwordMethod": "Password",
+    "emailLinkMethod": "Email link",
+    "passwordLabel": "Password",
+    "passwordRequired": "Enter your password.",
+    "signInWithPassword": "Sign in",
+    "signingIn": "Signing in...",
+    "invalidCredentials": "Email or password is incorrect.",
+    "passwordErrorGeneric": "Could not sign in right now. Please try again.",
     "sendMagicLink": "Send Magic Link",
     "sending": "Sending magic link...",
     "magicLinkSentTitle": "Check Your Inbox",
@@ -287,7 +302,12 @@
     },
     "errors": {
       "titleRequired": "Task title is required"
-    }
+    },
+    "pageRange": "Showing {start}–{end} of {total} tasks",
+    "pagination": "Task pages",
+    "pageOf": "Page {page} of {totalPages} · 25 per page",
+    "previousPage": "Previous",
+    "nextPage": "Next"
   },
   "recordModal": {
     "editTitle": "Edit Content Record",
@@ -387,6 +407,11 @@
     "createPost": "New Post",
     "loading": "Loading creator workspace...",
     "totalCount": "Showing {count} items",
+    "pageRange": "Showing {start}–{end} of {total} items",
+    "pagination": "Planner pages",
+    "pageOf": "Page {page} of {totalPages} · 25 per page",
+    "previousPage": "Previous",
+    "nextPage": "Next",
     "allPlatforms": "All Platforms"
   },
   "referenceAccounts": {

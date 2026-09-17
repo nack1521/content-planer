@@ -72,6 +72,10 @@ async function main() {
   console.log("\n=== 2. Running Production Domain & Validation Suites ===");
   runCommand(process.execPath, ["tests/workflow.test.mjs"]);
 
+  console.log("\n=== 2b. Running Planner & Tasks Sorting & Pagination Suite ===");
+  runCommand(process.execPath, ["--experimental-strip-types", "--test", "tests/planner-list.test.mjs"]);
+  runCommand(process.execPath, ["--experimental-strip-types", "--test", "tests/task-list.test.mjs"]);
+
   console.log("\n=== 3. Running Accessibility & Keyboard Navigation Suite ===");
   runCommand(process.execPath, ["tests/accessibility.test.mjs"]);
 
@@ -89,6 +93,9 @@ async function main() {
 
   console.log("\n=== 6. Running Authenticated Server Actions & Atomic Rollback Suite ===");
   runCommand(process.execPath, ["--loader", "./tests/test-loader.mjs", "tests/actions.test.mjs"]);
+
+  console.log("\n=== 6a. Running Existing-Owner Password Sign-In Suite ===");
+  runCommand(process.execPath, ["--loader", "./tests/test-loader.mjs", "tests/password-auth.test.mjs"]);
 
   console.log("\n=== 6b. Running Content Editor & Link Workspace Suite (Milestone 4) ===");
   runCommand(process.execPath, ["tests/editor-milestone4.test.mjs"]);
