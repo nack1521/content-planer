@@ -1,5 +1,75 @@
 # Content Planner Handoff — Milestone 7 (Controlled Hosted Supabase Import Preparation & Vercel Release)
 
+### Task Modal Searchable Combobox for Linked Content (2026-09-23)
+
+- **Status:** Complete; verified locally with unit, accessibility, localization, build, and integration tests. Stopped for review.
+- **Problem addressed:** The native `<select id="task-content-select">` in the task create/edit modal was difficult to use with ~158 content records.
+- **Behavior implemented:**
+  - Replaced the native select with an accessible, searchable combobox component (`TaskContentCombobox`).
+  - Search runs entirely client-side over already-loaded `contentItems` (0 database queries, 0 API routes, 0 new dependencies, 0 schema changes).
+  - Search ranking:
+    1. Exact source number match (e.g. `12` or `#12` matching `source_number: 12`).
+    2. Prefix source number match (e.g. `1` or `#1` matching `10`, `12`, etc.).
+    3. Exact title match.
+    4. Prefix title match.
+    5. Substring title match.
+    6. Keyword text match (hook, objective, caption, notes, production detail, hashtags, platforms, and localized status/format names in Thai and English).
+    - Predictable default order is preserved when query is empty.
+  - Result display & context:
+    - Each option shows `#source_number` when available, title, status badge, and planned date formatted in `Asia/Bangkok`.
+    - First option is "Standalone (No linked content)" (`tasks.fields.none`) for independent tasks.
+    - Selected content remains clear with input display and a dedicated summary metadata card showing source number, title, status, and planned date.
+    - Quick "Clear" (`IconX`) and "Toggle" (`IconChevronDown`) buttons allow one-click clearing to an independent task or dropdown toggle.
+  - Keyboard navigation & accessibility:
+    - Full ARIA combobox/listbox pattern (`role="combobox"`, `role="listbox"`, `role="option"`, `aria-expanded`, `aria-haspopup="listbox"`, `aria-controls="task-content-listbox"`, `aria-activedescendant`).
+    - Explicit `<label htmlFor="task-content-select">` association with `<input id="task-content-select">`.
+    - ArrowDown / ArrowUp navigation with auto-scrolling into view.
+    - Enter key selects active option and prevents modal form submission; Enter when closed submits form normally.
+    - Escape key closes combobox dropdown first without closing the entire modal.
+    - Click outside listener closes dropdown.
+    - Visible focus states on input (`focus:ring-2 focus:ring-purple-500`) and active option (`bg-purple-50 text-purple-900`).
+  - Localization:
+    - Added matching keys to `src/messages/en.json` and `src/messages/th.json` with 100% key parity (`tasks.combobox.placeholder`, `tasks.combobox.clear`, `tasks.combobox.noResults`, `tasks.combobox.toggle`).
+    - Zero hardcoded user-facing strings in reusable components.
+  - Mobile & desktop:
+    - Operates responsively within the existing modal on desktop and mobile viewports with `max-h-56 sm:max-h-60` scrollable listbox and touch-friendly targets.
+- **Files changed:**
+  - `src/utils/taskContentSearch.ts` [NEW]: Pure client-side filtering, ranking, and labeling utility.
+  - `src/components/tasks/TaskContentCombobox.tsx` [NEW]: Accessible searchable combobox component.
+  - `src/components/tasks/TasksView.tsx` [MODIFIED]: Replaced native select with `TaskContentCombobox`.
+  - `src/messages/en.json` [MODIFIED]: Added `tasks.combobox.*` dictionary keys.
+  - `src/messages/th.json` [MODIFIED]: Added `tasks.combobox.*` Thai dictionary keys.
+  - `tests/task-content-search.test.mjs` [NEW]: Focused unit tests for ranking, source numbers, Thai/English keywords, and selection/clear logic (9/9 passed).
+  - `tests/run-tests.mjs` [MODIFIED]: Integrated `tests/task-content-search.test.mjs` into test runner.
+  - `TASKS.md` & `HANDOFF.md` [MODIFIED]: Recorded implementation and verification results.
+- **Automated verification & quality checks:**
+  - `npm run lint`: clean (0 errors, 0 warnings).
+  - `npm run build`: clean Next.js 16 production compilation (17/17 SSG pages).
+  - Focused unit tests:
+    - `tests/task-content-search.test.mjs`: 9/9 passed.
+    - `tests/accessibility.test.mjs`: 7/7 passed (form control associations, button accessible names, focus trap).
+    - `tests/localization-scanner.test.mjs`: 5/5 passed (100% parity, no hardcoded loading/placeholders).
+    - `tests/release-quality-milestone6.test.mjs`: 9/9 passed (Thai typography, static call scanner, error codes).
+    - `tests/task-list.test.mjs`: 6/6 passed.
+    - `tests/planner-list.test.mjs`: 4/4 passed.
+  - Full test suite (`npm test`): 231/231 tests passed cleanly across local database pgTAP suite (85 tests) and application suites (146 tests).
+  - `git diff --check`: clean (0 whitespace errors).
+- **Preserved state:**
+  - Unrelated dirty changes in `ARCHITECTURE.md`, `PROJECT.md`, `HOSTED_IMPORT_FINISH_PLAN.md`, `scripts/prepare-hosted-import.mjs`, `PASSWORD_LOGIN_SETUP.md`, `chatgpt-conversation-history.md`, `scripts/set-owner-password.mjs`, and `vercel.json` were strictly preserved.
+  - Zero database migrations, zero hosted writes, zero password resets, zero deployments.
+
+### Singapore Runtime Region Release (2026-09-23)
+
+- **Status:** Complete; deployed to Preview and then Production after owner approval.
+- **Purpose:** Reduce Thailand-to-US latency by placing Vercel dynamic functions in Singapore (`sin1`), alongside the Singapore Supabase project.
+- **Change:** Added root `vercel.json` with `"regions": ["sin1"]`.
+- **Preview:** `https://content-planner-ou6bi3rlr-nack4.vercel.app`
+- **Deployment ID:** `dpl_9zYjKxDqkQgarSvHBgYDdvbriPqu`
+- **Production:** `https://content-planner-zeta-dusky.vercel.app` (direct deployment `https://content-planner-gw7728l6a-nack4.vercel.app`)
+- **Production deployment ID:** `dpl_4FE5DFsicY9X5dB9dmEeCmDK9MHq`
+- **Verification:** `npm run lint` and `npm run build` passed locally. Vercel marked both deployments Ready. `vercel inspect` confirmed dynamic functions, including index, calendar, ideas, planner, and tasks, deploy in `[sin1]` in Production. Production `/th/login` and `/en/login` returned HTTP 200; unauthenticated `/th/planner` remained protected.
+- **Known limitation:** The region change is live, but authenticated planner/task timing still needs a signed-in measurement to quantify the improvement.
+
 ### Production Release: Planner & Tasks Column Sorting, 25-Items-Per-Page, and Password Sign-In (2026-09-17)
 
 - **Status:** Successfully deployed to **Vercel Production** (`--prod`) and verified.

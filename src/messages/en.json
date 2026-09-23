@@ -307,7 +307,13 @@
     "pagination": "Task pages",
     "pageOf": "Page {page} of {totalPages} · 25 per page",
     "previousPage": "Previous",
-    "nextPage": "Next"
+    "nextPage": "Next",
+    "combobox": {
+      "placeholder": "Search by title, #number, or keyword...",
+      "clear": "Clear linked content",
+      "noResults": "No matching content found",
+      "toggle": "Toggle content list"
+    }
   },
   "recordModal": {
     "editTitle": "Edit Content Record",

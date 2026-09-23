@@ -337,6 +337,9 @@ The owner declined a backup on 2026-09-17 and explicitly approved the bounded ho
 - [ ] Reconcile CLI migration history for the import migration applied through Supabase Dashboard before any future `supabase db push`.
 - [x] Confirm that no secret values or private media URLs appear in client output or documentation.
 - [x] Record deployment results in `HANDOFF.md` without secrets.
+- [x] Configure Vercel functions for the Singapore region (`sin1`) to colocate runtime work with the Singapore-hosted Supabase project; deploy and verify a region-only Preview before Production promotion.
+- [x] Promote the Singapore runtime-region configuration to Vercel Production after owner approval and verify the production alias, dynamic-function region, and public/protected-route behavior.
+- [x] Replace the linked-content native select in the task create/edit modal (`id="task-content-select"`) with an accessible searchable combobox supporting client-side filtering across ~158 records, source-number exact/prefix ranking before title matches, Thai/English keyword search, keyboard navigation (ArrowUp/Down, Enter, Escape), clear/change controls, and full dictionary parity.
 
 Acceptance criteria:
 

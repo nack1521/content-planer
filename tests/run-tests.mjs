@@ -75,6 +75,7 @@ async function main() {
   console.log("\n=== 2b. Running Planner & Tasks Sorting & Pagination Suite ===");
   runCommand(process.execPath, ["--experimental-strip-types", "--test", "tests/planner-list.test.mjs"]);
   runCommand(process.execPath, ["--experimental-strip-types", "--test", "tests/task-list.test.mjs"]);
+  runCommand(process.execPath, ["--experimental-strip-types", "--test", "tests/task-content-search.test.mjs"]);
 
   console.log("\n=== 3. Running Accessibility & Keyboard Navigation Suite ===");
   runCommand(process.execPath, ["tests/accessibility.test.mjs"]);

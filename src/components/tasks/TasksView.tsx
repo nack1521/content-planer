@@ -35,6 +35,7 @@ import {
   IconSparkles,
 } from '@/components/common/Icons';
 import { getTaskPage, sortTasks, toggleTaskSort, resolveMobileTaskSort, type TaskSort, type TaskSortKey } from '@/utils/taskList';
+import { TaskContentCombobox } from './TaskContentCombobox';
 
 const ALL_STATUSES: TaskStatus[] = ['not_started', 'in_progress', 'done'];
 const ALL_PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
@@ -997,19 +998,13 @@ export function TasksView({
                 <label htmlFor="task-content-select" className="text-xs font-semibold text-slate-700">
                   {t('tasks.fields.linkedContent')}
                 </label>
-                <select
+                <TaskContentCombobox
                   id="task-content-select"
                   value={formContentId}
-                  onChange={(e) => setFormContentId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="">{t('tasks.fields.none')}</option>
-                  {contentItems.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.source_number ? `[#${item.source_number}] ` : ''}{item.title}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setFormContentId}
+                  contentItems={contentItems}
+                  disabled={isPending}
+                />
               </div>
 
               {/* Description */}
