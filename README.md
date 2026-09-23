@@ -1,127 +1,174 @@
 # Content Planner
 
-Content Planner is a private bilingual workspace for planning social content from the first idea through publication. It transforms spreadsheet workflows into a focused, responsive creator-studio control board.
+A private, bilingual content-planning workspace for organizing content from idea to publication. It replaces the project's spreadsheet and Notion workflow with one responsive web application while keeping every account's planner separate.
 
-## Stack
+**Live website:** [content-planner-zeta-dusky.vercel.app](https://content-planner-zeta-dusky.vercel.app)
 
-- **Framework**: Next.js (App Router)
-- **Language**: TypeScript (strict mode)
-- **Styling**: Tailwind CSS
-- **Database & Auth**: Supabase (PostgreSQL + SSR Auth + Private Storage)
-- **Deployment**: Vercel
-- **Localization**: Bilingual Thai (`th`) and English (`en`) with zero-reload switching
-- **Timezone**: Asia/Bangkok (`UTC+7`)
+## Product status
 
-## Features
+Sprint 1 is live on Vercel. The current release focuses on planning and tracking content through external links; it does not upload large media files or publish directly to social networks.
 
-### Milestone 1 — Application Foundation and Planner Slice
-- **AppShell**: Deep graphite desktop side navigation and mobile navigation with responsive layout.
-- **Production Overview**: KPIs for planned today, planned this month, in-production stages, and published records.
-- **Workflow Pipeline Breakdown**: Stage indicators for the 8 fixed workflow statuses (`idea`, `researching`, `scripting`, `recording`, `editing`, `reviewing`, `scheduled`, `published`).
-- **Controlled Filters & Search**: Search across titles, hooks, captions, and hashtags, plus filters for platform, status, content pillar, format, and goal.
-- **Dual Presentation**:
-  - Desktop: Compact, scannable table at 1440px wide.
-  - Mobile: Touch-friendly cards designed to fit 390px widths with no horizontal scroll.
-- **Bilingual Message Dictionaries**: 100% key parity across `messages/th.json` and `messages/en.json`.
-- **Bangkok Timezone Handling**: Localized date and time formatting in `Asia/Bangkok`.
-- **Loading & Empty States**: Built-in skeletons and empty filter state with reset actions.
+The interface is designed as a practical creator workspace:
 
-### Milestone 2 — Supabase Schema and Private Authentication
-- **Private Multi-Owner Authentication**: Passwordless magic link email authentication restricted strictly to the configured server-side `ALLOWED_EMAILS` (with legacy `ALLOWED_EMAIL` fallback).
-- **User Enumeration Defense**: Any unauthorized email entering the login flow receives an identical neutral success confirmation without contacting Supabase or exposing registration state.
-- **Strict Row Level Security (RLS)**:
-  - Enabled on all tables: `user_preferences`, `content_pillars`, `content_items`, `content_media`.
-  - All policies scoped to `auth.uid() = user_id`.
-  - `content_media` validates foreign relation ownership against `content_items`.
-- **Private Storage Bucket**:
-  - `content-media` bucket configured with `public = false`.
-  - Storage objects partitioned by owner folder: `auth.uid()::text = (storage.foldername(name))[1]`.
-- **Automated Profile Provisioning**: `on_auth_user_created` trigger automatically provisions `user_preferences` with `th` locale and `Asia/Bangkok` timezone on initial sign-in.
-- **SSR Session Middleware**: Protects application routes (`/th/planner`, `/en/planner`, `/th/calendar`, `/th/ideas`, `/th/settings`) by redirecting unauthenticated visitors to `/{locale}/login`.
+- dark navigation with a light working surface and purple accent;
+- compact, sortable desktop tables;
+- readable mobile cards and touch-friendly controls;
+- complete Thai and English interfaces;
+- dates and schedules displayed in the `Asia/Bangkok` timezone.
 
-## Getting Started
+## Current features
 
-### Prerequisites
+### Planner
 
-- Node.js 18+ (tested on Node.js v26)
-- npm
-- Supabase project
+- Create, edit, duplicate, archive, restore, and permanently delete content records.
+- Track objective, platforms, content pillar, format, goal, production status, progress, and publishing date.
+- Store hook, production detail, caption, call to action, hashtags, and notes.
+- Search and filter the content library.
+- Sort by clicking any of the seven desktop table headings.
+- Browse 25 records per page with pagination.
+- Use an equivalent mobile card view with mobile sorting controls.
 
-### Installation
+### Links and writing workspace
+
+- Save external idea sources, asset links, notes, and published-post links.
+- Validate URLs before saving without scraping or embedding third-party content.
+- Preview and copy reusable writing fields.
+- Receive protection against accidentally leaving an editor with unsaved changes.
+
+### Production tasks
+
+- Create standalone tasks or connect tasks to a content record.
+- Edit status, priority, type, due date, description, and completion state.
+- Search and filter the task list.
+- Sort by clicking any of the six desktop table headings.
+- Browse 25 tasks per page, with equivalent mobile sorting and pagination.
+
+### Calendar, ideas, and settings
+
+- Review scheduled content in a monthly calendar.
+- Capture ideas quickly and maintain reference accounts.
+- Switch between Thai and English without losing the current view.
+- Manage default platforms, content pillars, and timezone display preferences.
+
+### Authentication and privacy
+
+- Existing approved accounts can sign in with email and password.
+- Magic-link login remains available as a fallback.
+- Public sign-up is disabled; access is restricted by the server-side email allowlist.
+- Supabase Row Level Security isolates every account's planner, tasks, links, ideas, and settings.
+
+## Scope boundaries
+
+The current Sprint 1 release intentionally does **not** include:
+
+- direct image or video uploads;
+- automatic posting to social networks;
+- subscription billing;
+- shared team workspaces;
+- public account registration;
+- AI content generation;
+- ongoing synchronization with Excel or Notion.
+
+Private media storage, subscription access, and other larger capabilities belong to later sprints. The repository includes controlled one-time import tooling for the original Excel and Notion-export data, but the private source files and credentials are not committed.
+
+## Technology
+
+- [Next.js 16](https://nextjs.org/) App Router
+- React 19 and strict TypeScript
+- Tailwind CSS 4
+- Supabase Postgres, Authentication, and Row Level Security
+- Vercel hosting
+- npm with a committed lockfile
+
+## Application routes
+
+| Route | Purpose |
+| --- | --- |
+| `/{locale}/login` | Password and magic-link sign-in |
+| `/{locale}/planner` | Main content workspace |
+| `/{locale}/tasks` | Production task manager |
+| `/{locale}/calendar` | Monthly publishing calendar |
+| `/{locale}/ideas` | Idea bank and reference accounts |
+| `/{locale}/settings` | Language, platforms, pillars, and account settings |
+| `/{locale}/auth/callback` | Supabase authentication callback |
+| `/{locale}/auth/signout` | Secure sign-out endpoint |
+
+Supported locale prefixes are `th` and `en`.
+
+## Local development
+
+### 1. Install dependencies
+
+Use a current Node.js release compatible with Next.js 16, then install the locked dependencies:
 
 ```bash
 npm install
 ```
 
-### Environment Configuration
+### 2. Configure the environment
 
-Copy `.env.example` to `.env.local` and populate the values:
+Copy `.env.example` to `.env.local` and set:
 
-```bash
-cp .env.example .env.local
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+ALLOWED_EMAILS=owner@example.com,second-owner@example.com
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-Required environment variables:
-- `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL (`https://<project-ref>.supabase.co`).
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Your Supabase publishable/anon key.
-- `ALLOWED_EMAILS`: Comma-separated list of authorized owner email addresses (e.g. `owner1@example.com,owner2@example.com`).
-- `ALLOWED_EMAIL`: Legacy single-owner fallback (used only when `ALLOWED_EMAILS` is unset).
+`ALLOWED_EMAILS` is comma-separated. `ALLOWED_EMAIL` remains supported only as a legacy single-account fallback. Never expose or commit a Supabase service-role key, database password, access token, or `.env.local` file.
 
-> **Security Note**: Never commit `.env.local` or disclose publishable keys or private owner emails. No service-role key is required or permitted in application code.
+### 3. Prepare Supabase
 
-### Owner Account Provisioning & Disabling Public Sign-ups
+The versioned schema is in [`supabase/migrations`](supabase/migrations). Apply the migrations in filename order to a new Supabase project, create the approved users, and keep public sign-up disabled.
 
-1. **Initial Owner Sign-in**:
-   - Ensure `ALLOWED_EMAILS` in `.env.local` is set to the comma-separated list of owner email addresses.
-   - Start the development server (`npm run dev`) and navigate to `http://localhost:3000/th/login`.
-   - Submit the owner email to receive a passwordless magic link.
-   - Clicking the magic link triggers `/auth/callback`, establishing the authenticated session and triggering the `on_auth_user_created` profile provisioner.
-2. **Disabling Public Sign-ups**:
-   - Application-level defense: Non-matching email addresses are rejected at the server boundary (`sendMagicLinkAction` and `/auth/callback`) without triggering Supabase OTP emails or creating accounts.
-   - Supabase project settings: In the Supabase Dashboard under **Authentication -> Configuration -> User Signups**, toggle off **"Allow new users to sign up"** once the owner account is verified.
+For the existing hosted project, migration `20260914000003_add_controlled_batch_import.sql` was applied through the Supabase SQL Editor. Reconcile the hosted migration history before using an automated `supabase db push`; do not blindly reapply production migrations.
 
-### Running Migrations
+Configure Supabase Authentication URLs for both local development and the deployed Vercel domain so sign-in callbacks return to the correct website.
 
-Database migrations are located in `supabase/migrations/`:
-- `20260914000000_create_mvp_schema.sql`: MVP tables, constraints, updated_at triggers, indexes, and RLS policies.
-- `20260914000001_create_storage_and_user_trigger.sql`: Private storage bucket, storage policies, and auto-provisioning trigger.
-
-Apply them via the Supabase CLI:
-```bash
-npx supabase db push
-```
-Or execute the SQL scripts in the Supabase Dashboard SQL Editor.
-
-### Running Locally
+### 4. Start the app
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser. Unauthenticated requests will redirect to `/{locale}/login`.
+Open [http://localhost:3000](http://localhost:3000).
 
-### Verification & Quality Checks
-
-Run before committing or handoff:
+## Quality checks
 
 ```bash
-git diff --check
 npm run lint
-npm test
 npm run build
+npm test
 ```
 
-## Route Map
+The full test suite requires Docker and the Supabase CLI. It resets an isolated local Supabase stack and is guarded against running destructive database tests against the hosted project.
 
-- `/`: Redirects to saved locale destination (`/{locale}/planner`)
-- `/{locale}/login`: Responsive bilingual passwordless email login
-- `/{locale}/auth/callback`: Server route exchanging auth code for session
-- `/{locale}/auth/signout`: Sign-out handler clearing session cookies
-- `/{locale}/planner`: Core planner surface (protected)
-- `/{locale}/calendar`: Scheduled calendar view (protected, Milestone 5)
-- `/{locale}/ideas`: Idea bank quick capture (protected, Milestone 5)
-- `/{locale}/settings`: Workspace and language preferences (protected, Milestone 6)
+## Deployment
 
-## License
+The production application is hosted by Vercel and uses the hosted Supabase project for authentication and data. Configure the same public Supabase values and allowlisted emails in the Vercel project's environment settings, set `NEXT_PUBLIC_SITE_URL` to the production domain, then create a Vercel deployment.
 
-Private personal use.
+Pushing to GitHub updates the source repository. A Vercel deployment happens automatically only when Git integration is enabled for the Vercel project; otherwise deploy through the configured Vercel project separately.
+
+## Project documentation
+
+- [`PROJECT.md`](PROJECT.md) — product scope and decisions
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — application and data architecture
+- [`TASKS.md`](TASKS.md) — milestone history and remaining work
+- [`HANDOFF.md`](HANDOFF.md) — latest implementation and deployment notes
+- [`DATA_IMPORT_PLAN.md`](DATA_IMPORT_PLAN.md) — controlled legacy-data import process
+- [`AGENTS.md`](AGENTS.md) — repository rules for coding agents
+
+## Security notes
+
+- Browser code receives only the Supabase URL and publishable key.
+- Every exposed user-owned table uses Row Level Security with owner-scoped policies.
+- Authentication protects all application pages except the login and callback flow.
+- Private credentials and original import files remain outside version control.
+- External links are stored as references; the application does not fetch or execute their contents.
+
+## Repository
+
+[github.com/nack1521/content-planer](https://github.com/nack1521/content-planer)
+
+This project is currently maintained for private personal use.
