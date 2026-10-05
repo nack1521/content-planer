@@ -17,6 +17,18 @@ export interface CalendarGridDay {
   month: number; // 1-12
 }
 
+/** Keep month-grid event previews compact and return the hidden-item count. */
+export function getCalendarPreviewItems<T>(items: readonly T[], limit = 2): {
+  items: T[];
+  remainingCount: number;
+} {
+  const safeLimit = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 2;
+  return {
+    items: items.slice(0, safeLimit),
+    remainingCount: Math.max(0, items.length - safeLimit),
+  };
+}
+
 /**
  * Returns the current year and 1-based month in Asia/Bangkok.
  */

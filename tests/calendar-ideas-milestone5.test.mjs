@@ -15,6 +15,7 @@ import {
   getDaysInMonth,
   getFirstDayOfWeek,
   getMonthGrid,
+  getCalendarPreviewItems,
   filterAndGroupCalendarContent,
 } from "../src/utils/calendar.ts";
 import { isUnscheduledIdea, filterUnscheduledIdeas } from "../src/utils/ideas.ts";
@@ -33,9 +34,44 @@ const projectRoot = path.resolve(__dirname, "..");
 
 const enMessages = JSON.parse(fs.readFileSync(path.join(projectRoot, "src/messages/en.json"), "utf8"));
 const thMessages = JSON.parse(fs.readFileSync(path.join(projectRoot, "src/messages/th.json"), "utf8"));
+const tasksViewSource = fs.readFileSync(path.join(projectRoot, "src/components/tasks/TasksView.tsx"), "utf8");
+const calendarViewSource = fs.readFileSync(path.join(projectRoot, "src/components/calendar/CalendarView.tsx"), "utf8");
+
+test("Tasks and mobile calendar expose the planned high-visibility interactions", () => {
+  assert.match(tasksViewSource, /onClick=\{\(\) => handleOpenEdit\(task\)\}[\s\S]{0,300}block w-full min-h-\[44px\]/);
+  assert.match(tasksViewSource, /task\.description/);
+  assert.ok((tasksViewSource.match(/line-clamp-2/g) || []).length >= 2, "desktop and mobile task descriptions should be limited to two lines");
+  assert.match(calendarViewSource, /role="grid"/);
+  assert.match(calendarViewSource, /aria-pressed=\{selectedDate === cell\.dateString\}/);
+  assert.match(calendarViewSource, /calendar\.selectedDay/);
+  assert.match(calendarViewSource, /getCalendarPreviewItems/);
+  assert.deepEqual(enMessages.calendar, Object.fromEntries(Object.keys(thMessages.calendar).map((key) => [key, enMessages.calendar[key]])));
+  for (const key of ["selectedDay", "noItemsOnDay", "selectDate"]) {
+    assert.equal(typeof enMessages.calendar[key], "string", `English calendar.${key} translation exists`);
+    assert.equal(typeof thMessages.calendar[key], "string", `Thai calendar.${key} translation exists`);
+  }
+});
 
 // ==============================================================================
-// 1. Bangkok Calendar Math & Leap-Year Boundaries
+// 1. Mobile calendar preview behavior
+// ==============================================================================
+test("Calendar Preview: month cells show at most two event titles and count the remainder", () => {
+  assert.deepEqual(getCalendarPreviewItems(["A", "B", "C"], 2), {
+    items: ["A", "B"],
+    remainingCount: 1,
+  });
+  assert.deepEqual(getCalendarPreviewItems(["A"], 2), {
+    items: ["A"],
+    remainingCount: 0,
+  });
+  assert.deepEqual(getCalendarPreviewItems([], 2), {
+    items: [],
+    remainingCount: 0,
+  });
+});
+
+// ==============================================================================
+// 2. Bangkok Calendar Math & Leap-Year Boundaries
 // ==============================================================================
 test("Calendar Math: Leap-year calculation adheres to Gregorian rules", () => {
   assert.equal(isLeapYear(2024), true, "2024 is a leap year (divisible by 4, not 100)");

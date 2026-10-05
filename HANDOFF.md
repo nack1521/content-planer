@@ -1,5 +1,16 @@
 # Content Planner Handoff — Milestone 7 (Controlled Hosted Supabase Import Preparation & Vercel Release)
 
+### Task list and mobile calendar UX (2026-10-05)
+
+- **Status:** Implemented, committed locally, and deployed to Production; `main` is one commit ahead of `origin/main` (not pushed).
+- **Tasks:** The title cell now provides a full-width, touch-friendly edit target in the desktop table and mobile cards. Optional descriptions appear in a wide desktop column and in mobile cards, each clamped to two lines. Completion and linked-content actions remain separate.
+- **Mobile Calendar:** Replaced the agenda-only mobile presentation with a month grid inspired by iPhone Calendar, selectable Bangkok-local dates, up to two compact event-title previews per date with an overflow count, and a selected-day agenda. Existing desktop calendar and content-edit actions remain.
+- **Localization:** Added Thai and English selected-day, empty-day, and date-selection strings.
+- **Files:** `src/components/tasks/TasksView.tsx`, `src/components/calendar/CalendarView.tsx`, `src/utils/calendar.ts`, `src/messages/en.json`, `src/messages/th.json`, and `tests/calendar-ideas-milestone5.test.mjs`.
+- **Checks:** Focused task/calendar UX tests 2/2 passed; `npx tsc --noEmit`, `npm run lint`, `npm run build`, and `git diff --check` passed. Full `npm test` was not run: the runner includes password-auth tests, and the known development Server Action tracing concern has not been addressed. No authenticated browser smoke test was performed.
+- **Production deployment:** Ready at `https://content-planner-zeta-dusky.vercel.app` (deployment `dpl_7EL6Ve31THrVWdJVUNRihbDWMvr1`); dynamic functions verified in `sin1`. `/th/login` and `/en/login` returned HTTP 200; `/th/tasks` and `/th/calendar` returned HTTP 307 to `/th/login`.
+- **External state:** No database writes or migrations, password changes, or Git push were performed. Unrelated existing worktree changes were preserved.
+
 ### Task Modal Searchable Combobox for Linked Content (2026-09-23)
 
 - **Status:** Complete; verified locally with unit, accessibility, localization, build, and integration tests. Stopped for review.

@@ -588,14 +588,17 @@ export function TasksView({
           {/* Desktop Table */}
           <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="min-w-[1160px] w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
                     <th scope="col" className="py-3 px-4 w-10">
                       <span className="sr-only">{t('tasks.fields.status')}</span>
                     </th>
-                    <th scope="col" aria-sort={ariaSort('title')} className="py-3 px-4">
+                    <th scope="col" aria-sort={ariaSort('title')} className="py-3 px-4 min-w-[190px]">
                       {sortButton('title', t('tasks.fields.title'))}
+                    </th>
+                    <th scope="col" className="py-3 px-4 w-[32%] min-w-[280px]">
+                      {t('tasks.fields.description')}
                     </th>
                     <th scope="col" aria-sort={ariaSort('status')} className="py-3 px-4">
                       {sortButton('status', t('tasks.fields.status'))}
@@ -638,16 +641,26 @@ export function TasksView({
                             {isDone && <IconCheck className="w-3.5 h-3.5" size={14} />}
                           </button>
                         </td>
-                        <td className="py-3 px-4 font-medium text-slate-900">
+                        <td className="p-0 align-middle min-w-[190px]">
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(task)}
-                            className="text-left font-medium text-slate-900 hover:text-purple-600 transition-colors cursor-pointer"
+                            aria-label={`${t('tasks.editTask')}: ${task.title}`}
+                            className="block w-full min-h-[44px] h-full px-4 py-3 text-left font-medium text-slate-900 hover:text-purple-600 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-purple-600 transition-colors cursor-pointer"
                           >
                             <span className={isDone ? 'line-through text-slate-500' : ''}>
                               {task.title}
                             </span>
                           </button>
+                        </td>
+                        <td className="py-3 px-4 w-[32%] min-w-[280px] align-top">
+                          {task.description ? (
+                            <p className="line-clamp-2 break-words text-xs leading-5 text-slate-600">
+                              {task.description}
+                            </p>
+                          ) : (
+                            <span className="text-slate-300">—</span>
+                          )}
                         </td>
                         <td className="py-3 px-4">
                           <span
@@ -773,7 +786,8 @@ export function TasksView({
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(task)}
-                          className="text-left font-semibold text-sm text-slate-900 hover:text-purple-600 transition-colors cursor-pointer"
+                          aria-label={`${t('tasks.editTask')}: ${task.title}`}
+                          className="block w-full min-h-[44px] px-2 py-2 text-left font-semibold text-sm text-slate-900 hover:text-purple-600 focus-visible:outline-2 focus-visible:outline-purple-600 transition-colors cursor-pointer"
                         >
                           <span className={isDone ? 'line-through text-slate-500' : ''}>
                             {task.title}
@@ -781,6 +795,12 @@ export function TasksView({
                         </button>
                       </div>
                     </div>
+
+                    {task.description && (
+                      <p className="ml-8 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600 line-clamp-2 break-words">
+                        {task.description}
+                      </p>
+                    )}
 
                     <div className="flex flex-wrap items-center gap-1.5 pl-8 text-xs">
                       <span

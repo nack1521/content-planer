@@ -340,6 +340,9 @@ The owner declined a backup on 2026-09-17 and explicitly approved the bounded ho
 - [x] Configure Vercel functions for the Singapore region (`sin1`) to colocate runtime work with the Singapore-hosted Supabase project; deploy and verify a region-only Preview before Production promotion.
 - [x] Promote the Singapore runtime-region configuration to Vercel Production after owner approval and verify the production alias, dynamic-function region, and public/protected-route behavior.
 - [x] Replace the linked-content native select in the task create/edit modal (`id="task-content-select"`) with an accessible searchable combobox supporting client-side filtering across ~158 records, source-number exact/prefix ranking before title matches, Thai/English keyword search, keyboard navigation (ArrowUp/Down, Enter, Escape), clear/change controls, and full dictionary parity.
+- [x] Make the task title cell a full-width, touch-friendly edit target on desktop and mobile while keeping completion and linked-content controls separate; show task descriptions in a wide desktop column and mobile cards, clamped to two lines.
+- [x] Replace the mobile agenda-only Calendar layout with an iOS-inspired month grid, selectable Bangkok-local dates, compact event previews, and a selected-day agenda; preserve the existing desktop grid and content actions.
+- [x] Verify focused task/calendar UX tests (2/2), `npx tsc --noEmit`, `npm run lint`, `npm run build`, and `git diff --check`. Full `npm test` was not run because its runner includes password-auth tests while the known local development tracing concern remains unresolved.
 
 Acceptance criteria:
 
