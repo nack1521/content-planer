@@ -36,6 +36,47 @@ const enMessages = JSON.parse(fs.readFileSync(path.join(projectRoot, "src/messag
 const thMessages = JSON.parse(fs.readFileSync(path.join(projectRoot, "src/messages/th.json"), "utf8"));
 const tasksViewSource = fs.readFileSync(path.join(projectRoot, "src/components/tasks/TasksView.tsx"), "utf8");
 const calendarViewSource = fs.readFileSync(path.join(projectRoot, "src/components/calendar/CalendarView.tsx"), "utf8");
+const recordModalSource = fs.readFileSync(path.join(projectRoot, "src/components/planner/RecordModal.tsx"), "utf8");
+
+test("Task description is last and the desktop table avoids horizontal scrolling", () => {
+  const desktopTaskTable = tasksViewSource.slice(
+    tasksViewSource.indexOf("{/* Desktop Table */}"),
+    tasksViewSource.indexOf("{/* Mobile Cards */}")
+  );
+  const tableStart = desktopTaskTable.indexOf("<table");
+  const tableEnd = desktopTaskTable.indexOf("</table>");
+  const tableMarkup = tableStart >= 0 && tableEnd >= 0
+    ? desktopTaskTable.slice(tableStart, tableEnd + "</table>".length)
+    : "";
+
+  assert.ok(tableMarkup, "desktop task table markup exists");
+  assert.ok(
+    tableMarkup.indexOf("t('tasks.fields.description')") > tableMarkup.indexOf("t('tasks.fields.linkedContent')"),
+    "description header follows linked content as the final column"
+  );
+  assert.ok(tableMarkup.includes("table-fixed"));
+  assert.ok(!desktopTaskTable.includes("overflow-x-auto"));
+  assert.ok(!desktopTaskTable.includes("min-w-[1160px]"));
+  assert.ok(desktopTaskTable.includes("hidden xl:block"));
+  assert.ok(tasksViewSource.includes("block xl:hidden"));
+});
+
+test("Content schedule date can be reset to an unset value", () => {
+  const scheduleSection = recordModalSource.slice(
+    recordModalSource.indexOf("{/* Publication Schedule in Asia/Bangkok */}"),
+    recordModalSource.indexOf("{/* Hook & Objective */}")
+  );
+
+  assert.ok(scheduleSection.includes("t('recordModal.clearDate')"), "schedule form exposes a localized clear-date control");
+  assert.match(
+    scheduleSection,
+    /onClick=\{\(\) => \{\s*setPublishDate\(''\);\s*setPublishTimeKnown\(false\);\s*\}\}/,
+    "clear-date control resets both date and time-known state"
+  );
+  assert.ok(scheduleSection.includes("{publishDate && ("), "time settings are only available when a date is set");
+  assert.match(recordModalSource, /let finalPublishAt: string \| null = null;[\s\S]*if \(publishDate\.trim\(\)\)/);
+  assert.match(recordModalSource, /publish_at: finalPublishAt/);
+});
 
 test("Tasks and mobile calendar expose the planned high-visibility interactions", () => {
   assert.match(tasksViewSource, /onClick=\{\(\) => handleOpenEdit\(task\)\}[\s\S]{0,300}block w-full min-h-\[44px\]/);

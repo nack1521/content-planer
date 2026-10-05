@@ -364,6 +364,7 @@
     "timeKnown": "Set specific publication time",
     "dateOnly": "Date only",
     "publishDate": "Publish Date",
+    "clearDate": "Clear date",
     "publishTime": "Time (Asia/Bangkok)",
     "unassigned": "Unassigned / None",
     "close": "Close dialog",

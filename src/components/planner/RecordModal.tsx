@@ -708,49 +708,72 @@ function RecordModalForm({
               <span className="text-xs font-semibold text-slate-800">
                 {t('recordModal.schedule')}
               </span>
-              <label htmlFor="modal-publish-time-known-checkbox" className="inline-flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                <input
-                  id="modal-publish-time-known-checkbox"
-                  type="checkbox"
-                  checked={publishTimeKnown}
-                  onChange={(e) => setPublishTimeKnown(e.target.checked)}
-                  className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
-                />
-                <span>{t('recordModal.timeKnown')}</span>
-              </label>
+              {publishDate && (
+                <label htmlFor="modal-publish-time-known-checkbox" className="inline-flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                  <input
+                    id="modal-publish-time-known-checkbox"
+                    type="checkbox"
+                    checked={publishTimeKnown}
+                    onChange={(e) => setPublishTimeKnown(e.target.checked)}
+                    className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                  />
+                  <span>{t('recordModal.timeKnown')}</span>
+                </label>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="space-y-1">
-                <label htmlFor="modal-publish-date-input" className="text-[11px] text-slate-500 block">
-                  {t('recordModal.publishDate')}
-                </label>
+                <div className="flex min-h-[44px] items-center justify-between gap-2">
+                  <label htmlFor="modal-publish-date-input" className="text-[11px] text-slate-500 block">
+                    {t('recordModal.publishDate')}
+                  </label>
+                  {publishDate && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPublishDate('');
+                        setPublishTimeKnown(false);
+                      }}
+                      className="inline-flex min-h-[44px] items-center rounded-lg px-2 text-xs font-semibold text-purple-700 hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      {t('recordModal.clearDate')}
+                    </button>
+                  )}
+                </div>
                 <input
                   id="modal-publish-date-input"
                   type="date"
                   value={publishDate}
-                  onChange={(e) => setPublishDate(e.target.value)}
+                  onChange={(e) => {
+                    setPublishDate(e.target.value);
+                    if (!e.target.value) setPublishTimeKnown(false);
+                  }}
                   className="w-full px-3 py-1.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
-              {publishTimeKnown ? (
-                <div className="space-y-1">
-                  <label htmlFor="modal-publish-time-input" className="text-[11px] text-slate-500 block">
-                    {t('recordModal.publishTime')}
-                  </label>
-                  <input
-                    id="modal-publish-time-input"
-                    type="time"
-                    value={publishTime}
-                    onChange={(e) => { setPublishTime(e.target.value); setPublishTimeKnown(true); }}
-                    className="w-full px-3 py-1.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                </div>
+              {publishDate ? (
+                publishTimeKnown ? (
+                  <div className="space-y-1">
+                    <label htmlFor="modal-publish-time-input" className="text-[11px] text-slate-500 block">
+                      {t('recordModal.publishTime')}
+                    </label>
+                    <input
+                      id="modal-publish-time-input"
+                      type="time"
+                      value={publishTime}
+                      onChange={(e) => { setPublishTime(e.target.value); setPublishTimeKnown(true); }}
+                      className="w-full px-3 py-1.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-end pb-1.5 text-xs text-slate-500 italic">
+                    <span>{t('recordModal.dateOnly')}</span>
+                  </div>
+                )
               ) : (
-                <div className="flex items-end pb-1.5 text-xs text-slate-500 italic">
-                  <span>{t('recordModal.dateOnly')}</span>
-                </div>
+                <div aria-hidden="true" />
               )}
             </div>
           </div>

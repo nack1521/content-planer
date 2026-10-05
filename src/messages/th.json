@@ -364,6 +364,7 @@
     "timeKnown": "ระบุเวลาเผยแพร่ที่แน่นอน",
     "dateOnly": "ระบุเฉพาะวัน",
     "publishDate": "วันที่เผยแพร่",
+    "clearDate": "ล้างวันที่",
     "publishTime": "เวลา (Asia/Bangkok)",
     "unassigned": "ไม่ระบุ",
     "close": "ปิดหน้าต่าง",

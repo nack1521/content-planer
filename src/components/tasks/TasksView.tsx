@@ -586,34 +586,44 @@ export function TasksView({
           </div>
 
           {/* Desktop Table */}
-          <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-[1160px] w-full text-left border-collapse text-xs">
+          <div className="hidden xl:block bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="w-full">
+              <table className="w-full table-fixed text-left border-collapse text-xs">
+                <colgroup>
+                  <col className="w-[4%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[9%]" />
+                  <col className="w-[9%]" />
+                  <col className="w-[9%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[17%]" />
+                  <col className="w-[23%]" />
+                </colgroup>
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
-                    <th scope="col" className="py-3 px-4 w-10">
+                    <th scope="col" className="py-3 px-1">
                       <span className="sr-only">{t('tasks.fields.status')}</span>
                     </th>
-                    <th scope="col" aria-sort={ariaSort('title')} className="py-3 px-4 min-w-[190px]">
+                    <th scope="col" aria-sort={ariaSort('title')} className="py-3 px-2">
                       {sortButton('title', t('tasks.fields.title'))}
                     </th>
-                    <th scope="col" className="py-3 px-4 w-[32%] min-w-[280px]">
-                      {t('tasks.fields.description')}
-                    </th>
-                    <th scope="col" aria-sort={ariaSort('status')} className="py-3 px-4">
+                    <th scope="col" aria-sort={ariaSort('status')} className="py-3 px-2">
                       {sortButton('status', t('tasks.fields.status'))}
                     </th>
-                    <th scope="col" aria-sort={ariaSort('priority')} className="py-3 px-4">
+                    <th scope="col" aria-sort={ariaSort('priority')} className="py-3 px-2">
                       {sortButton('priority', t('tasks.fields.priority'))}
                     </th>
-                    <th scope="col" aria-sort={ariaSort('type')} className="py-3 px-4">
+                    <th scope="col" aria-sort={ariaSort('type')} className="py-3 px-2">
                       {sortButton('type', t('tasks.fields.taskType'))}
                     </th>
-                    <th scope="col" aria-sort={ariaSort('dueDate')} className="py-3 px-4">
+                    <th scope="col" aria-sort={ariaSort('dueDate')} className="py-3 px-2">
                       {sortButton('dueDate', t('tasks.fields.dueDate'))}
                     </th>
-                    <th scope="col" aria-sort={ariaSort('content')} className="py-3 px-4">
+                    <th scope="col" aria-sort={ariaSort('content')} className="py-3 px-2">
                       {sortButton('content', t('tasks.fields.linkedContent'))}
+                    </th>
+                    <th scope="col" className="py-3 px-2">
+                      {t('tasks.fields.description')}
                     </th>
                   </tr>
                 </thead>
@@ -627,7 +637,7 @@ export function TasksView({
                           isDone ? 'opacity-60 bg-slate-50/30' : ''
                         }`}
                       >
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-1 text-center">
                           <button
                             type="button"
                             onClick={() => handleToggleDone(task)}
@@ -641,30 +651,21 @@ export function TasksView({
                             {isDone && <IconCheck className="w-3.5 h-3.5" size={14} />}
                           </button>
                         </td>
-                        <td className="p-0 align-middle min-w-[190px]">
+                        <td className="p-0 align-middle">
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(task)}
                             aria-label={`${t('tasks.editTask')}: ${task.title}`}
-                            className="block w-full min-h-[44px] h-full px-4 py-3 text-left font-medium text-slate-900 hover:text-purple-600 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-purple-600 transition-colors cursor-pointer"
+                            className="block w-full min-h-[44px] h-full px-2 py-3 text-left font-medium text-slate-900 hover:text-purple-600 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-purple-600 transition-colors cursor-pointer"
                           >
-                            <span className={isDone ? 'line-through text-slate-500' : ''}>
+                            <span className={`block truncate ${isDone ? 'line-through text-slate-500' : ''}`}>
                               {task.title}
                             </span>
                           </button>
                         </td>
-                        <td className="py-3 px-4 w-[32%] min-w-[280px] align-top">
-                          {task.description ? (
-                            <p className="line-clamp-2 break-words text-xs leading-5 text-slate-600">
-                              {task.description}
-                            </p>
-                          ) : (
-                            <span className="text-slate-300">—</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-2">
                           <span
-                            className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                            className={`inline-flex whitespace-nowrap px-1.5 py-0.5 rounded-full text-[11px] font-medium ${
                               task.status === 'done'
                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                 : task.status === 'in_progress'
@@ -675,10 +676,10 @@ export function TasksView({
                             {t(`tasks.status.${task.status}`)}
                           </span>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-2">
                           {task.priority ? (
                             <span
-                              className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                              className={`inline-flex whitespace-nowrap px-1.5 py-0.5 rounded-full text-[11px] font-medium ${
                                 task.priority === 'high'
                                 ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                 : task.priority === 'medium'
@@ -692,29 +693,40 @@ export function TasksView({
                             <span className="text-slate-400">&mdash;</span>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-slate-600">
-                          {task.task_type ? t(`tasks.type.${task.task_type}`) : '—'}
+                        <td className="py-3 px-2 text-slate-600">
+                          <span className="block truncate">
+                            {task.task_type ? t(`tasks.type.${task.task_type}`) : '—'}
+                          </span>
                         </td>
-                        <td className="py-3 px-4 font-mono text-slate-600">
+                        <td className="py-3 px-2 font-mono text-[11px] text-slate-600 whitespace-nowrap">
                           {task.due_date || '—'}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-2 min-w-0">
                           {task.content_item ? (
                             <button
                               type="button"
                               onClick={() => handleOpenContentRecord(task.content_item!.id)}
                               title={t('tasks.openContent')}
-                              className="inline-flex items-center gap-1.5 text-xs text-purple-700 bg-purple-50 hover:bg-purple-100 px-2 py-1 rounded-md border border-purple-200 transition-colors cursor-pointer max-w-[220px] truncate"
+                              className="inline-flex w-full min-w-0 items-center gap-1 text-[11px] text-purple-700 bg-purple-50 hover:bg-purple-100 px-1.5 py-1 rounded-md border border-purple-200 transition-colors cursor-pointer whitespace-nowrap"
                             >
                               {task.content_item.source_number ? (
-                                <span className="font-mono font-bold">
+                                <span className="shrink-0 font-mono font-bold">
                                   #{task.content_item.source_number}
                                 </span>
                               ) : null}
-                              <span className="truncate">{task.content_item.title}</span>
+                              <span className="min-w-0 truncate">{task.content_item.title}</span>
                             </button>
                           ) : (
-                            <span className="text-slate-400">{t('tasks.standalone')}</span>
+                            <span className="block truncate text-[11px] text-slate-400">{t('tasks.standalone')}</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-2 align-top">
+                          {task.description ? (
+                            <p className="line-clamp-2 break-words text-xs leading-5 text-slate-600">
+                              {task.description}
+                            </p>
+                          ) : (
+                            <span className="text-slate-300">—</span>
                           )}
                         </td>
                       </tr>
@@ -726,7 +738,7 @@ export function TasksView({
           </div>
 
           {/* Mobile Cards */}
-          <div className="block md:hidden">
+          <div className="block xl:hidden">
             <div className="flex items-end gap-2 mb-3">
               <div className="flex-1">
                 <label htmlFor="tasks-mobile-sort" className="block text-sm font-semibold text-slate-700 mb-1">

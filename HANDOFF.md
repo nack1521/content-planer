@@ -1,5 +1,22 @@
 # Content Planner Handoff — Milestone 7 (Controlled Hosted Supabase Import Preparation & Vercel Release)
 
+### Clear a content publication date (2026-10-05)
+
+- **Status:** Implemented, committed locally to `main`, and verified in Production; not pushed.
+- **Root cause:** `RecordModal` had a controlled date input but no explicit clear-date control. The save path, runtime validator, and existing database RPC already support persisting an unset date as `null`.
+- **Behavior:** Added a localized, touch-friendly “Clear date” button in English and Thai. Clearing resets the date and known-time flag; time controls are hidden until a date is selected. The existing save path submits `publish_at: null` when the date is blank.
+- **Files changed:** `src/components/planner/RecordModal.tsx`, `src/messages/en.json`, `src/messages/th.json`, and `tests/calendar-ideas-milestone5.test.mjs`.
+- **Checks:** Focused date-clear/task/calendar tests 4/4; accessibility/localization tests 12/12; `npx tsc --noEmit`, `npm run lint`, `npm run build`, and `git diff --check` passed. Vercel's production build passed. Full `npm test` and authenticated browser testing were not run; password-auth/logging concerns remain, and no authenticated browser session was used.
+- **Production deployment:** Ready, deployment `dpl_3WQw3dCNjNXm6jppD4umiEXBzEB7`, at `https://content-planner-2vk6g3ek3-nack4.vercel.app`, aliased to `https://content-planner-zeta-dusky.vercel.app`; dynamic functions verified in `sin1`.
+- **Route verification:** `/th/login` and `/en/login` returned 200. `/th/tasks`, `/th/calendar`, and `/th/planner` returned 307 to `/th/login`; these were unauthenticated checks only.
+- **External state and Git:** No database migration or write. Commit message: `fix(ui): clear content dates and fit task table`; local `main` was not pushed. After Production verification, this handoff record was amended; no app source changed after deployment. Unrelated dirty files were preserved, and `.vercelignore` excluded docs, scripts, tests, and local environment files from the deployment bundle.
+
+### Task table fit correction (2026-10-05)
+
+- **Status:** Implemented, committed with the publication-date reset, and deployed to Production above. The desktop Description column is last and the fixed-layout table fits without horizontal scrolling; tablet and mobile continue to use touch-friendly cards.
+- **Checks:** Focused task/calendar UX tests passed; `npx tsc --noEmit`, `npm run lint`, `npm run build`, and `git diff --check` passed. No authenticated browser layout test was performed.
+- **External state:** No database write or migration; commit remains local and was not pushed.
+
 ### Task list and mobile calendar UX (2026-10-05)
 
 - **Status:** Implemented, committed locally, and deployed to Production; `main` is one commit ahead of `origin/main` (not pushed).
