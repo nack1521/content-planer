@@ -8,13 +8,19 @@ A private, bilingual content-planning workspace for organizing content from idea
 
 Sprint 1 is live on Vercel. The current release focuses on planning and tracking content through external links; it does not upload large media files or publish directly to social networks.
 
+The latest verified application release is **`25e9366`** (CP-RELEASE-02). The owner reported **PASS for desktop UAT cases 1–4**: sidebar placement, checkbox spacing, task-row/control actions, and text selection/keyboard entry. This is scoped owner acceptance, not a claim that every mobile, authentication, or RLS case has been independently tested. See the [release receipt](docs/handoffs/CP-RELEASE-02-RECEIPT.md) and [desktop UAT acceptance](docs/handoffs/CP-RELEASE-02-UAT.md).
+
 The interface is designed as a practical creator workspace:
 
-- dark navigation with a light working surface and purple accent;
+- warm cream/paper surfaces, muted rose accents, and readable dark warm text;
+- a viewport-height desktop sidebar with language, timezone, and sign-out controls kept at the bottom, and a scrollable middle navigation area for short windows;
 - compact, sortable desktop tables;
 - readable mobile cards and touch-friendly controls;
 - complete Thai and English interfaces;
-- dates and schedules displayed in the `Asia/Bangkok` timezone.
+- dates and schedules displayed in the `Asia/Bangkok` timezone;
+- route-level loading states and per-menu pending feedback during navigation.
+
+Initial server reads reuse an authentication context within a request; this is not a shared cross-account data cache or a measured hosted-speed guarantee.
 
 ## Current features
 
@@ -22,6 +28,7 @@ The interface is designed as a practical creator workspace:
 
 - Create, edit, duplicate, archive, restore, and permanently delete content records.
 - Track objective, platforms, content pillar, format, goal, production status, progress, and publishing date.
+- Clear a scheduled publication date back to an unset value in the shared content editor.
 - Store hook, production detail, caption, call to action, hashtags, and notes.
 - Search and filter the content library.
 - Sort by clicking any of the seven desktop table headings.
@@ -42,10 +49,14 @@ The interface is designed as a practical creator workspace:
 - Search and filter the task list.
 - Sort by clicking any of the six desktop table headings.
 - Browse 25 tasks per page, with equivalent mobile sorting and pagination.
+- Click non-interactive space across a desktop task row to edit that task; the native title button remains available for keyboard access.
+- Toggle completion independently with the checkbox, or open the linked content independently without also opening task editing.
+- Select and copy row text without opening an editor.
+- Keep descriptions in the last desktop column, limited to two lines, with a fixed-fit table and mobile cards below the table breakpoint.
 
 ### Calendar, ideas, and settings
 
-- Review scheduled content in a monthly calendar.
+- Review scheduled content in a monthly calendar, including a mobile month grid and selected-day agenda.
 - Capture ideas quickly and maintain reference accounts.
 - Switch between Thai and English without losing the current view.
 - Manage default platforms, content pillars, and timezone display preferences.
@@ -102,7 +113,7 @@ Supported locale prefixes are `th` and `en`.
 Use a current Node.js release compatible with Next.js 16, then install the locked dependencies:
 
 ```bash
-npm install
+npm ci
 ```
 
 ### 2. Configure the environment
@@ -136,13 +147,18 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Quality checks
 
+For routine source/build checks:
+
 ```bash
+npx --no-install tsc --noEmit
 npm run lint
-npm run build
-npm test
+NEXT_TELEMETRY_DISABLED=1 npm run build
+node --loader ./tests/test-loader.mjs --test tests/desktop-ux.test.mjs tests/task-list.test.mjs tests/task-content-search.test.mjs tests/accessibility.test.mjs
 ```
 
-The full test suite requires Docker and the Supabase CLI. It resets an isolated local Supabase stack and is guarded against running destructive database tests against the hosted project.
+The desktop suite mixes static assertions and a handwritten event-logic mirror; it is **not** mounted/browser or actual-handler proof. The primary review separately exercised the exact production handler in a bounded synthetic probe; see [CP-DESKTOP-01 review](docs/handoffs/CP-DESKTOP-01-output/REVIEW.md) for its evidence and limits.
+
+`npm test` is an opt-in full suite, not a default smoke test. It requires Docker and the Supabase CLI and resets an isolated local Supabase stack. Inspect its current hooks, local database target, and authentication/private-data effects before running; do not point destructive tests at the hosted project. Builds may automatically load `.env.local`; keep environment values and logs private.
 
 ## Deployment
 
@@ -152,6 +168,8 @@ Pushing to GitHub updates the source repository. A Vercel deployment happens aut
 
 ## Project documentation
 
+- [Verified application release](docs/handoffs/CP-RELEASE-02-RECEIPT.md) — deployed version, verification, and rollback
+- [Desktop UAT acceptance](docs/handoffs/CP-RELEASE-02-UAT.md) — owner-reported cases and acceptance limits
 - [`PROJECT.md`](PROJECT.md) — product scope and decisions
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — application and data architecture
 - [`TASKS.md`](TASKS.md) — milestone history and remaining work
@@ -165,6 +183,7 @@ Pushing to GitHub updates the source repository. A Vercel deployment happens aut
 - Every exposed user-owned table uses Row Level Security with owner-scoped policies.
 - Authentication protects all application pages except the login and callback flow.
 - Private credentials and original import files remain outside version control.
+- Local development tracing may record Server Action arguments, including password inputs. Avoid real-account password login testing on the development server until tracing has been checked; never share passwords or credential-bearing logs in chat or commits.
 - External links are stored as references; the application does not fetch or execute their contents.
 
 ## Repository

@@ -1,5 +1,19 @@
 # Content Planner Milestones
 
+## Owner-scoped follow-up — Navigation performance and rose theme
+
+This named owner sequence supersedes the first-unchecked-milestone rule for this follow-up only; do not resume migration reconciliation or reopen accepted milestones.
+
+- [x] CP-PERF-01 source/synthetic implementation-review gate: original review plus R1-only PASS closes the sole required evidence gap. Historical HOLD retained; hosted speed/browser/RLS/UAT not claimed. Closeout: `docs/handoffs/CP-PERF-01-R1-CLOSEOUT.md`.
+- CP-THEME-SAMPLE-01: CANCELED by owner message `1562093674400059464`; no prototype or composition redesign. Do not run the prior sample prompt.
+- [x] CP-COLOR-01 source/check review sequence: original primary review plus same-reviewer `PASS — F1/F2 only` resolves both required findings. Original HOLD preserved; no full-theme/browser/hosted/UAT acceptance implied. Closeout: `docs/handoffs/CP-COLOR-01-F1F2-CLOSEOUT.md`. No further review loop; release completed below.
+- [x] Deploy reviewed candidate on existing Vercel: application release `dbbe3f1`, Production `dpl_d7HwSTJSnrbd9WNrgRHhn8VQCh4Z` READY; existing alias verified to same ID, app functions sin1, public Login 200/protected routes redirect. Existing project/Supabase config reused; no DB/import operation. Receipt: `docs/handoffs/CP-RELEASE-01-RECEIPT.md`.
+- [x] Owner desktop UAT 1–4: PASS reported in `1562416547702636636` on deployed `25e9366`, resolving the offered sidebar/Tasks cases. Acceptance `docs/handoffs/CP-RELEASE-02-UAT.md`; do not infer unoffered cases passed.
+- [x] CP-DESKTOP-01 source/actual-handler synthetic review gate: Luna PASS, no source blocker; 26 tests and separate 21-case exact-handler probe pass. Closeout `docs/handoffs/CP-DESKTOP-01-CLOSEOUT.md`. Released below; the four offered desktop cases are owner-accepted, separately from synthetic evidence.
+- [x] CP-RELEASE-02: application commit `25e9366`, Production `dpl_hdg9oLjeDzvdBD1acg6raAbDTWRj` verified READY; owner desktop UAT 1–4 accepted. No data/config change. Deployment receipt `docs/handoffs/CP-RELEASE-02-RECEIPT.md`; acceptance `docs/handoffs/CP-RELEASE-02-UAT.md`. Owner authorized README refresh and Git synchronization; no new implementation or manual release.
+
+Hermes coordinates, Antigravity codes, Luna is the sole primary reviewer; Nack submits the IDE prompt and reports completion. One implementation pass plus one review per phase; consolidate major blockers and stop, no autonomous loops. Current details are the owner follow-up block in HANDOFF.md.
+
 ## Product Roadmap & Execution Rules
 
 The project roadmap is structured into two phases:

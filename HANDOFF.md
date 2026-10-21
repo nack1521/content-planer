@@ -1,5 +1,14 @@
 # Content Planner Handoff — Milestone 7 (Controlled Hosted Supabase Import Preparation & Vercel Release)
 
+## Current owner follow-up — CP-RELEASE-02
+
+- **Status:** PRODUCTION-VERIFIED, DESKTOP-UAT-ACCEPTED. Owner `1562416547702636636` reported “1–4: ผ่าน” for the offered desktop cases on application commit `25e9366110bd7125924675c45b722824b6972576` (`25e9366`). Acceptance: `docs/handoffs/CP-RELEASE-02-UAT.md`. README refresh and Git synchronization authorized in that message; unrelated dirty work remains excluded.
+- **Deployment:** `dpl_hdg9oLjeDzvdBD1acg6raAbDTWRj`, `https://content-planner-db6x1sn0d-nack4.vercel.app`, READY. Existing alias `https://content-planner-zeta-dusky.vercel.app` independently resolves to same ID; app functions sin1. Receipt/version/rollback/UAT `docs/handoffs/CP-RELEASE-02-RECEIPT.md`.
+- **Artifact/checks:** exact-commit isolated archive, all 84 src files match accepted desktop seal, 98 dry-run upload files with no env/private/operator/evidence assets. Fresh typecheck/lint/build/normal worktree whitespace pass; four inherited lint warnings. Staged source/tests whitespace clean; 19 existing notices in six immutable evidence records retained, whole-staged check not claimed clean. Staged secret-signature scan found zero hits.
+- **External proof/limits:** th/en Login 200, five anonymous protected routes 307 to Login; served shell JS includes new sticky/scroll-nav tokens and CSS h-screen height. Same existing Vercel/Supabase environment, no data/config/account/migration/import operation. Asset presence is not rendered or authenticated proof. Owner-reported UAT 1–4 now accepts the offered desktop layout/control/selection/keyboard cases; unoffered mobile, broad auth/RLS/data and timing claims remain unverified. No new review/correction loop or manual deployment is requested.
+
+## Historical release entries
+
 ### Clear a content publication date (2026-10-05)
 
 - **Status:** Implemented, committed locally to `main`, and verified in Production; not pushed.
