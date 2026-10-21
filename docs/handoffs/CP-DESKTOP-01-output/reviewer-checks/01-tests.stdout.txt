@@ -1,0 +1,46 @@
+(node:51673) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 1. Form controls in modals and views have explicit label htmlFor associations (2.493125ms)
+✔ 2. All icon-only and interactive action buttons have accessible names (aria-label, title, or inner text) (1.759083ms)
+✔ 3. Focus trap keydown handler wraps focus backwards on Shift+Tab at first element (0.367084ms)
+✔ 4. Focus trap keydown handler wraps focus forwards on Tab at last element (0.113459ms)
+✔ 5. Focus trap keydown handler triggers onClose on Escape (0.081167ms)
+✔ 6. Modal components declare dialog role and focus trap references (0.364292ms)
+✔ 7. IdeasView declares accessible live regions, alert roles, and roving tabIndex attributes (0.366625ms)
+(node:51674) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 1. [static source assertion] DesktopSidebar declares sticky top-0 h-screen containment with scrollable nav (0.95275ms)
+✔ 2. [static source assertion] TasksView desktop table checkbox cell has pl-3 left breathing room and fixed column layout (0.725417ms)
+✔ 3. [executed synthetic test] TasksView handleRowClick production logic triggers edit on inert areas and ignores interactive controls, modifiers, and text selection (0.967083ms)
+✔ 4. [static source assertion] Table retains native HTML semantics, stops propagation on nested buttons, and preserves mobile cards (0.647917ms)
+(node:51675) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ empty or whitespace query preserves exact predictable default order (0.885916ms)
+✔ source-number exact and prefix matches rank before title substring matches (0.74175ms)
+✔ source-number match supports leading hash (#) (0.145625ms)
+✔ title exact match ranks before title prefix, which ranks before title substring (0.110708ms)
+✔ Thai and English keyword matching against hook, objective, caption, notes, and hashtags (0.628291ms)
+✔ localized status and format keyword matching (0.1175ms)
+✔ formatContentItemLabel formats source number and title correctly (0.078042ms)
+✔ returns empty array when no content items match query (0.06475ms)
+✔ selection and clear resolution behaves predictably for independent and linked tasks (0.117ms)
+(node:51676) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ task sorting toggles numeric-aware title order without mutating the fetched order (17.462333ms)
+✔ task columns sort by their field, with missing values last in both directions (0.27175ms)
+✔ equal sort values retain original fetched order (0.090791ms)
+✔ task pages contain 25 items and clamp after records shrink (0.183458ms)
+✔ task sorting toggles between asc and desc on repeated clicks, matching planner (0.101958ms)
+✔ mobile direction button switches both ways and only default order clears sort (0.06625ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 207.941625

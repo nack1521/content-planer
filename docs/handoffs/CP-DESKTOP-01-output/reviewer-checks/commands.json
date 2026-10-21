@@ -1,0 +1,75 @@
+{
+  "sequence": "CP-DESKTOP-01 frozen reviewer sequence",
+  "status": "ALL_PASSED",
+  "commands": [
+    {
+      "gate": 1,
+      "name": "Bounded task/desktop/accessibility suites",
+      "argv": ["node", "--loader", "./tests/test-loader.mjs", "--test", "tests/desktop-ux.test.mjs", "tests/task-list.test.mjs", "tests/task-content-search.test.mjs", "tests/accessibility.test.mjs"],
+      "command": "node --loader ./tests/test-loader.mjs --test tests/desktop-ux.test.mjs tests/task-list.test.mjs tests/task-content-search.test.mjs tests/accessibility.test.mjs",
+      "exit_code": 0,
+      "stdout": {"path": "01-tests.stdout.txt", "bytes": 4317, "sha256": "d714b7ac24dd0ee433fe3157117db2f822983ecdfc05d717ba41babf69699a2b"},
+      "stderr": {"path": "01-tests.stderr.txt", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+      "exit_artifact": {"path": "01-tests.exit.txt", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+      "summary": "26 passed, 0 failed, 0 skipped; Node experimental-loader warning present"
+    },
+    {
+      "gate": 2,
+      "name": "Actual production row-handler probe",
+      "argv": ["node", "docs/handoffs/CP-DESKTOP-01-output/reviewer-checks/row-handler-probe.mjs"],
+      "command": "node docs/handoffs/CP-DESKTOP-01-output/reviewer-checks/row-handler-probe.mjs",
+      "exit_code": 0,
+      "stdout": {"path": "02-handler-probe.stdout.txt", "bytes": 203, "sha256": "3a5b2e51a85ae992814f47a30d7c905dfd291ce33bb78801879b8ac8e29ead31"},
+      "stderr": {"path": "02-handler-probe.stderr.txt", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+      "exit_artifact": {"path": "02-handler-probe.exit.txt", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+      "summary": "TypeScript 5.9.3 AST-extracted TasksView.tsx:217 initializer; 21 cases, 6 opened exact task once, 15 suppressed, 0 failures; no app/SDK imports"
+    },
+    {
+      "gate": 3,
+      "name": "TypeScript type check",
+      "argv": ["npx", "--no-install", "tsc", "--noEmit"],
+      "command": "npx --no-install tsc --noEmit",
+      "exit_code": 0,
+      "stdout": {"path": "03-tsc.stdout.txt", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+      "stderr": {"path": "03-tsc.stderr.txt", "bytes": 154, "sha256": "44c8b6bf321f7bb8b813a2a67ef773201708e6e5294f11f9516939ff03e0853e"},
+      "exit_artifact": {"path": "03-tsc.exit.txt", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+      "summary": "No TypeScript diagnostics; npm emitted unknown-user-config allow-scripts warning"
+    },
+    {
+      "gate": 4,
+      "name": "ESLint",
+      "argv": ["npm", "run", "lint"],
+      "command": "npm run lint",
+      "exit_code": 0,
+      "stdout": {"path": "04-lint.stdout.txt", "bytes": 569, "sha256": "092737d2fa99c0c604bb1716011d131dee382fa44f38c5e227ef55ded24bc6a6"},
+      "stderr": {"path": "04-lint.stderr.txt", "bytes": 154, "sha256": "44c8b6bf321f7bb8b813a2a67ef773201708e6e5294f11f9516939ff03e0853e"},
+      "exit_artifact": {"path": "04-lint.exit.txt", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+      "summary": "0 errors, 4 warnings in two unchanged legacy test files; npm emitted unknown-user-config allow-scripts warning"
+    },
+    {
+      "gate": 5,
+      "name": "Next.js production build",
+      "argv": ["npm", "run", "build"],
+      "command": "npm run build",
+      "exit_code": 0,
+      "environment_overrides": {"NEXT_TELEMETRY_DISABLED": "1 (set and guard-checked in the terminal session to prevent telemetry network POST)"},
+      "stdout": {"path": "05-build.stdout.txt", "bytes": 1172, "sha256": "b11e42640c95c16dfe3c452482907898b37e0ed0698668fbd1875e0b020c9308"},
+      "stderr": {"path": "05-build.stderr.txt", "bytes": 154, "sha256": "44c8b6bf321f7bb8b813a2a67ef773201708e6e5294f11f9516939ff03e0853e"},
+      "exit_artifact": {"path": "05-build.exit.txt", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+      "summary": "Compiled and typechecked successfully; generated 17/17 static pages; .env.local was automatically listed by Next, no values inspected or printed; npm emitted unknown-user-config allow-scripts warning"
+    },
+    {
+      "gate": 6,
+      "name": "Git whitespace check (read-only)",
+      "argv": ["git", "diff", "--check"],
+      "command": "git diff --check",
+      "exit_code": 0,
+      "stdout": {"path": "06-diff-check.stdout.txt", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+      "stderr": {"path": "06-diff-check.stderr.txt", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+      "exit_artifact": {"path": "06-diff-check.exit.txt", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+      "summary": "Clean, exit 0"
+    }
+  ],
+  "artifact_note": "All referenced raw stdout/stderr/exit files are retained adjacent to this manifest under reviewer-checks/.",
+  "evidence_boundary": "The 26-test suite includes a handwritten mirror and does not execute the production handler; gate 2 is separate actual-handler execution. Neither proves DOM bubbling/rendered/browser/hosted behavior."
+}

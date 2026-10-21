@@ -67,9 +67,9 @@ export function DesktopSidebar() {
   ];
 
   return (
-    <aside className="hidden md:flex flex-col w-64 shrink-0 bg-[#FBF7F5] text-[#2D2526] border-r border-[#F0E6E3] min-h-screen select-none">
+    <aside className="hidden md:flex flex-col w-64 shrink-0 bg-[#FBF7F5] text-[#2D2526] border-r border-[#F0E6E3] sticky top-0 h-screen select-none">
       {/* Brand Header */}
-      <div className="p-5 border-b border-[#F0E6E3] flex items-center justify-between">
+      <div className="p-5 border-b border-[#F0E6E3] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#8D324C] via-[#A13F5B] to-[#C26880] flex items-center justify-center text-white font-bold text-sm shadow-md shadow-[#A13F5B]/30">
             CP
@@ -87,7 +87,7 @@ export function DesktopSidebar() {
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 p-3 space-y-1.5" aria-label={t('nav.mainNavAria')}>
+      <nav className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1.5" aria-label={t('nav.mainNavAria')}>
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -116,7 +116,7 @@ export function DesktopSidebar() {
       </nav>
 
       {/* Footer Info & Actions */}
-      <div className="p-4 border-t border-[#F0E6E3] space-y-3 bg-[#FBF7F5]">
+      <div className="p-4 border-t border-[#F0E6E3] space-y-3 bg-[#FBF7F5] shrink-0">
         <div className="flex items-center justify-between text-xs">
           <span className="text-[#746365] font-medium">{t('common.currentLocale')}</span>
           <LocaleSwitch variant="compact" />

@@ -214,6 +214,24 @@ export function TasksView({
     setModalOpen(true);
   };
 
+  const handleRowClick = (task: ProductionTask, event: React.MouseEvent<HTMLTableRowElement>) => {
+    // Only primary mouse button without modifiers
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
+      return;
+    }
+    // Check if user is selecting/copying text
+    const selection = typeof window !== 'undefined' ? window.getSelection() : null;
+    if (selection && selection.toString().trim().length > 0) {
+      return;
+    }
+    // Check if click was inside an interactive control
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('button, a, input, select, textarea, [role="button"]')) {
+      return;
+    }
+    handleOpenEdit(task);
+  };
+
   const handleCloseModal = () => {
     setModalOpen(false);
     setEditingTask(null);
@@ -601,7 +619,7 @@ export function TasksView({
                 </colgroup>
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
-                    <th scope="col" className="py-3 px-1">
+                    <th scope="col" className="py-3 pl-3 pr-1">
                       <span className="sr-only">{t('tasks.fields.status')}</span>
                     </th>
                     <th scope="col" aria-sort={ariaSort('title')} className="py-3 px-2">
@@ -633,14 +651,18 @@ export function TasksView({
                     return (
                       <tr
                         key={task.id}
-                        className={`hover:bg-slate-50/70 transition-colors ${
+                        onClick={(event) => handleRowClick(task, event)}
+                        className={`hover:bg-slate-50/70 transition-colors cursor-pointer ${
                           isDone ? 'opacity-60 bg-slate-50/30' : ''
                         }`}
                       >
-                        <td className="py-3 px-1 text-center">
+                        <td className="py-3 pl-3 pr-1 text-center">
                           <button
                             type="button"
-                            onClick={() => handleToggleDone(task)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleToggleDone(task);
+                            }}
                             aria-label={isDone ? t('tasks.markIncomplete') : t('tasks.markComplete')}
                             className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors cursor-pointer ${
                               isDone
@@ -654,7 +676,10 @@ export function TasksView({
                         <td className="p-0 align-middle">
                           <button
                             type="button"
-                            onClick={() => handleOpenEdit(task)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleOpenEdit(task);
+                            }}
                             aria-label={`${t('tasks.editTask')}: ${task.title}`}
                             className="block w-full min-h-[44px] h-full px-2 py-3 text-left font-medium text-slate-900 hover:text-[#A13F5B] hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#A13F5B] transition-colors cursor-pointer"
                           >
@@ -705,7 +730,10 @@ export function TasksView({
                           {task.content_item ? (
                             <button
                               type="button"
-                              onClick={() => handleOpenContentRecord(task.content_item!.id)}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleOpenContentRecord(task.content_item!.id);
+                              }}
                               title={t('tasks.openContent')}
                               className="inline-flex w-full min-w-0 items-center gap-1 text-[11px] text-[#A13F5B] bg-[#F5E4E8] hover:bg-[#EED8DC] px-1.5 py-1 rounded-md border border-[#E8CCD2] transition-colors cursor-pointer whitespace-nowrap"
                             >

@@ -1,0 +1,77 @@
+{
+  "review": "CP-DESKTOP-01",
+  "phase": "postflight",
+  "status": "PASS — source and bounded actual-handler synthetic boundary only",
+  "incoming_manifest": {
+    "path": "/Users/nack/.hermes/workspaces/content-planer/CP-DESKTOP-01/incoming/manifest.json",
+    "sha256": "c083e1aae42248f9be2a3267dcf56cac7470f147126c64c1ab4dc81bf27e7228",
+    "entries": 282,
+    "postflight_mismatches": []
+  },
+  "received_baseline": {
+    "path": "/Users/nack/.hermes/workspaces/content-planer/CP-DESKTOP-01/baseline/manifest.json",
+    "sha256": "5bdbc126f5f4cf59842514d4011892bf1878225c369bba9b134ad9cd4f8ab2b3",
+    "entries": 263,
+    "received_before_copies": [
+      {"path": "HANDOFF.md", "sha256": "0b37b9a2d659aa3a3064727f5155995dde4a78390f499a2aa900bd274fa06208", "matches_baseline": true},
+      {"path": "TASKS.md", "sha256": "80b61cf718075823310b6479dbff2e0606970e70646877122a61b62cc55145b6", "matches_baseline": true},
+      {"path": "src/components/shell/AppShell.tsx", "sha256": "90ebcc0fa9c565dfc73bb32c19026f3f81facb403b788c0d90c85873893ae058", "matches_baseline": true},
+      {"path": "src/components/shell/DesktopSidebar.tsx", "sha256": "0e1d0849374cec54c8d1c0b60f6d6c44ad10bb0078385f312ce7d12dcb9ff907", "matches_baseline": true},
+      {"path": "src/components/tasks/TasksView.tsx", "sha256": "3621a7738983ecc416e80c1653e8255bfc3500ccaa979df800d956af248a7b84", "matches_baseline": true}
+    ]
+  },
+  "candidate_comparison": {
+    "common_entries": 261,
+    "unchanged_common_entries": 259,
+    "only_changed_source_paths": ["src/components/shell/DesktopSidebar.tsx", "src/components/tasks/TasksView.tsx"],
+    "baseline_only_mutable_root_docs": ["HANDOFF.md", "TASKS.md"],
+    "AppShell_matches_received_baseline": true
+  },
+  "root_status_hashes": {
+    "preflight": {
+      "HANDOFF.md": "c85f15d26f5290feb1c591ac2b8ebf2e26354a54f16ee9c6bbea2851e0f67e42",
+      "TASKS.md": "9ecd9ff7682d7d8e6b3b821363eebdc032914c4ff1cb3182fe9ca4f52db074d6"
+    },
+    "postflight": {
+      "HANDOFF.md": "c85f15d26f5290feb1c591ac2b8ebf2e26354a54f16ee9c6bbea2851e0f67e42",
+      "TASKS.md": "9ecd9ff7682d7d8e6b3b821363eebdc032914c4ff1cb3182fe9ca4f52db074d6"
+    },
+    "unchanged": true
+  },
+  "commands_manifest": {
+    "path": "docs/handoffs/CP-DESKTOP-01-output/reviewer-checks/commands.json",
+    "sha256": "aa846d83f11111d7867611ebe758e19d9fb89469b49a7a852d14b62879274048",
+    "all_six_exit_zero": true,
+    "all_stdout_stderr_exit_hashes_match": true
+  },
+  "review_report": {
+    "path": "docs/handoffs/CP-DESKTOP-01-output/REVIEW.md",
+    "bytes": 6940,
+    "sha256": "73e09225fdba10465ebc2573f6dba243f5bcf06198202f9e2d6ff773dff70db4"
+  },
+  "reviewer_check_artifacts": [
+    {"path": "01-tests.exit.txt", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+    {"path": "01-tests.stderr.txt", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": "01-tests.stdout.txt", "bytes": 4317, "sha256": "d714b7ac24dd0ee433fe3157117db2f822983ecdfc05d717ba41babf69699a2b"},
+    {"path": "02-handler-probe.exit.txt", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+    {"path": "02-handler-probe.stderr.txt", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": "02-handler-probe.stdout.txt", "bytes": 203, "sha256": "3a5b2e51a85ae992814f47a30d7c905dfd291ce33bb78801879b8ac8e29ead31"},
+    {"path": "03-tsc.exit.txt", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+    {"path": "03-tsc.stderr.txt", "bytes": 154, "sha256": "44c8b6bf321f7bb8b813a2a67ef773201708e6e5294f11f9516939ff03e0853e"},
+    {"path": "03-tsc.stdout.txt", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": "04-lint.exit.txt", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+    {"path": "04-lint.stderr.txt", "bytes": 154, "sha256": "44c8b6bf321f7bb8b813a2a67ef773201708e6e5294f11f9516939ff03e0853e"},
+    {"path": "04-lint.stdout.txt", "bytes": 569, "sha256": "092737d2fa99c0c604bb1716011d131dee382fa44f38c5e227ef55ded24bc6a6"},
+    {"path": "05-build.exit.txt", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+    {"path": "05-build.stderr.txt", "bytes": 154, "sha256": "44c8b6bf321f7bb8b813a2a67ef773201708e6e5294f11f9516939ff03e0853e"},
+    {"path": "05-build.stdout.txt", "bytes": 1172, "sha256": "b11e42640c95c16dfe3c452482907898b37e0ed0698668fbd1875e0b020c9308"},
+    {"path": "06-diff-check.exit.txt", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+    {"path": "06-diff-check.stderr.txt", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": "06-diff-check.stdout.txt", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": "commands.json", "bytes": 5410, "sha256": "aa846d83f11111d7867611ebe758e19d9fb89469b49a7a852d14b62879274048"},
+    {"path": "preflight.json", "bytes": 4083, "sha256": "8f51f6330b98fa1446cdd70f75fb2fd5b97e9d0c2750ce7e618c094d2974d2f5"},
+    {"path": "row-handler-probe.mjs", "bytes": 5957, "sha256": "8b6a2b3757db19ea0070f24d0d1e9b4629d2690ea4736b0979643ace2993042a"}
+  ],
+  "artifact_count": 21,
+  "note": "This postflight receipt hashes REVIEW.md and every file under reviewer-checks/; its own digest is not self-embedded."
+}

@@ -1,0 +1,66 @@
+{
+  "review": "CP-DESKTOP-01",
+  "phase": "preflight",
+  "scope": "read-only review; one reviewer-owned AST extraction probe; six finite commands only",
+  "candidate": {
+    "manifest": "/Users/nack/.hermes/workspaces/content-planer/CP-DESKTOP-01/incoming/manifest.json",
+    "manifest_sha256": "c083e1aae42248f9be2a3267dcf56cac7470f147126c64c1ab4dc81bf27e7228",
+    "entry_count": 282,
+    "candidate_files_matching_seal": 282,
+    "mismatches": []
+  },
+  "received_baseline": {
+    "manifest": "/Users/nack/.hermes/workspaces/content-planer/CP-DESKTOP-01/baseline/manifest.json",
+    "manifest_sha256": "5bdbc126f5f4cf59842514d4011892bf1878225c369bba9b134ad9cd4f8ab2b3",
+    "entry_count": 263,
+    "received_before_copies": 5,
+    "received_before_copies_matching_baseline": 5
+  },
+  "comparison": {
+    "common_entries": 261,
+    "unchanged_common_entries": 259,
+    "changed_common_entries": [
+      "src/components/shell/DesktopSidebar.tsx",
+      "src/components/tasks/TasksView.tsx"
+    ],
+    "candidate_only_entries": 21,
+    "baseline_only_entries": ["HANDOFF.md", "TASKS.md"],
+    "AppShell.tsx_matches_baseline": true,
+    "source_diff_review": {
+      "DesktopSidebar.tsx": [
+        "aside: min-h-screen replaced by sticky top-0 h-screen",
+        "brand header: shrink-0",
+        "middle nav: min-h-0 overflow-y-auto",
+        "footer: shrink-0"
+      ],
+      "TasksView.tsx": [
+        "added handleRowClick at line 217 with primary/modifier, selection, interactive-target guards and one handleOpenEdit(task) call",
+        "checkbox header/body cell changed from px-1 to pl-3 pr-1",
+        "desktop tr attached to handler and gained cursor-pointer",
+        "checkbox, title and linked-content child callbacks stop propagation before their existing actions",
+        "no other source hunks; fixed column widths, description-last table, mobile cards and sorting/paging markup remain unchanged"
+      ]
+    }
+  },
+  "safety_inspection": {
+    "selected_tests": "node:test files and test-loader inspected; synthetic fixtures/local source reads only; no setup/teardown hooks, network, DB, account, or service calls found",
+    "production_probe": "reviewer script inspected; imports only Node built-ins and installed TypeScript; reads TasksView.tsx only; AST-extracts the exact production initializer; vm runs that body with synthetic window and handleOpenEdit spy; no app/SDK import, subprocess, env read, network, or probe file writes",
+    "scripts": "package.json maps lint to eslint and build to next build; no fix flag; next.config.ts is empty",
+    "build_network_safety": "installed Next telemetry source contains a POST endpoint and flush path; NEXT_TELEMETRY_DISABLED=1 will be set in the terminal session before the frozen npm run build command so it cannot emit telemetry; no app browser/server/login, DB/account or deployment path is invoked",
+    "private_environment": "No .env file contents or credential values were opened or printed; Next's normal build may load project environment as indicated by the retained build log"
+  },
+  "known_evidence_limit": "desktop-ux.test.mjs locates the production handler but executes a handwritten mirror, not the extracted function; its mock closest does not implement [role=button]. Do not cite it as actual-handler execution. The bounded reviewer probe is the independent actual-handler evidence; neither proves real DOM bubbling, rendered geometry, browser behavior, or hosted UAT.",
+  "root_status_hashes_preflight": {
+    "HANDOFF.md": "c85f15d26f5290feb1c591ac2b8ebf2e26354a54f16ee9c6bbea2851e0f67e42",
+    "TASKS.md": "9ecd9ff7682d7d8e6b3b821363eebdc032914c4ff1cb3182fe9ca4f52db074d6"
+  },
+  "sequence": [
+    "node --loader ./tests/test-loader.mjs --test tests/desktop-ux.test.mjs tests/task-list.test.mjs tests/task-content-search.test.mjs tests/accessibility.test.mjs",
+    "node docs/handoffs/CP-DESKTOP-01-output/reviewer-checks/row-handler-probe.mjs",
+    "npx --no-install tsc --noEmit",
+    "npm run lint",
+    "npm run build",
+    "git diff --check"
+  ],
+  "run_status": "NOT_RUN_AT_PREFLIGHT"
+}

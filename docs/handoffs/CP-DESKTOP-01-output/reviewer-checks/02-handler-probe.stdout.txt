@@ -1,0 +1,3 @@
+CP-DESKTOP-01 actual-handler probe: PASS
+TypeScript 5.9.3; extracted src/components/tasks/TasksView.tsx:217 AST initializer; no app/SDK imports.
+Synthetic cases: 21; opened=6; suppressed=15; failures=0.

@@ -1,0 +1,147 @@
+{
+  "sequence": "CP-DESKTOP-01 Frozen Checks Sequence",
+  "executed_at": "2026-10-21T01:22:18.585Z",
+  "status": "ALL_PASSED",
+  "checks": [
+    {
+      "gate": 1,
+      "name": "Bounded desktop UX, task list, task content search, and accessibility test suite",
+      "argv": [
+        "node",
+        "--loader",
+        "./tests/test-loader.mjs",
+        "--test",
+        "tests/desktop-ux.test.mjs",
+        "tests/task-list.test.mjs",
+        "tests/task-content-search.test.mjs",
+        "tests/accessibility.test.mjs"
+      ],
+      "command": "node --loader ./tests/test-loader.mjs --test tests/desktop-ux.test.mjs tests/task-list.test.mjs tests/task-content-search.test.mjs tests/accessibility.test.mjs",
+      "stdout_file": "01-tests.stdout.txt",
+      "stderr_file": "01-tests.stderr.txt",
+      "exit_file": "01-tests.exit.txt",
+      "exit_code": 0,
+      "tests_passed": 26,
+      "tests_failed": 0
+    },
+    {
+      "gate": 2,
+      "name": "TypeScript type check",
+      "argv": [
+        "npx",
+        "--no-install",
+        "tsc",
+        "--noEmit"
+      ],
+      "command": "npx --no-install tsc --noEmit",
+      "stdout_file": "02-tsc.stdout.txt",
+      "stderr_file": "02-tsc.stderr.txt",
+      "exit_file": "02-tsc.exit.txt",
+      "exit_code": 0
+    },
+    {
+      "gate": 3,
+      "name": "ESLint static analysis",
+      "argv": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "command": "npm run lint",
+      "stdout_file": "03-lint.stdout.txt",
+      "stderr_file": "03-lint.stderr.txt",
+      "exit_file": "03-lint.exit.txt",
+      "exit_code": 0
+    },
+    {
+      "gate": 4,
+      "name": "Production Next.js build and static generation",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "command": "npm run build",
+      "stdout_file": "04-build.stdout.txt",
+      "stderr_file": "04-build.stderr.txt",
+      "exit_file": "04-build.exit.txt",
+      "exit_code": 0
+    },
+    {
+      "gate": 5,
+      "name": "Git diff whitespace and syntax check",
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "command": "git diff --check",
+      "stdout_file": "05-diff-check.stdout.txt",
+      "stderr_file": "05-diff-check.stderr.txt",
+      "exit_file": "05-diff-check.exit.txt",
+      "exit_code": 0
+    }
+  ],
+  "artifacts": {
+    "01-tests.exit.txt": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "01-tests.stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "01-tests.stdout.txt": {
+      "bytes": 4314,
+      "sha256": "b1d1c001c9a2fae5392ea0a7927d362b2ad1e322f0d1c82b00c21bd9ae533fbe"
+    },
+    "02-tsc.exit.txt": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "02-tsc.stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "02-tsc.stdout.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "03-lint.exit.txt": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "03-lint.stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "03-lint.stdout.txt": {
+      "bytes": 569,
+      "sha256": "092737d2fa99c0c604bb1716011d131dee382fa44f38c5e227ef55ded24bc6a6"
+    },
+    "04-build.exit.txt": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "04-build.stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "04-build.stdout.txt": {
+      "bytes": 1171,
+      "sha256": "88b1b5dd508137fdb47e274cb60f3fb4021da4db2c5f94a6f26ef6384e2e27f7"
+    },
+    "05-diff-check.exit.txt": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "05-diff-check.stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "05-diff-check.stdout.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+Review CP-DESKTOP-01 in /Users/nack/contentPlaner as the sole primary reviewer. Read AGENTS.md, current HANDOFF.md, docs/handoffs/CP-DESKTOP-01.md, CP-DESKTOP-01-INTAKE.md, CP-DESKTOP-01-REVIEW.md and RESULT/logs. Verify the sealed candidate and received baseline.
+
+Check desktop sidebar viewport/scroll containment, Tasks padding and correct row editing with checkbox/content/title/selection exceptions, preserved keyboard/table/mobile behavior and no unrelated source changes. The new synthetic test executes a handwritten mirror, NOT the extracted production handler; do not repeat its stronger claim.
+
+Follow the contract's one bounded actual-handler probe using already-installed TypeScript, without copying the algorithm or loading the app/SDK. Run only the six frozen commands once after safety inspection; stop on failure/block. No fixes, installs, browser/server/login, private data, DB/accounts, Git writes or deployment. Do not reopen performance/theme/F1F2 or make deferred browser UAT a new infrastructure gate.
+
+Write docs/handoffs/CP-DESKTOP-01-output/REVIEW.md with PASS/HOLD/BLOCKED, consolidated material findings, actual source/synthetic evidence and unverified rendered/hosted limits. Fresh raw logs/probe go in reviewer-checks/. Preserve all received bytes. Return CP-DESKTOP-01-REVIEW-DONE with verdict/path and STOP; no automatic correction loop.

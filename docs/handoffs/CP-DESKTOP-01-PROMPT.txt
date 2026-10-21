@@ -1,0 +1,9 @@
+Implement CP-DESKTOP-01 in /Users/nack/contentPlaner. Read AGENTS.md, current HANDOFF.md and docs/handoffs/CP-DESKTOP-01.md. This is the named DESKTOP UX follow-up, not more color work or a performance redesign.
+
+Keep the sidebar language/timezone/Sign Out block at the viewport bottom, consistently across menus, loading and page scroll. Prefer viewport-height sticky containment with a scrollable middle nav; preserve mobile navigation and document scrolling.
+
+In desktop Tasks, add left cell padding before the completion checkmark. Make inert space across each row open that task's existing editor once. Checkbox toggles only; linked content opens its existing content editor only; title keyboard button stays accessible and must not double-trigger. Preserve text selection, table semantics/fit, sorting/pagination, description-last and mobile cards.
+
+Touch only the three allowed components, new bounded regression test, current routing docs and fresh output. Preserve theme/F1F2, auth/data and dirty work. Run the five frozen checks once; stop on failure/block. No installs, private data, real login, DB/accounts, Git writes or deploy. Do not claim static tests prove rendered positions/clicks; label deferred browser UAT.
+
+Write docs/handoffs/CP-DESKTOP-01-output/RESULT.md with actual changes/checks/evidence limits. Return CP-DESKTOP-01-DONE or CP-DESKTOP-01-BLOCKED and STOP for one Luna review. No extra phase or automatic correction loop.

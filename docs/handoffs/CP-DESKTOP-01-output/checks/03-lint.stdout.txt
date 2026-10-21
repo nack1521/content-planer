@@ -1,0 +1,15 @@
+
+> content-planner@0.1.0 lint
+> eslint
+
+
+/Users/nack/contentPlaner/tests/navigation-performance.test.mjs
+  549:7  warning  'counter' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/nack/contentPlaner/tests/navigation-r1-fixture.mjs
+   94:18  warning  '_cols' is defined but never used   @typescript-eslint/no-unused-vars
+  103:17  warning  '_field' is defined but never used  @typescript-eslint/no-unused-vars
+  103:25  warning  '_opts' is defined but never used   @typescript-eslint/no-unused-vars
+
+✖ 4 problems (0 errors, 4 warnings)
+
