@@ -1,0 +1,125 @@
+{
+  "phase": "post-review-before-receipt",
+  "candidate_manifest_sha256": "4d6111dd2cdb9912c8c11b1861ad077a0f622083e567cbb3c0dbfeba8c5cd4cb",
+  "candidate_sealed_entries": 187,
+  "candidate_mismatches": 0,
+  "correction_baseline_entries": 176,
+  "app_source_entries": 84,
+  "app_source_mismatches_vs_baseline": 0,
+  "authorized_baseline_drift": [
+    "HANDOFF.md",
+    "TASKS.md",
+    "docs/handoffs/CP-PERF-01-output/RESULT.md",
+    "tests/navigation-performance.test.mjs"
+  ],
+  "pre_review_status_entries": 87,
+  "pre_review_status_hashes_unchanged": true,
+  "reviewer_added_paths_before_receipt": [
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/REVIEW.md",
+      "sha256": "13204d91c78295125e6e59d7a2ccff11d0a7c93550047b66f1695902c898116f",
+      "bytes": 7578
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/reviewer-checks/01-tests.exit.txt",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/reviewer-checks/01-tests.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/reviewer-checks/01-tests.stdout.txt",
+      "sha256": "5f387d513bd0be10859a03587cf7cae8711f0e4711725ff8c66060867cb96a4b",
+      "bytes": 2869
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/reviewer-checks/02-git-diff.exit.txt",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/reviewer-checks/02-git-diff.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/reviewer-checks/02-git-diff.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/reviewer-checks/manifest.json",
+      "sha256": "6147eeb474080cda607798db2754971074ccba4bed2a91566df0d2fbbd3ff801",
+      "bytes": 1681
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/reviewer-checks/preflight.json",
+      "sha256": "e982cb1be97cdc1d8ad17cca502c6efad3671befd6cc2eb61039dc3b8d748a2f",
+      "bytes": 26829
+    }
+  ],
+  "authorized_addition_count_before_receipt": 9,
+  "checks": [
+    {
+      "gate": 1,
+      "name": "R1 navigation synthetic production-factory tests",
+      "argv": [
+        "node",
+        "--loader",
+        "./tests/test-loader.mjs",
+        "--loader",
+        "./tests/navigation-r1-loader.mjs",
+        "--test",
+        "tests/navigation-performance.test.mjs"
+      ],
+      "command": "node --loader ./tests/test-loader.mjs --loader ./tests/navigation-r1-loader.mjs --test tests/navigation-performance.test.mjs",
+      "stdout_file": "01-tests.stdout.txt",
+      "stderr_file": "01-tests.stderr.txt",
+      "exit_file": "01-tests.exit.txt",
+      "exit_code": 0,
+      "duration_wall_seconds": 1.239783,
+      "stdout_sha256": "5f387d513bd0be10859a03587cf7cae8711f0e4711725ff8c66060867cb96a4b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tests": 19,
+      "suites": 0,
+      "passed": 19,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "runner_duration_ms": 858.324083
+    },
+    {
+      "gate": 2,
+      "name": "Git diff whitespace check",
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "command": "git diff --check",
+      "stdout_file": "02-git-diff.stdout.txt",
+      "stderr_file": "02-git-diff.stderr.txt",
+      "exit_file": "02-git-diff.exit.txt",
+      "exit_code": 0,
+      "duration_wall_seconds": 0.043069,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "review_sha256": "13204d91c78295125e6e59d7a2ccff11d0a7c93550047b66f1695902c898116f",
+  "review_bytes": 7578,
+  "original_hold_and_implementer_artifacts_in_candidate_seal_match": true
+}

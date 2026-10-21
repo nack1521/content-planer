@@ -15,11 +15,11 @@ export function AppShell({ children }: AppShellProps) {
   const isAuthRoute = pathname?.includes('/login') || pathname?.includes('/auth/');
 
   if (isAuthRoute) {
-    return <div className="min-h-screen bg-slate-950 antialiased">{children}</div>;
+    return <div className="min-h-screen bg-[#FBF7F5] antialiased">{children}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row antialiased selection:bg-purple-500 selection:text-white">
+    <div className="min-h-screen bg-[#FBF7F5] text-[#2D2526] flex flex-col md:flex-row antialiased selection:bg-[#F5E4E8] selection:text-[#A13F5B]">
       {/* Desktop Persistent Sidebar */}
       <DesktopSidebar />
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { getNavigationReadContext } from "@/utils/supabase/navigationReadContext";
 import type {
   ContentItem,
   ContentPillar,
@@ -78,12 +79,10 @@ interface SupabaseContentItemRow {
 
 export async function getContentPillarsAction(): Promise<{ pillars: ContentPillar[]; error?: string | null }> {
   try {
-    const supabase = await createClient();
-    const { data: claimsData } = await supabase.auth.getClaims();
-    const userId = claimsData?.claims?.sub;
+    const { supabase, userId, error: authError } = await getNavigationReadContext();
 
-    if (!userId) {
-      return { pillars: [], error: "unauthorized" };
+    if (!userId || !supabase) {
+      return { pillars: [], error: authError || "unauthorized" };
     }
 
     const { data, error } = await supabase
@@ -120,12 +119,10 @@ export async function getContentPillarsAction(): Promise<{ pillars: ContentPilla
 
 export async function getContentItemsAction(): Promise<{ items: ContentItem[]; error?: string | null }> {
   try {
-    const supabase = await createClient();
-    const { data: claimsData } = await supabase.auth.getClaims();
-    const userId = claimsData?.claims?.sub;
+    const { supabase, userId, error: authError } = await getNavigationReadContext();
 
-    if (!userId) {
-      return { items: [], error: "unauthorized" };
+    if (!userId || !supabase) {
+      return { items: [], error: authError || "unauthorized" };
     }
 
     const { data, error } = await supabase

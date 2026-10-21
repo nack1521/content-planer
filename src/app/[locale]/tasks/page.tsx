@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { TasksView } from '@/components/tasks/TasksView';
 import { getTasksAction } from '@/app/actions/tasks';
 import { getContentItemsAction, getContentPillarsAction } from '@/app/actions/content';
+import { createNavigationReadContext, withNavigationReadContext } from '@/utils/supabase/navigationReadContext';
 
 export async function generateMetadata({
   params,
@@ -36,11 +37,15 @@ export default async function TasksPage({
   }
 
   // Server-side initial reads
-  const [tasksRes, itemsRes, pillarsRes] = await Promise.all([
-    getTasksAction(),
-    getContentItemsAction(),
-    getContentPillarsAction(),
-  ]);
+  const [tasksRes, itemsRes, pillarsRes] = await withNavigationReadContext(
+    createNavigationReadContext(),
+    () =>
+      Promise.all([
+        getTasksAction(),
+        getContentItemsAction(),
+        getContentPillarsAction(),
+      ])
+  );
 
   return (
     <TasksView

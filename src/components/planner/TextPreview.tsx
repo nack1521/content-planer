@@ -125,7 +125,7 @@ export function TextPreview({
           {renderCopyButton('preview-cta', cta.trim(), t('recordModal.copyCta'))}
         </div>
         {cta.trim() ? (
-          <p className="text-xs sm:text-sm font-medium text-purple-900 bg-purple-50/70 border border-purple-200/60 rounded-md px-2.5 py-1.5 break-words">
+          <p className="text-xs sm:text-sm font-medium text-[#A13F5B] bg-[#F5E4E8]/70 border border-[#E8CCD2]/60 rounded-md px-2.5 py-1.5 break-words">
             {cta.trim()}
           </p>
         ) : (
@@ -148,7 +148,7 @@ export function TextPreview({
             {parsedHashtags.map((tag, idx) => (
               <span
                 key={`${tag}-${idx}`}
-                className="text-xs font-mono font-medium text-purple-700 bg-white border border-purple-200/80 px-2 py-0.5 rounded-md shadow-2xs"
+                className="text-xs font-mono font-medium text-[#A13F5B] bg-white border border-[#E8CCD2]/80 px-2 py-0.5 rounded-md shadow-2xs"
               >
                 {tag}
               </span>

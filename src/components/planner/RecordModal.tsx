@@ -516,7 +516,7 @@ function RecordModalForm({
               <span>
                 {t('recordModal.editTitle')}{' '}
                 {item.source_number ? (
-                  <span className="text-xs font-mono text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200 ml-1.5 font-normal">
+                  <span className="text-xs font-mono text-[#A13F5B] bg-[#F5E4E8] px-2 py-0.5 rounded-md border border-[#E8CCD2] ml-1.5 font-normal">
                     #{item.source_number}
                   </span>
                 ) : null}
@@ -555,7 +555,7 @@ function RecordModalForm({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('recordModal.titlePlaceholder')}
-              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium"
+              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B] font-medium"
             />
           </div>
 
@@ -574,7 +574,7 @@ function RecordModalForm({
                     onClick={() => togglePlatform(p)}
                     className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                        ? 'bg-[#A13F5B] text-white border-[#A13F5B] shadow-xs'
                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
@@ -595,7 +595,7 @@ function RecordModalForm({
                 id="modal-pillar-select"
                 value={pillarId}
                 onChange={(e) => setPillarId(e.target.value)}
-                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
               >
                 <option value="">{t('recordModal.noPillar')}</option>
                 {pillars.map((pil) => (
@@ -614,7 +614,7 @@ function RecordModalForm({
                 id="modal-format-select"
                 value={format}
                 onChange={(e) => setFormat(e.target.value as ContentFormat)}
-                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
               >
                 <option value="">{t('recordModal.unassigned')}</option>
                 {ALL_FORMATS.map((fmt) => (
@@ -633,7 +633,7 @@ function RecordModalForm({
                 id="modal-goal-select"
                 value={goal}
                 onChange={(e) => setGoal(e.target.value as ContentGoal)}
-                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
               >
                 <option value="">{t('recordModal.unassigned')}</option>
                 {ALL_GOALS.map((gl) => (
@@ -655,7 +655,7 @@ function RecordModalForm({
                 id="modal-status-select"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as WorkflowStatus)}
-                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
               >
                 {ALL_STATUSES.map((st) => (
                   <option key={st} value={st}>
@@ -673,7 +673,7 @@ function RecordModalForm({
                 id="modal-review-status-select"
                 value={reviewStatus}
                 onChange={(e) => setReviewStatus(e.target.value as ReviewStatus)}
-                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
               >
                 <option value="">{t('recordModal.unassigned')}</option>
                 {ALL_REVIEW_STATUSES.map((rst) => (
@@ -687,7 +687,7 @@ function RecordModalForm({
             <div className="space-y-1">
               <label htmlFor="modal-progress-range" className="text-xs font-semibold text-slate-700 flex justify-between">
                 <span>{t('recordModal.progress').replace('{val}', String(progress))}</span>
-                <span className="font-mono text-purple-700">{progress}%</span>
+                <span className="font-mono text-[#A13F5B]">{progress}%</span>
               </label>
               <input
                 id="modal-progress-range"
@@ -697,7 +697,7 @@ function RecordModalForm({
                 step="5"
                 value={progress}
                 onChange={(e) => setProgress(Number(e.target.value))}
-                className="w-full accent-purple-600 cursor-pointer"
+                className="w-full accent-[#A13F5B] cursor-pointer"
               />
             </div>
           </div>
@@ -715,7 +715,7 @@ function RecordModalForm({
                     type="checkbox"
                     checked={publishTimeKnown}
                     onChange={(e) => setPublishTimeKnown(e.target.checked)}
-                    className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                    className="rounded text-[#A13F5B] focus:ring-[#A13F5B] cursor-pointer"
                   />
                   <span>{t('recordModal.timeKnown')}</span>
                 </label>
@@ -735,7 +735,7 @@ function RecordModalForm({
                         setPublishDate('');
                         setPublishTimeKnown(false);
                       }}
-                      className="inline-flex min-h-[44px] items-center rounded-lg px-2 text-xs font-semibold text-purple-700 hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="inline-flex min-h-[44px] items-center rounded-lg px-2 text-xs font-semibold text-[#A13F5B] hover:bg-[#F5E4E8] focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
                     >
                       {t('recordModal.clearDate')}
                     </button>
@@ -749,7 +749,7 @@ function RecordModalForm({
                     setPublishDate(e.target.value);
                     if (!e.target.value) setPublishTimeKnown(false);
                   }}
-                  className="w-full px-3 py-1.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-1.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
                 />
               </div>
 
@@ -764,7 +764,7 @@ function RecordModalForm({
                       type="time"
                       value={publishTime}
                       onChange={(e) => { setPublishTime(e.target.value); setPublishTimeKnown(true); }}
-                      className="w-full px-3 py-1.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-1.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
                     />
                   </div>
                 ) : (
@@ -790,7 +790,7 @@ function RecordModalForm({
                 value={hook}
                 onChange={(e) => setHook(e.target.value)}
                 placeholder={t('recordModal.hookPlaceholder')}
-                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B] resize-none"
               />
             </div>
 
@@ -804,7 +804,7 @@ function RecordModalForm({
                 value={objective}
                 onChange={(e) => setObjective(e.target.value)}
                 placeholder={t('recordModal.objectivePlaceholder')}
-                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B] resize-none"
               />
             </div>
           </div>
@@ -821,7 +821,7 @@ function RecordModalForm({
                 value={productionDetail}
                 onChange={(e) => setProductionDetail(e.target.value)}
                 placeholder={t('recordModal.productionDetailPlaceholder')}
-                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B] resize-none"
               />
             </div>
 
@@ -835,7 +835,7 @@ function RecordModalForm({
                 value={cta}
                 onChange={(e) => setCta(e.target.value)}
                 placeholder={t('recordModal.ctaPlaceholder')}
-                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B] resize-none"
               />
             </div>
           </div>
@@ -852,7 +852,7 @@ function RecordModalForm({
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 placeholder={t('recordModal.captionPlaceholder')}
-                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B] resize-none"
               />
             </div>
 
@@ -866,7 +866,7 @@ function RecordModalForm({
                 value={hashtagsStr}
                 onChange={(e) => setHashtagsStr(e.target.value)}
                 placeholder={t('recordModal.hashtagsPlaceholder')}
-                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
               />
             </div>
           </div>
@@ -892,7 +892,7 @@ function RecordModalForm({
                 type="button"
                 onClick={handleAddLink}
                 aria-label={t('recordModal.addLinkAria')}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-purple-700 bg-purple-100 hover:bg-purple-200 rounded-md transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#A13F5B] bg-[#F5E4E8] hover:bg-[#EED8DC] rounded-md transition-colors cursor-pointer"
               >
                 <IconPlus className="w-3.5 h-3.5" size={14} />
                 <span>{t('recordModal.addLink')}</span>
@@ -935,7 +935,7 @@ function RecordModalForm({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder={t('recordModal.notesPlaceholder')}
-              className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+              className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B] resize-none"
             />
           </div>
 
@@ -1010,7 +1010,7 @@ function RecordModalForm({
               <button
                 type="submit"
                 disabled={isPending}
-                className="px-4 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 active:bg-purple-800 rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                className="px-4 py-1.5 text-xs font-semibold text-white bg-[#A13F5B] hover:bg-[#8D324C] active:bg-[#78283E] rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50"
               >
                 {isPending ? t('common.saving') : t('recordModal.save')}
               </button>

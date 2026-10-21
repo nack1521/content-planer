@@ -235,10 +235,10 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#2D2526] tracking-tight">
             {t('nav.planner')}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-[#746365] mt-0.5">
             {t('planner.subtitle')}
           </p>
         </div>
@@ -246,7 +246,7 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
         <button
           type="button"
           onClick={handleOpenCreate}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#A13F5B] hover:bg-[#8D324C] active:bg-[#78283E] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
         >
           <IconPlus className="w-4 h-4" size={16} />
           <span>{t('planner.createPost')}</span>
@@ -272,7 +272,7 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
 
       {/* Main Content Area */}
       {isLoading ? (
-        <div className="py-20 text-center text-slate-400 text-sm animate-pulse">
+        <div className="py-20 text-center text-[#746365] text-sm animate-pulse">
           {t('planner.loading')}
         </div>
       ) : fetchError ? (
@@ -294,7 +294,7 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
         <EmptyState type="filtered" onResetFilters={handleResetFilters} />
       ) : (
         <div ref={resultsRef} className="space-y-4">
-          <div className="flex items-center justify-between text-sm text-slate-600 px-1">
+          <div className="flex items-center justify-between text-sm text-[#746365] px-1">
             <span>
               {t('planner.pageRange', { start: pageData.start, end: pageData.end, total: filteredItems.length })}
             </span>
@@ -307,7 +307,7 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
           <div className="block lg:hidden">
             <div className="flex items-end gap-2 mb-3">
               <div className="flex-1">
-                <label htmlFor="planner-mobile-sort" className="block text-sm font-semibold text-slate-700 mb-1">
+                <label htmlFor="planner-mobile-sort" className="block text-sm font-semibold text-[#2D2526] mb-1">
                   {t('table.sortLabel')}
                 </label>
                 <select
@@ -318,7 +318,7 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
                     setSort(key === 'default' ? null : { key: key as PlannerSortKey, direction: 'asc' });
                     setRequestedPage(1);
                   }}
-                  className="w-full min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800 focus-visible:outline-2 focus-visible:outline-purple-600"
+                  className="w-full min-h-10 rounded-lg border border-[#E8CCD2] bg-white px-3 text-sm text-[#2D2526] focus-visible:outline-2 focus-visible:outline-[#A13F5B]"
                 >
                   <option value="default">{t('table.defaultOrder')}</option>
                   <option value="title">{t('table.headerTitle')}</option>
@@ -335,7 +335,7 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
                 disabled={!sort}
                 onClick={() => sort && handleSort(sort.key)}
                 aria-label={t('table.reverseSort')}
-                className="min-h-10 min-w-10 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer disabled:cursor-not-allowed"
+                className="min-h-10 min-w-10 rounded-lg border border-[#E8CCD2] bg-white text-[#2D2526] hover:bg-[#F5E4E8] disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-[#A13F5B] cursor-pointer disabled:cursor-not-allowed"
               >
                 <span aria-hidden="true">{sort?.direction === 'desc' ? '↓' : '↑'}</span>
               </button>
@@ -344,8 +344,8 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
           </div>
 
           {pageData.totalPages > 1 && (
-            <nav aria-label={t('planner.pagination')} className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-              <span aria-live="polite" className="text-sm text-slate-600">
+            <nav aria-label={t('planner.pagination')} className="flex flex-wrap items-center justify-between gap-3 border-t border-[#F0E6E3] pt-4">
+              <span aria-live="polite" className="text-sm text-[#746365]">
                 {t('planner.pageOf', { page: pageData.page, totalPages: pageData.totalPages })}
               </span>
               <div className="flex items-center gap-2">
@@ -353,7 +353,7 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
                   type="button"
                   disabled={pageData.page === 1}
                   onClick={() => handlePageChange(pageData.page - 1)}
-                  className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer disabled:cursor-not-allowed"
+                  className="min-h-10 rounded-lg border border-[#E8CCD2] bg-white px-3 text-sm font-medium text-[#2D2526] hover:bg-[#F5E4E8] disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-[#A13F5B] cursor-pointer disabled:cursor-not-allowed"
                 >
                   {t('planner.previousPage')}
                 </button>
@@ -361,7 +361,7 @@ export function PlannerView({ initialItems, initialPillars, initialError }: Plan
                   type="button"
                   disabled={pageData.page === pageData.totalPages}
                   onClick={() => handlePageChange(pageData.page + 1)}
-                  className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer disabled:cursor-not-allowed"
+                  className="min-h-10 rounded-lg border border-[#E8CCD2] bg-white px-3 text-sm font-medium text-[#2D2526] hover:bg-[#F5E4E8] disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-[#A13F5B] cursor-pointer disabled:cursor-not-allowed"
                 >
                   {t('planner.nextPage')}
                 </button>

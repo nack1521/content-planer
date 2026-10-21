@@ -1,0 +1,7 @@
+Implement the approved single CP-COLOR-01-F1F2 correction in /Users/nack/contentPlaner. Read AGENTS.md, current HANDOFF.md, docs/handoffs/CP-COLOR-01-F1F2.md, the original color REVIEW.md and review receipt. This named correction supersedes generic milestone/full-suite instructions.
+
+Edit only the four named app files: restore the specific original shadow/blur/font/border-width utilities in F1 while retaining cream/rose colors. Fix F2 only: email placeholder #746365 on white, and resting email/password borders #9C8B8E on white. Preserve focus styling and all handlers/auth/data/layout behavior. No global recolor or cleanup.
+
+Use the correction baseline/.before copies; preserve all old results, HOLD and performance evidence. Correct overclaims only in the NEW result. Create the bounded source/contrast checker and run only the four frozen checks once; stop on failure/block. No full suite/build, test/config edits, installs, browser/login, network/DB/accounts, Git writes or deploy.
+
+Write docs/handoffs/CP-COLOR-01-F1F2-output/RESULT.md with exact edits, actual checks/contrasts and protected hashes; keep source proof distinct from deferred browser UAT. Return CP-COLOR-01-F1F2-DONE or CP-COLOR-01-F1F2-BLOCKED and STOP for Hermes intake, then same-reviewer F1/F2-only verification. No automatic second correction or next phase.

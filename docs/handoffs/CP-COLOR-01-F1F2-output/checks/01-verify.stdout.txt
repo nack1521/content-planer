@@ -1,0 +1,19 @@
+--- CP-COLOR-01-F1F2 Source and Contrast Verification ---
+✔ PASS: F1.1 LoginForm brand mark restored shadow-md (not shadow-xs)
+✔ PASS: F1.2 LoginForm main card restored shadow-xl and backdrop-blur-md (not shadow-sm)
+✔ PASS: F1.3 DesktopSidebar brand mark restored shadow-md (not shadow-xs)
+✔ PASS: F1.4 DesktopSidebar active item font-semibold removed, retaining inherited font-medium
+✔ PASS: F1.5 Settings back-to-Planner Link removed bare border width utility
+✔ PASS: F1.6 DiscardConfirmDialog keep-editing button removed bare border width utility
+✔ PASS: F2.1 LoginForm email input uses placeholder:text-[#746365]
+✔ PASS: F2.2 LoginForm inputs use resting border-[#9C8B8E]
+✔ PASS: F2.3 LoginForm email input preserves bg-white, text-[#2D2526], and rose focus ring/border
+✔ PASS: F2.4 LoginForm password input preserves bg-white, text-[#2D2526], and rose focus ring/border
+Measured email placeholder contrast (#746365 on #FFFFFF): 5.65237:1
+Measured resting border contrast (#9C8B8E on #FFFFFF): 3.23215:1
+✔ PASS: F2.5 Email placeholder contrast (5.65237:1) meets WCAG AA normal text threshold (>= 4.5:1)
+✔ PASS: F2.6 Resting input border contrast (3.23215:1) meets WCAG AA UI control boundary threshold (>= 3.0:1)
+✔ PASS: F1F2.1 All diffs against .before baseline copies match exact approved changes with 0 extraneous changes
+✔ PASS: F1F2.2 All other 228 files in baseline manifest remain 100% byte-identical
+---------------------------------------------------------
+Results: 14 passed, 0 failed

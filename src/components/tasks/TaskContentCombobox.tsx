@@ -254,7 +254,7 @@ export function TaskContentCombobox({
             if (!isOpen) setIsOpen(true);
           }}
           onKeyDown={handleKeyDown}
-          className="w-full pl-9 pr-16 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-colors"
+          className="w-full pl-9 pr-16 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#A13F5B] focus:bg-white transition-colors"
         />
 
         {/* Clear & Dropdown Action Controls */}
@@ -266,7 +266,7 @@ export function TaskContentCombobox({
               onClick={handleClear}
               aria-label={t('tasks.combobox.clear')}
               title={t('tasks.combobox.clear')}
-              className="p-1 text-slate-400 hover:text-slate-600 rounded cursor-pointer transition-colors focus:outline-none focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
+              className="p-1 text-slate-400 hover:text-slate-600 rounded cursor-pointer transition-colors focus:outline-none focus:ring-1 focus:ring-[#A13F5B] disabled:opacity-50"
             >
               <IconX className="w-3.5 h-3.5" />
             </button>
@@ -284,7 +284,7 @@ export function TaskContentCombobox({
             }}
             aria-label={t('tasks.combobox.toggle')}
             title={t('tasks.combobox.toggle')}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded cursor-pointer transition-colors focus:outline-none focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
+            className="p-1 text-slate-400 hover:text-slate-600 rounded cursor-pointer transition-colors focus:outline-none focus:ring-1 focus:ring-[#A13F5B] disabled:opacity-50"
           >
             <IconChevronDown
               className={`w-3.5 h-3.5 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
@@ -305,7 +305,7 @@ export function TaskContentCombobox({
             <span className="font-medium text-slate-800 truncate">
               {selectedItem.title}
             </span>
-            <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 font-medium rounded text-[10px] shrink-0">
+            <span className="px-1.5 py-0.5 bg-[#F5E4E8] text-[#A13F5B] font-medium rounded text-[10px] shrink-0">
               {t(`status.${selectedItem.status}`)}
             </span>
             {selectedItem.publish_at && (
@@ -356,7 +356,7 @@ export function TaskContentCombobox({
                   onClick={() => handleSelectOption(opt.id)}
                   className={`px-3 py-2 cursor-pointer transition-colors flex items-center justify-between gap-2 ${
                     isHighlighted
-                      ? 'bg-purple-50 text-purple-900'
+                      ? 'bg-[#F5E4E8] text-[#A13F5B]'
                       : isSelected
                         ? 'bg-slate-50 text-slate-900 font-medium'
                         : 'text-slate-700 hover:bg-slate-50'
@@ -390,7 +390,7 @@ export function TaskContentCombobox({
                   </div>
 
                   {isSelected && (
-                    <span className="text-purple-600 shrink-0">
+                    <span className="text-[#A13F5B] shrink-0">
                       <IconCheck className="w-4 h-4" />
                     </span>
                   )}

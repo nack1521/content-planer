@@ -17,16 +17,16 @@ export function MobileHeader() {
   };
 
   return (
-    <header className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-slate-950 text-white border-b border-slate-800 shadow-xs">
+    <header className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white text-[#2D2526] border-b border-[#F0E6E3] shadow-xs">
       <div className="flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-700 to-orchid-500 flex items-center justify-center text-white font-bold text-xs shadow-xs">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#8D324C] to-[#A13F5B] flex items-center justify-center text-white font-bold text-xs shadow-xs">
           CP
         </div>
         <div>
-          <span className="font-bold text-sm text-white tracking-tight">
+          <span className="font-bold text-sm text-[#2D2526] tracking-tight">
             {t('app.title')}
           </span>
-          <span className="block text-[10px] text-slate-400 font-medium">
+          <span className="block text-[10px] text-[#746365] font-medium">
             {t('app.ownerBadge')}
           </span>
         </div>
@@ -38,7 +38,7 @@ export function MobileHeader() {
           type="button"
           onClick={handleSignOut}
           disabled={isPending}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-slate-900 border border-slate-800 transition-colors disabled:opacity-50"
+          className="p-1.5 rounded-lg text-[#746365] hover:text-[#A13F5B] hover:bg-[#F5E4E8] border border-[#E8CCD2] transition-colors disabled:opacity-50"
           title={t('auth.signOut')}
           aria-label={t('auth.signOut')}
         >

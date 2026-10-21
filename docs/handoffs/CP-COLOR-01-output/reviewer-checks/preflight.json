@@ -1,0 +1,39 @@
+{
+  "review": "CP-COLOR-01",
+  "date": "2026-10-20",
+  "workspace": "/Users/nack/contentPlaner",
+  "candidate_seal": {
+    "path": "/Users/nack/.hermes/workspaces/content-planer/CP-COLOR-01/incoming/manifest.json",
+    "sha256": "a4d513d99f21c8c9708c0e1ea78728202085b1dd97938aed9465b44abd5cb629",
+    "entries": 211,
+    "current_entry_mismatches": 0
+  },
+  "received_color_baseline": {
+    "path": "/Users/nack/.hermes/workspaces/content-planer/CP-COLOR-01/baseline/manifest.json",
+    "sha256": "2a3a38be46f7c5f4f581364556fed0df2984a208ba8dee68ff1fd20afb2fcbd7",
+    "entries": 204,
+    "common_unchanged": 175,
+    "changed_source_files": 27,
+    "mutable_status_files_excluded_from_candidate_seal": ["HANDOFF.md", "TASKS.md"],
+    "changed_source_baselines_independently_reconstructed_and_hash_verified": 27
+  },
+  "status_file_preflight_sha256": {
+    "HANDOFF.md": "8b7c3d64705e925156964ef6f5487cb64238acbe6d3d159a0b124ace31d56ffe",
+    "TASKS.md": "0764fc94765d10359ea59028506a565b36dc68285f798a3b9033bb90998d6b0a"
+  },
+  "frozen_check_safety": {
+    "selected_tests": "Inspected all five test files and test loader; tests exercise pure utility cases or read project files. No fetch, Supabase client, network/database writes, subprocess, or fixture-writing hooks were found.",
+    "typescript": "tsconfig includes project .ts/.tsx sources; local node_modules/.bin/tsc exists; no install will be attempted.",
+    "lint": "package script is eslint with no prelint/postlint scripts; ESLint config uses Next core-web-vitals and TypeScript configs.",
+    "build": "package script is next build; next.config.ts has no custom hooks; no app server, browser, login, or external account operation is part of this check.",
+    "git_diff_check": "Read-only whitespace check; no Git write is authorized or planned."
+  },
+  "authorized_sequence": [
+    "node --loader ./tests/test-loader.mjs --test tests/planner-list.test.mjs tests/task-list.test.mjs tests/task-content-search.test.mjs tests/localization-scanner.test.mjs tests/accessibility.test.mjs",
+    "npx --no-install tsc --noEmit",
+    "npm run lint",
+    "npm run build",
+    "git diff --check"
+  ],
+  "stop_rule": "Run once, in order; stop on first nonzero or platform-blocked check. Preserve exact argv/stdout/stderr/exit separately. No retries, source/test/config edits, installation, network/database/account operation, server/browser, Git writes, or deployment."
+}

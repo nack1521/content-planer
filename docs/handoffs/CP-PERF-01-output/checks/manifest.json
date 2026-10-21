@@ -1,0 +1,84 @@
+{
+  "sequence": "CP-PERF-01 Finite Checks Sequence",
+  "executed_at": "2026-10-20T16:28:06+07:00",
+  "status": "ALL_PASSED",
+  "checks": [
+    {
+      "gate": 1,
+      "name": "Regression and pure utility test suite",
+      "argv": [
+        "node",
+        "--loader",
+        "./tests/test-loader.mjs",
+        "--test",
+        "tests/navigation-performance.test.mjs",
+        "tests/planner-list.test.mjs",
+        "tests/task-list.test.mjs",
+        "tests/task-content-search.test.mjs",
+        "tests/localization-scanner.test.mjs"
+      ],
+      "command": "node --loader ./tests/test-loader.mjs --test tests/navigation-performance.test.mjs tests/planner-list.test.mjs tests/task-list.test.mjs tests/task-content-search.test.mjs tests/localization-scanner.test.mjs",
+      "stdout_file": "01-tests.stdout.txt",
+      "stderr_file": "01-tests.stderr.txt",
+      "exit_code": 0,
+      "tests_passed": 41,
+      "tests_failed": 0
+    },
+    {
+      "gate": 2,
+      "name": "TypeScript compilation check",
+      "argv": [
+        "npx",
+        "--no-install",
+        "tsc",
+        "--noEmit"
+      ],
+      "command": "npx --no-install tsc --noEmit",
+      "stdout_file": "02-tsc.stdout.txt",
+      "stderr_file": "02-tsc.stderr.txt",
+      "exit_code": 0
+    },
+    {
+      "gate": 3,
+      "name": "ESLint linter check",
+      "argv": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "command": "npm run lint",
+      "stdout_file": "03-lint.stdout.txt",
+      "stderr_file": "03-lint.stderr.txt",
+      "exit_code": 0,
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "gate": 4,
+      "name": "Next.js production build",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "command": "npm run build",
+      "stdout_file": "04-build.stdout.txt",
+      "stderr_file": "04-build.stderr.txt",
+      "exit_code": 0,
+      "pages_generated": "17/17"
+    },
+    {
+      "gate": 5,
+      "name": "Git diff whitespace check",
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "command": "git diff --check",
+      "stdout_file": "05-git-diff.stdout.txt",
+      "stderr_file": "05-git-diff.stderr.txt",
+      "exit_code": 0
+    }
+  ]
+}

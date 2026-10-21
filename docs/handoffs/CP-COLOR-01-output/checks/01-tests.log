@@ -1,0 +1,55 @@
+(node:17316) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 1. Form controls in modals and views have explicit label htmlFor associations (26.24275ms)
+✔ 2. All icon-only and interactive action buttons have accessible names (aria-label, title, or inner text) (14.062875ms)
+✔ 3. Focus trap keydown handler wraps focus backwards on Shift+Tab at first element (1.493708ms)
+✔ 4. Focus trap keydown handler wraps focus forwards on Tab at last element (0.68325ms)
+✔ 5. Focus trap keydown handler triggers onClose on Escape (0.306625ms)
+✔ 6. Modal components declare dialog role and focus trap references (1.031458ms)
+✔ 7. IdeasView declares accessible live regions, alert roles, and roving tabIndex attributes (1.300167ms)
+(node:17317) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 1. Translation keys have 100% parity between en.json and th.json (15.061416ms)
+✔ 2. Reusable components have no hardcoded English loading messages (19.4525ms)
+✔ 3. Reusable components have no hardcoded literal placeholders (122.305708ms)
+✔ 4. Reusable components do not contain hardcoded 'Copy of' prefix in JSX (7.49175ms)
+✔ 5. getLocalizedErrorMessage translates stable server error codes (7.344708ms)
+(node:17318) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ planner sorting toggles numeric-aware title order without mutating the fetched order (76.998958ms)
+✔ planner columns sort by their displayed field, with missing values last (3.140167ms)
+✔ equal sort values retain fetched order (0.469625ms)
+✔ planner pages contain 25 items and clamp after records shrink (0.590792ms)
+(node:17319) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ empty or whitespace query preserves exact predictable default order (6.786583ms)
+✔ source-number exact and prefix matches rank before title substring matches (1.103292ms)
+✔ source-number match supports leading hash (#) (0.513458ms)
+✔ title exact match ranks before title prefix, which ranks before title substring (0.320459ms)
+✔ Thai and English keyword matching against hook, objective, caption, notes, and hashtags (9.676583ms)
+✔ localized status and format keyword matching (0.587792ms)
+✔ formatContentItemLabel formats source number and title correctly (0.333625ms)
+✔ returns empty array when no content items match query (0.232083ms)
+✔ selection and clear resolution behaves predictably for independent and linked tasks (2.047542ms)
+(node:17320) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ task sorting toggles numeric-aware title order without mutating the fetched order (74.634ms)
+✔ task columns sort by their field, with missing values last in both directions (2.127333ms)
+✔ equal sort values retain original fetched order (0.821417ms)
+✔ task pages contain 25 items and clamp after records shrink (0.506375ms)
+✔ task sorting toggles between asc and desc on repeated clicks, matching planner (0.330125ms)
+✔ mobile direction button switches both ways and only default order clears sort (3.893917ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1098.926083
+EXIT:0

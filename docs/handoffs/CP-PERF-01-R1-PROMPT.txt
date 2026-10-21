@@ -1,0 +1,7 @@
+Implement only the approved evidence correction CP-PERF-01-R1 in /Users/nack/contentPlaner. Read AGENTS.md, the current HANDOFF.md block, docs/handoffs/CP-PERF-01-output/REVIEW.md and docs/handoffs/CP-PERF-01-R1.md. Preserve the original HOLD and retained checks.
+
+Fix R1 by testing the actual production createNavigationReadContext -> createClient/getClaims -> initial-read action fan-out with an isolated synthetic client dependency. Count calls originating from production code, not a test-local mockContext invoked once. Cover independent request freshness and a claims-error zero-query control. Keep generic React.cache demonstrations and hosted/browser performance claims correctly limited.
+
+Edit only the handoff's allowed test/report/status paths; add the isolated loader/fixture if specified. ALL application source stays unchanged. No installs, env/private data, network/DB/accounts, server/browser starts, Git writes, theme work or deployment. If the existing seam cannot be instrumented within those limits, report BLOCKED rather than refactor production.
+
+Run only the frozen R1 final checks, retain actual argv/logs/exits, and write docs/handoffs/CP-PERF-01-R1-output/RESULT.md. Correct overstated claims in the original RESULT.md while retaining historical evidence. Return CP-PERF-01-R1-DONE or CP-PERF-01-R1-BLOCKED and STOP. No self-review or automatic additional pass; Luna will review R1 only.

@@ -1,0 +1,30 @@
+(node:69306) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/navigation-r1-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/navigation-r1-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ C1.1: NavigationPending component is exported and uses useLinkStatus (2.299875ms)
+✔ C1.2: DesktopSidebar and MobileNav integrate NavigationPending in all 5 app navigation links (0.669375ms)
+✔ C1.3: Route loading boundaries exist for all 5 app routes (1.254334ms)
+✔ C1.4: PageLoading provides accessible feedback and structural skeletons for all 5 routes (0.369708ms)
+✔ C2.0: createNavigationReadContext and getNavigationReadContext are exported functions (0.184584ms)
+✔ C2.1: Planner page pattern executes production factory and captures exactly 1 createClient and 1 getClaims call (2.08175ms)
+✔ C2.2: Tasks page pattern executes production factory and captures exactly 1 createClient and 1 getClaims call across 3 reads (0.62825ms)
+✔ C2.3: Ideas page pattern executes production factory and captures exactly 1 createClient and 1 getClaims call across 3 reads (0.336875ms)
+✔ C2.4: Calendar page pattern executes production factory and captures exactly 1 createClient and 1 getClaims call (0.271667ms)
+✔ C2.5: Representative content record payloads (links, tasks, pillar, hook, CTA) are preserved via production mapping (1.978708ms)
+✔ C2.6: (Generic library behavior only) React.cache server dispatcher memoizes within scope and discards across scopes (3.959209ms)
+✔ C3.1: Missing user identity in production factory leads to ZERO database queries and returns unauthorized (0.282709ms)
+✔ C3.2: Production factory getClaims error branch leads to ZERO database queries and returns unauthorized (0.262917ms)
+✔ C3.3: User A and User B independent subsequent requests through the production factory retain separate identities without leakage (0.503083ms)
+✔ C3.4: Authentication failure in Request A does not contaminate subsequent Request B through production factory (0.233792ms)
+✔ C4.1: Query results are not cached across requests (subsequent requests query database freshly) (0.215875ms)
+✔ C4.2: Content date clearing and editor payloads remain valid (0.135209ms)
+✔ C5.1: Translation keys have 100% parity including new loading and navigation keys (1.739208ms)
+✔ C5.2: Accessible attributes and zero-layout-shift classes on NavigationPending and PageLoading (0.214583ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 511.027916

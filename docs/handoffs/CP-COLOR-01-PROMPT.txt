@@ -1,0 +1,7 @@
+Supersede CP-THEME-SAMPLE-01: Nack canceled the sample and redesign. Implement CP-COLOR-01 directly in /Users/nack/contentPlaner. Read AGENTS.md, the current HANDOFF.md block and docs/handoffs/CP-COLOR-01.md. Do not run both tasks.
+
+Change COLORS ONLY: warm cream/paper surfaces, muted rose/pink primary accents and readable dark warm text, consistently across existing pages, menus, Login, dialogs and loading/pending states. Start with minimal central token changes plus necessary local foreground/background fixes. Preserve semantic status/error colors, platform brands and user pillar colors. Measure actual contrast.
+
+Do not change layout/DOM, spacing, font/size, radii/shadow geometry, columns, breakpoints, navigation, handlers, queries or any business/auth/data logic. Preserve all performance/R1 work. No prototype, new components/theme switch, dependencies, tests/config edits, unrelated cleanup, DB/accounts, real login, Git writes, host migration or deployment.
+
+Follow the exact style-path allowlist, baseline and finite checks. Write docs/handoffs/CP-COLOR-01-output/RESULT.md with changed paths, retained behavior, actual checks/contrast and honest visual limits. Return CP-COLOR-01-DONE or CP-COLOR-01-BLOCKED and STOP for one Luna review. Do not start another phase or correction loop.

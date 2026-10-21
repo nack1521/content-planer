@@ -77,13 +77,13 @@ export function PlannerSummary({
     <section aria-labelledby="summary-heading" className="space-y-3">
       {/* Mobile Compact Overview (md:hidden) — Height <= 70px to preserve 390x844 first viewport */}
       <div className="md:hidden space-y-2">
-        <div className="grid grid-cols-3 gap-2 bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs">
+        <div className="grid grid-cols-3 gap-2 bg-white p-2.5 rounded-xl border border-[#F0E6E3] shadow-xs">
           {/* Today */}
-          <div className="flex flex-col items-center justify-center p-1 rounded-lg bg-purple-50/50 border border-purple-100/60">
-            <span className="text-[11px] font-semibold text-purple-900 truncate">
+          <div className="flex flex-col items-center justify-center p-1 rounded-lg bg-[#F5E4E8]/50 border border-[#E8CCD2]/60">
+            <span className="text-[11px] font-semibold text-[#A13F5B] truncate">
               {t('summary.compactToday')}
             </span>
-            <span className="text-base font-bold font-mono text-purple-700">
+            <span className="text-base font-bold font-mono text-[#A13F5B]">
               {plannedToday}
             </span>
           </div>
@@ -114,7 +114,7 @@ export function PlannerSummary({
           <button
             type="button"
             onClick={() => setShowMobileStages(!showMobileStages)}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-purple-600 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-[#A13F5B] transition-colors cursor-pointer"
           >
             <span>
               {showMobileStages
@@ -133,7 +133,7 @@ export function PlannerSummary({
             <button
               type="button"
               onClick={() => onSelectStatusFilter('all')}
-              className="text-xs font-medium text-purple-600 hover:text-purple-700 cursor-pointer"
+              className="text-xs font-medium text-[#A13F5B] hover:text-[#8D324C] cursor-pointer"
             >
               {t('filters.reset')}
             </button>
@@ -141,7 +141,7 @@ export function PlannerSummary({
         </div>
 
         {showMobileStages && (
-          <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs flex flex-wrap gap-1.5 animate-fadeIn">
+          <div className="bg-white p-2.5 rounded-xl border border-[#F0E6E3] shadow-xs flex flex-wrap gap-1.5 animate-fadeIn">
             {ALL_STATUSES.map((st) => {
               const isSelected = activeStatusFilter === st;
               const count = stageCounts[st] || 0;
@@ -153,7 +153,7 @@ export function PlannerSummary({
                   onClick={() => onSelectStatusFilter(isSelected ? 'all' : st)}
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
                     isSelected
-                      ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                      ? 'bg-[#A13F5B] text-white border-[#A13F5B] shadow-xs'
                       : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                   }`}
                   title={t('summary.filterByStatus', { status: localizedStatus })}
@@ -161,7 +161,7 @@ export function PlannerSummary({
                   <span>{localizedStatus}</span>
                   <span
                     className={`font-mono text-[11px] px-1.5 py-0.2 rounded-full ${
-                      isSelected ? 'bg-purple-700/80 text-white' : 'bg-slate-200/80 text-slate-800'
+                      isSelected ? 'bg-[#8D324C] text-white' : 'bg-slate-200/80 text-slate-800'
                     }`}
                   >
                     {count}
@@ -185,10 +185,10 @@ export function PlannerSummary({
         {/* Summary KPI Cards Strip */}
         <div className="grid grid-cols-6 gap-3">
           {/* Planned Today */}
-          <div className="bg-white rounded-xl p-3.5 border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="bg-white rounded-xl p-3.5 border border-[#F0E6E3] shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between text-slate-500 mb-2">
               <span className="text-xs font-semibold text-slate-700">{t('summary.plannedToday')}</span>
-              <div className="p-1.5 rounded-lg bg-purple-50 text-purple-600">
+              <div className="p-1.5 rounded-lg bg-[#F5E4E8] text-[#A13F5B]">
                 <IconClock className="w-4 h-4" size={16} />
               </div>
             </div>
@@ -196,9 +196,9 @@ export function PlannerSummary({
               <span className="text-2xl font-bold font-mono text-slate-900">{plannedToday}</span>
               <span className="text-xs text-slate-500">{t('common.items')}</span>
             </div>
-            <div className="mt-2 h-1 w-full bg-purple-100 rounded-full overflow-hidden">
+            <div className="mt-2 h-1 w-full bg-[#F5E4E8] rounded-full overflow-hidden">
               <div
-                className="h-full bg-purple-600 rounded-full"
+                className="h-full bg-[#A13F5B] rounded-full"
                 style={{ width: `${Math.min(100, plannedToday * 33)}%` }}
               />
             </div>
@@ -308,14 +308,14 @@ export function PlannerSummary({
         </div>
 
         {/* Desktop Interactive Stage Breakdown Strip */}
-        <div className="bg-white rounded-xl p-3.5 border border-slate-200 shadow-xs">
+        <div className="bg-white rounded-xl p-3.5 border border-[#F0E6E3] shadow-xs">
           <div className="text-xs font-semibold text-slate-600 mb-2 flex items-center justify-between">
             <span>{t('summary.pipelineHealth')}</span>
             {activeStatusFilter !== 'all' && (
               <button
                 type="button"
                 onClick={() => onSelectStatusFilter('all')}
-                className="text-purple-600 hover:text-purple-700 text-xs font-medium cursor-pointer"
+                className="text-[#A13F5B] hover:text-[#8D324C] text-xs font-medium cursor-pointer"
               >
                 {t('filters.reset')}
               </button>
@@ -333,7 +333,7 @@ export function PlannerSummary({
                   onClick={() => onSelectStatusFilter(isSelected ? 'all' : st)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
                     isSelected
-                      ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                      ? 'bg-[#A13F5B] text-white border-[#A13F5B] shadow-xs'
                       : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                   }`}
                   title={t('summary.filterByStatus', { status: localizedStatus })}
@@ -341,7 +341,7 @@ export function PlannerSummary({
                   <span>{localizedStatus}</span>
                   <span
                     className={`font-mono text-xs px-1.5 py-0.2 rounded-full ${
-                      isSelected ? 'bg-purple-700/80 text-white' : 'bg-slate-200/80 text-slate-800'
+                      isSelected ? 'bg-[#8D324C] text-white' : 'bg-slate-200/80 text-slate-800'
                     }`}
                   >
                     {count}

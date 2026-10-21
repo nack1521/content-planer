@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { getContentItemsAction, getContentPillarsAction } from '@/app/actions/content';
+import { createNavigationReadContext, withNavigationReadContext } from '@/utils/supabase/navigationReadContext';
 
 export async function generateMetadata({
   params,
@@ -31,10 +32,14 @@ export default async function CalendarPage({
     notFound();
   }
 
-  const [itemsRes, pillarsRes] = await Promise.all([
-    getContentItemsAction(),
-    getContentPillarsAction(),
-  ]);
+  const [itemsRes, pillarsRes] = await withNavigationReadContext(
+    createNavigationReadContext(),
+    () =>
+      Promise.all([
+        getContentItemsAction(),
+        getContentPillarsAction(),
+      ])
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

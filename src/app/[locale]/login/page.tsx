@@ -33,7 +33,7 @@ export default async function LoginPage({
   }
 
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[#FBF7F5]" />}>
       <LoginForm />
     </Suspense>
   );

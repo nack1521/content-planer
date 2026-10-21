@@ -1,0 +1,7 @@
+Start the sole primary review of CP-PERF-01 in /Users/nack/contentPlaner. Read AGENTS.md, the current HANDOFF.md block, docs/handoffs/CP-PERF-01.md, CP-PERF-01-INTAKE.md and CP-PERF-01-REVIEW.md, then the implementation RESULT.md and retained logs. Follow the exact candidate hash seal and review contract.
+
+Review C1-C5 for major correctness/security/data-freshness/navigation regressions, not cosmetic expansion. Assess whether supplied-context counters and a standalone React.cache test actually prove production auth deduplication; distinguish source assertions, synthetic behavior and real browser/hosted proof. Missing hosted timings/browser UAT were explicitly deferred; do not invent that evidence or turn it into a new infrastructure project.
+
+You may inspect source/hashes and run only the review contract's five final commands once, after safety checks; stop execution at the first failure. Do not edit app/tests/config, install, log in, touch DB/accounts, rerun full suites, commit, push, deploy or auto-fix. Preserve inherited files and implementer evidence.
+
+Write docs/handoffs/CP-PERF-01-output/REVIEW.md with PASS/HOLD/BLOCKED, consolidated major findings, actual checks and evidence limits. Save fresh raw reviewer logs only under reviewer-checks/. Return CP-PERF-01-REVIEW-DONE with the verdict and report path, then STOP. No automatic correction or second review.

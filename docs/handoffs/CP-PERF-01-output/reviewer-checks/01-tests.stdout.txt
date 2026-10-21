@@ -1,0 +1,64 @@
+(node:62888) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 1. Translation keys have 100% parity between en.json and th.json (13.951917ms)
+✔ 2. Reusable components have no hardcoded English loading messages (32.814708ms)
+✔ 3. Reusable components have no hardcoded literal placeholders (92.089666ms)
+✔ 4. Reusable components do not contain hardcoded 'Copy of' prefix in JSX (5.918ms)
+✔ 5. getLocalizedErrorMessage translates stable server error codes (1.584834ms)
+(node:62889) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ C1.1: NavigationPending component is exported and uses useLinkStatus (1.120167ms)
+✔ C1.2: DesktopSidebar and MobileNav integrate NavigationPending in all 5 app navigation links (0.570209ms)
+✔ C1.3: Route loading boundaries exist for all 5 app routes (1.292125ms)
+✔ C1.4: PageLoading provides accessible feedback and structural skeletons for all 5 routes (0.438541ms)
+✔ C2.0: createNavigationReadContext and getNavigationReadContext are exported functions (0.146541ms)
+✔ C2.1: Planner initial reads deduplicate authentication to exactly 1 auth call (1.848417ms)
+✔ C2.2: Tasks initial reads deduplicate authentication to exactly 1 auth call across 3 reads (0.458458ms)
+✔ C2.3: Ideas initial reads deduplicate authentication to exactly 1 auth call across 3 reads (0.303333ms)
+✔ C2.4: Full content record payloads (links, tasks, pillar, hook, CTA) are completely preserved (0.792709ms)
+✔ C2.5: React.cache real server-render semantics (via server dispatcher) memoizes within a request and discards across requests (3.21975ms)
+✔ C3.1: Missing or unauthorized identity performs ZERO database queries and returns unauthorized (0.209625ms)
+✔ C3.2: User A and User B synthetic requests retain separate identity and queries without leakage (0.240333ms)
+✔ C3.3: Authentication failure in Request A does not contaminate Request B (0.172417ms)
+✔ C4.1: Query results are not cached across requests (subsequent requests query database freshly) (0.22175ms)
+✔ C4.2: Content date clearing and editor payloads remain valid (0.13675ms)
+✔ C5.1: Translation keys have 100% parity including new loading and navigation keys (0.831ms)
+✔ C5.2: Accessible attributes and zero-layout-shift classes on NavigationPending and PageLoading (0.161167ms)
+(node:62890) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ planner sorting toggles numeric-aware title order without mutating the fetched order (76.434667ms)
+✔ planner columns sort by their displayed field, with missing values last (4.274042ms)
+✔ equal sort values retain fetched order (0.465ms)
+✔ planner pages contain 25 items and clamp after records shrink (0.586917ms)
+(node:62891) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ empty or whitespace query preserves exact predictable default order (5.822041ms)
+✔ source-number exact and prefix matches rank before title substring matches (1.496167ms)
+✔ source-number match supports leading hash (#) (2.424333ms)
+✔ title exact match ranks before title prefix, which ranks before title substring (0.503958ms)
+✔ Thai and English keyword matching against hook, objective, caption, notes, and hashtags (1.854459ms)
+✔ localized status and format keyword matching (0.844375ms)
+✔ formatContentItemLabel formats source number and title correctly (0.503375ms)
+✔ returns empty array when no content items match query (0.870041ms)
+✔ selection and clear resolution behaves predictably for independent and linked tasks (0.482583ms)
+(node:62892) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./tests/test-loader.mjs", pathToFileURL("./")); register("./tests/test-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ task sorting toggles numeric-aware title order without mutating the fetched order (77.149833ms)
+✔ task columns sort by their field, with missing values last in both directions (1.367083ms)
+✔ equal sort values retain original fetched order (3.537667ms)
+✔ task pages contain 25 items and clamp after records shrink (1.179541ms)
+✔ task sorting toggles between asc and desc on repeated clicks, matching planner (0.690583ms)
+✔ mobile direction button switches both ways and only default order clears sort (0.34475ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 41
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 876.319125

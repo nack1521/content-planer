@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getReferenceAccountsAction } from '@/app/actions/reference-accounts';
 import { getContentItemsAction, getContentPillarsAction } from '@/app/actions/content';
 import { IdeasView } from '@/components/ideas/IdeasView';
+import { createNavigationReadContext, withNavigationReadContext } from '@/utils/supabase/navigationReadContext';
 
 export async function generateMetadata({
   params,
@@ -34,11 +35,15 @@ export default async function IdeasPage({
     notFound();
   }
 
-  const [itemsRes, pillarsRes, accountsRes] = await Promise.all([
-    getContentItemsAction(),
-    getContentPillarsAction(),
-    getReferenceAccountsAction(),
-  ]);
+  const [itemsRes, pillarsRes, accountsRes] = await withNavigationReadContext(
+    createNavigationReadContext(),
+    () =>
+      Promise.all([
+        getContentItemsAction(),
+        getContentPillarsAction(),
+        getReferenceAccountsAction(),
+      ])
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

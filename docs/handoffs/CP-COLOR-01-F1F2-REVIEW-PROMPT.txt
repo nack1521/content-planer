@@ -1,0 +1,7 @@
+Verify CP-COLOR-01-F1F2 in /Users/nack/contentPlaner as the same reviewer, F1/F2 ONLY. Read AGENTS.md, current HANDOFF.md, docs/handoffs/CP-COLOR-01-F1F2.md, CP-COLOR-01-F1F2-INTAKE.md, CP-COLOR-01-F1F2-REVIEW.md, correction RESULT/logs, and the original color HOLD. Verify the sealed incoming candidate.
+
+Independently compare the complete four-file correction diff with its .before copies: exact shadow/blur/font/border-width restorations, no extra changes. Verify actual email/password classes, placeholder contrast >=4.5:1 and resting borders >=3:1, preserving white fill and focus styling. The supplied checker's substring checks do not replace full-line inspection.
+
+Run only the single frozen verifier command once after safety inspection; reconcile retained scoped lint/typecheck/whitespace evidence without rerunning them. No full re-review/suite/build, performance/R1 reopening, new browser requirement, fixes, installs, private data, network/DB/accounts, Git writes or deployment.
+
+Write docs/handoffs/CP-COLOR-01-F1F2-output/REVIEW.md with PASS/HOLD/BLOCKED - F1/F2 only, actual evidence and unverified browser/UAT limits. Fresh raw logs go in reviewer-checks/. Preserve original HOLD and all received evidence. Return CP-COLOR-01-F1F2-REVIEW-DONE with verdict/path and STOP; no automatic correction loop.

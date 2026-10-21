@@ -1,0 +1,123 @@
+{
+  "candidate_manifest": "/Users/nack/.hermes/workspaces/content-planer/CP-PERF-01/incoming/manifest.json",
+  "candidate_manifest_sha256": "e3d2adb58a33dacb232dd8cb5aa16fa3f70d8b9da6fb265163aac2907aba0452",
+  "candidate_sealed_files": 149,
+  "candidate_sealed_files_verified_after_review": 149,
+  "candidate_hash_mismatches": 0,
+  "pre_review_status_entries": 52,
+  "pre_review_status_hashes_unchanged": true,
+  "authorized_new_paths_before_receipt": [
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/REVIEW.md",
+      "sha256": "d096003bed7468150253a9c3a10c461773e7636fe7a87f4129f0eb931c033389",
+      "bytes": 10769
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/01-tests.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/01-tests.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/01-tests.stdout.txt",
+      "sha256": "8f704516f2b49237b250517597a66630a919f2cad7252b5de36421e82434f2fc",
+      "bytes": 5976
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/02-tsc.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/02-tsc.stderr.txt",
+      "sha256": "44c8b6bf321f7bb8b813a2a67ef773201708e6e5294f11f9516939ff03e0853e",
+      "bytes": 154
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/02-tsc.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/03-lint.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/03-lint.stderr.txt",
+      "sha256": "44c8b6bf321f7bb8b813a2a67ef773201708e6e5294f11f9516939ff03e0853e",
+      "bytes": 154
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/03-lint.stdout.txt",
+      "sha256": "da194d48ddb14a801a6f3e853ae6f3f822e493d46ced44da8ba5b52f8badfdf4",
+      "bytes": 40
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/04-build.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/04-build.stderr.txt",
+      "sha256": "44c8b6bf321f7bb8b813a2a67ef773201708e6e5294f11f9516939ff03e0853e",
+      "bytes": 154
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/04-build.stdout.txt",
+      "sha256": "9eb941a062e38bfe06493ae68eb6bc07b9bfb2195b43eb7ef1d15c9c2acbf9f6",
+      "bytes": 1171
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/05-git-diff.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/05-git-diff.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/05-git-diff.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/manifest.json",
+      "sha256": "8fbffe3a53fb2e95e39acba85b43911283ef73cfb840a88e4a6d1165626c80c8",
+      "bytes": 2087
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/preflight.json",
+      "sha256": "baf10276170abf9c6f214f7e180e718b69cd76679001f3b8392ade16346ebb9c",
+      "bytes": 13994
+    }
+  ],
+  "authorized_new_paths_before_receipt_count": 18,
+  "only_added_path_policy": "REVIEW.md and reviewer-checks/",
+  "self_hash_note": "This receipt includes hashes for REVIEW.md and all reviewer evidence created before it; its own SHA-256 is computed after writing and reported in the final handoff.",
+  "expected_final_status_entries": 71
+}

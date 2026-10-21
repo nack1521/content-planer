@@ -1,0 +1,7 @@
+Review CP-PERF-01-R1 only in /Users/nack/contentPlaner, as the same primary reviewer. Read AGENTS.md, the current HANDOFF.md block, docs/handoffs/CP-PERF-01-output/REVIEW.md, docs/handoffs/CP-PERF-01-R1.md, CP-PERF-01-R1-INTAKE.md, CP-PERF-01-R1-REVIEW.md and the R1 RESULT.md. Verify the new R1 candidate seal.
+
+Decide whether R1 is closed by actual production factory/read execution with instrumented synthetic createClient/getClaims dependencies, fresh subsequent identity and a claims-error zero-query control. Check corrected evidence wording and source-line references. Do not reopen prior non-blocking findings, generic cache/Next runtime proof, browser UAT, hosted timing or infrastructure work. ALL app source must remain unchanged from the correction baseline.
+
+After safety checks, run only the two frozen R1 commands once; stop on failure. No edits/fixes, full suite, build/lint cycle, install, network/DB/accounts, server/browser, Git writes or deployment.
+
+Write docs/handoffs/CP-PERF-01-R1-output/REVIEW.md with an R1-only PASS/HOLD/BLOCKED, raw reviewer evidence, counts and remaining boundaries. Preserve original HOLD and implementer logs. Return CP-PERF-01-R1-REVIEW-DONE with verdict/path and STOP. No automatic further correction or review.

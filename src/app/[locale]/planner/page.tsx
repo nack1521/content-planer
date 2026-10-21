@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PlannerView } from '@/components/planner/PlannerView';
 import { getContentItemsAction, getContentPillarsAction } from '@/app/actions/content';
+import { createNavigationReadContext, withNavigationReadContext } from '@/utils/supabase/navigationReadContext';
 
 export async function generateMetadata({
   params,
@@ -35,10 +36,14 @@ export default async function PlannerPage({
   }
 
   // Server-side initial reads
-  const [itemsRes, pillarsRes] = await Promise.all([
-    getContentItemsAction(),
-    getContentPillarsAction(),
-  ]);
+  const [itemsRes, pillarsRes] = await withNavigationReadContext(
+    createNavigationReadContext(),
+    () =>
+      Promise.all([
+        getContentItemsAction(),
+        getContentPillarsAction(),
+      ])
+  );
 
   return (
     <PlannerView

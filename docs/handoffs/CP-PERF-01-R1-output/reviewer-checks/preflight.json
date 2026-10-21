@@ -1,0 +1,540 @@
+{
+  "phase": "pre-review-before-frozen-checks",
+  "candidate_manifest_sha256": "4d6111dd2cdb9912c8c11b1861ad077a0f622083e567cbb3c0dbfeba8c5cd4cb",
+  "candidate_sealed_entries": 187,
+  "candidate_mismatches": 0,
+  "correction_baseline_entries": 176,
+  "app_source_entries": 84,
+  "app_source_mismatches_vs_baseline": 0,
+  "expected_authorized_baseline_drift": [
+    "HANDOFF.md",
+    "TASKS.md",
+    "docs/handoffs/CP-PERF-01-output/RESULT.md",
+    "tests/navigation-performance.test.mjs"
+  ],
+  "status_entries": [
+    {
+      "status": " M",
+      "path": "ARCHITECTURE.md",
+      "sha256": "a7bc9640a93ffbe37a5af7f40f4543e3291911acd424441d61575862b0252ac0",
+      "bytes": 13825
+    },
+    {
+      "status": " M",
+      "path": "HANDOFF.md",
+      "sha256": "830afa8b6fa82297d25f1c47570761c3d9451b4049aa6e33a051590c915daafc",
+      "bytes": 59100
+    },
+    {
+      "status": " M",
+      "path": "HOSTED_IMPORT_FINISH_PLAN.md",
+      "sha256": "f73defd50d95997dee5a761681e2d697136cd68adf4ce92b0af92f3bfef0a8b2",
+      "bytes": 6709
+    },
+    {
+      "status": " M",
+      "path": "PROJECT.md",
+      "sha256": "dcfa4e9c24b4324b111ffbe9f9058ff5dbf4d98e8a8ce865bde0faffd014030b",
+      "bytes": 10430
+    },
+    {
+      "status": " M",
+      "path": "TASKS.md",
+      "sha256": "9eb31a2172bf9b6f548cf683e268fba0df26739ed8a11da1150fb50248222040",
+      "bytes": 48554
+    },
+    {
+      "status": " M",
+      "path": "scripts/prepare-hosted-import.mjs",
+      "sha256": "368eee543ebc2cc89df6d8a1410a667be490ee90a459388071b58a8bb14d9393",
+      "bytes": 55772
+    },
+    {
+      "status": " M",
+      "path": "src/app/[locale]/calendar/page.tsx",
+      "sha256": "5e3576af6a706e0b781600b1b6fda200ab3d7cc26dd0ddefac82a08ee022356f",
+      "bytes": 1829
+    },
+    {
+      "status": " M",
+      "path": "src/app/[locale]/ideas/page.tsx",
+      "sha256": "9af8346ee66eba654b4656bffeac3dbbbb116db97ec53fae2f89924fdd703daa",
+      "bytes": 2263
+    },
+    {
+      "status": " M",
+      "path": "src/app/[locale]/planner/page.tsx",
+      "sha256": "bdd71d3a2bab497bd1be7b402fb56974937fb9d02421dd42879d32e543e7c7c6",
+      "bytes": 1893
+    },
+    {
+      "status": " M",
+      "path": "src/app/[locale]/tasks/page.tsx",
+      "sha256": "688ffbbcdc097b38d8c674c366aa1917e649d58483ea9fbe0e4a1d8680632e09",
+      "bytes": 1917
+    },
+    {
+      "status": " M",
+      "path": "src/app/actions/content.ts",
+      "sha256": "f2440fb4637e6954ed0522c224636693de59cf4bbbbe4e466715091870b22fe8",
+      "bytes": 19152
+    },
+    {
+      "status": " M",
+      "path": "src/app/actions/reference-accounts.ts",
+      "sha256": "494dd70a4da4742ffcb16e2947cb7d0460b336c2daa21fb3f35385a2a291a576",
+      "bytes": 5858
+    },
+    {
+      "status": " M",
+      "path": "src/app/actions/tasks.ts",
+      "sha256": "5585b1edbaeaac31e7fd90d31495daec4bd60c74575d9cc6672d1166545fb0de",
+      "bytes": 9337
+    },
+    {
+      "status": " M",
+      "path": "src/components/shell/DesktopSidebar.tsx",
+      "sha256": "4852ab9ee967788cbbffb2614860bd2df1b1f7975224fcd5bc6decfd841bb039",
+      "bytes": 5037
+    },
+    {
+      "status": " M",
+      "path": "src/components/shell/MobileNav.tsx",
+      "sha256": "7f0994814d211ae9673b092950f9b8be4516e38d978a4809481f868679fb1462",
+      "bytes": 2288
+    },
+    {
+      "status": " M",
+      "path": "src/messages/en.json",
+      "sha256": "117ab2f290b773b67fb1dc881fc4b3c381a5c9ad2e044f4f3de0c0c283b43756",
+      "bytes": 17066
+    },
+    {
+      "status": " M",
+      "path": "src/messages/th.json",
+      "sha256": "75940e38fe5023eb845e4b1716d9adb7dd73fd8bb41328f276522f2a67af965b",
+      "bytes": 31459
+    },
+    {
+      "status": "??",
+      "path": "PASSWORD_LOGIN_SETUP.md",
+      "sha256": "86a6b1b2b73867fa39247ff680e7dd36f52324463e4bd2d13a20ac446b1f8aa6",
+      "bytes": 2513
+    },
+    {
+      "status": "??",
+      "path": "chatgpt-conversation-history.md",
+      "sha256": "0390459b95b01fa8eb9d19546bead3a18d50ff3eb17ce587e497cb5ec6e65286",
+      "bytes": 750926
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-INTAKE.md",
+      "sha256": "9dc3ad7184e95b5ff3825b6314b0878fd0c59eb9fb7cec54e56aefba3a012c0b",
+      "bytes": 5627
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-PROMPT.txt",
+      "sha256": "2900dbfcf1feef57507596d45f76530b37704e931394e50de79dd77d514de092",
+      "bytes": 1435
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-INTAKE.md",
+      "sha256": "740c5264592e9338529afcd54b80318367bdd2f3ad46b0568461ff96bd5232fb",
+      "bytes": 3255
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-PROMPT.txt",
+      "sha256": "e2df0d6a9f2cc5f7daedbd8a9ee3074676c872c4572049eff82fc7967de9c8ec",
+      "bytes": 1414
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-REVIEW-PROMPT.txt",
+      "sha256": "1b0dae82e7206f6baad1b1661802919173098ccfa43a2fad87427f74e873357d",
+      "bytes": 1262
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-REVIEW.md",
+      "sha256": "8303ebd27e3423474f3fbd3c840828b49cc90bcdeb12b824d2115177e85bd87d",
+      "bytes": 4079
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/RESULT.md",
+      "sha256": "080363c146e59ce44e892d19309b638297998af3e68ff9dc3c00bbb2a1445ce6",
+      "bytes": 10795
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/checks/01-tests.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/checks/01-tests.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/checks/01-tests.stdout.txt",
+      "sha256": "9bc902ba123c4a3dc14360f5ef30c46a3d8d866363d1d7a83ca90ad0c26efe83",
+      "bytes": 2876
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/checks/02-git-diff.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/checks/02-git-diff.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/checks/02-git-diff.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1-output/checks/manifest.json",
+      "sha256": "13ba8095f95aa84954d26fba2c60e27312dc7e29a428ae042862963379e82ae6",
+      "bytes": 1089
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-R1.md",
+      "sha256": "e6b19fbad78ddc1fcd640a9d155aa0a336591bb4793e5b79f461e093dad860ff",
+      "bytes": 7462
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-REVIEW-PROMPT.txt",
+      "sha256": "0353c476cdbf79a3fdc9525f07f865b4b34a1559e4bc02c2df9ab907609af957",
+      "bytes": 1384
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-REVIEW-RECEIPT.md",
+      "sha256": "95885257c80c994621d464d88e074d0f8b45e84db55a011f38c64e2b884e7c11",
+      "bytes": 2754
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-REVIEW-START.txt",
+      "sha256": "dc8166b1659f6c7268dcd716e8abdcf3c25d9002914afca1cd65dc4f897b268c",
+      "bytes": 949
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-REVIEW.md",
+      "sha256": "a6602807ce55220640eef665469190ed1e2e177d15ee65356d472b1fef4c179c",
+      "bytes": 4882
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/RESULT.md",
+      "sha256": "d2d0a36eefbc179da6bf5b57f050f4a04ba3730b2541c3b6bf255641fe1a6826",
+      "bytes": 15604
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/REVIEW.md",
+      "sha256": "d096003bed7468150253a9c3a10c461773e7636fe7a87f4129f0eb931c033389",
+      "bytes": 10769
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/01-tests.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/01-tests.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/01-tests.stdout.txt",
+      "sha256": "e560a003819e870afae5efed1f8ee39ade6713e6fa84144e61ccf6467f708803",
+      "bytes": 5969
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/02-tsc.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/02-tsc.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/02-tsc.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/03-lint.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/03-lint.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/03-lint.stdout.txt",
+      "sha256": "da194d48ddb14a801a6f3e853ae6f3f822e493d46ced44da8ba5b52f8badfdf4",
+      "bytes": 40
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/04-build.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/04-build.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/04-build.stdout.txt",
+      "sha256": "777d9b3fb5da44b73be8c998fd147b0f67e50cf1807f38a0edcf1b34372729d7",
+      "bytes": 1171
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/05-git-diff.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/05-git-diff.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/05-git-diff.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/manifest.json",
+      "sha256": "ded0ce2b7426fc0ad6f2f8998182e8df3a3eb4462af0dc8f8b74d8dd5afa1d17",
+      "bytes": 2212
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/01-tests.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/01-tests.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/01-tests.stdout.txt",
+      "sha256": "8f704516f2b49237b250517597a66630a919f2cad7252b5de36421e82434f2fc",
+      "bytes": 5976
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/02-tsc.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/02-tsc.stderr.txt",
+      "sha256": "44c8b6bf321f7bb8b813a2a67ef773201708e6e5294f11f9516939ff03e0853e",
+      "bytes": 154
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/02-tsc.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/03-lint.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/03-lint.stderr.txt",
+      "sha256": "44c8b6bf321f7bb8b813a2a67ef773201708e6e5294f11f9516939ff03e0853e",
+      "bytes": 154
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/03-lint.stdout.txt",
+      "sha256": "da194d48ddb14a801a6f3e853ae6f3f822e493d46ced44da8ba5b52f8badfdf4",
+      "bytes": 40
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/04-build.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/04-build.stderr.txt",
+      "sha256": "44c8b6bf321f7bb8b813a2a67ef773201708e6e5294f11f9516939ff03e0853e",
+      "bytes": 154
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/04-build.stdout.txt",
+      "sha256": "9eb941a062e38bfe06493ae68eb6bc07b9bfb2195b43eb7ef1d15c9c2acbf9f6",
+      "bytes": 1171
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/05-git-diff.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/05-git-diff.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/05-git-diff.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/manifest.json",
+      "sha256": "8fbffe3a53fb2e95e39acba85b43911283ef73cfb840a88e4a6d1165626c80c8",
+      "bytes": 2087
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/postflight.json",
+      "sha256": "ff112e8ee5d5c6ef09f2a798bf8092f43abd1fcedd943f8094951a7d195a88a6",
+      "bytes": 4754
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/reviewer-checks/preflight.json",
+      "sha256": "baf10276170abf9c6f214f7e180e718b69cd76679001f3b8392ade16346ebb9c",
+      "bytes": 13994
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01.md",
+      "sha256": "691d7d0392e2861fc0ba9cc8966d7ee4ede0154616d4e2c36af499fb6a962cc5",
+      "bytes": 10747
+    },
+    {
+      "status": "??",
+      "path": "scripts/set-owner-password.mjs",
+      "sha256": "ff3a5b0e528a76df5d7d5d9e7fff00b679dda6f37e5a74ca5ec970e09a91c097",
+      "bytes": 4908
+    },
+    {
+      "status": "??",
+      "path": "src/app/[locale]/calendar/loading.tsx",
+      "sha256": "332af5771f3f108cda5cc01fd38f2e007806621a7bf160fb553950b8697dab9f",
+      "bytes": 243
+    },
+    {
+      "status": "??",
+      "path": "src/app/[locale]/ideas/loading.tsx",
+      "sha256": "0f0d3062be99a7cd613395619de2cd85a75658aa8c9a0d248c4219db5837819f",
+      "bytes": 237
+    },
+    {
+      "status": "??",
+      "path": "src/app/[locale]/planner/loading.tsx",
+      "sha256": "dc6210eb0bf517b820f3020b7f13583bae66c9ce5877767ea07a2c2f7c3fffac",
+      "bytes": 152
+    },
+    {
+      "status": "??",
+      "path": "src/app/[locale]/settings/loading.tsx",
+      "sha256": "8e4ce218756cfc2ed20579db633085683f87c76a9c168a00a6ff2879f03e5bed",
+      "bytes": 244
+    },
+    {
+      "status": "??",
+      "path": "src/app/[locale]/tasks/loading.tsx",
+      "sha256": "46523f39fcd55842b0837adfed29be04e0e4888bb802528681baa60b4e22ef3e",
+      "bytes": 148
+    },
+    {
+      "status": "??",
+      "path": "src/components/shell/NavigationPending.tsx",
+      "sha256": "2797f8adc7b4f528c89a405cf707b07b58de302bf35b6fcb9d77c5cf7c682230",
+      "bytes": 1942
+    },
+    {
+      "status": "??",
+      "path": "src/components/shell/PageLoading.tsx",
+      "sha256": "402352cb2fe3baa0edcebbc098fb84fd24b958b2a0f871f52a74184e09de6d81",
+      "bytes": 8960
+    },
+    {
+      "status": "??",
+      "path": "src/utils/supabase/navigationReadContext.ts",
+      "sha256": "25c05b6499a6c1a77de3fd038da961a8d360e9932d5273cd5acb18a8769e4999",
+      "bytes": 2448
+    },
+    {
+      "status": "??",
+      "path": "tests/navigation-performance.test.mjs",
+      "sha256": "83ca694f5268f73df1e4d27c0f134bbfb348c4fe69fcbbe2900711e3f56f76ae",
+      "bytes": 26076
+    },
+    {
+      "status": "??",
+      "path": "tests/navigation-r1-fixture.mjs",
+      "sha256": "a21b71f431a900e2aef61453decad9908954577b34a0fc4626a8c89229c1e185",
+      "bytes": 2976
+    },
+    {
+      "status": "??",
+      "path": "tests/navigation-r1-loader.mjs",
+      "sha256": "cefea80c5ae026de11c351b3569f70e663074d13d70c18f1bf964c6c1ed8b80b",
+      "bytes": 510
+    }
+  ],
+  "raw_porcelain_hex": "204d204152434849544543545552452e6d6400204d2048414e444f46462e6d6400204d20484f535445445f494d504f52545f46494e4953485f504c414e2e6d6400204d2050524f4a4543542e6d6400204d205441534b532e6d6400204d20736372697074732f707265706172652d686f737465642d696d706f72742e6d6a7300204d207372632f6170702f5b6c6f63616c655d2f63616c656e6461722f706167652e74737800204d207372632f6170702f5b6c6f63616c655d2f69646561732f706167652e74737800204d207372632f6170702f5b6c6f63616c655d2f706c616e6e65722f706167652e74737800204d207372632f6170702f5b6c6f63616c655d2f7461736b732f706167652e74737800204d207372632f6170702f616374696f6e732f636f6e74656e742e747300204d207372632f6170702f616374696f6e732f7265666572656e63652d6163636f756e74732e747300204d207372632f6170702f616374696f6e732f7461736b732e747300204d207372632f636f6d706f6e656e74732f7368656c6c2f4465736b746f70536964656261722e74737800204d207372632f636f6d706f6e656e74732f7368656c6c2f4d6f62696c654e61762e74737800204d207372632f6d657373616765732f656e2e6a736f6e00204d207372632f6d657373616765732f74682e6a736f6e003f3f2050415353574f52445f4c4f47494e5f53455455502e6d64003f3f20636861746770742d636f6e766572736174696f6e2d686973746f72792e6d64003f3f20646f63732f68616e646f6666732f43502d504552462d30312d494e54414b452e6d64003f3f20646f63732f68616e646f6666732f43502d504552462d30312d50524f4d50542e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312d494e54414b452e6d64003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312d50524f4d50542e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312d5245564945572d50524f4d50542e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312d5245564945572e6d64003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312d6f75747075742f524553554c542e6d64003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312d6f75747075742f636865636b732f30312d74657374732e657869742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312d6f75747075742f636865636b732f30312d74657374732e7374646572722e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312d6f75747075742f636865636b732f30312d74657374732e7374646f75742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312d6f75747075742f636865636b732f30322d6769742d646966662e657869742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312d6f75747075742f636865636b732f30322d6769742d646966662e7374646572722e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312d6f75747075742f636865636b732f30322d6769742d646966662e7374646f75742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312d6f75747075742f636865636b732f6d616e69666573742e6a736f6e003f3f20646f63732f68616e646f6666732f43502d504552462d30312d52312e6d64003f3f20646f63732f68616e646f6666732f43502d504552462d30312d5245564945572d50524f4d50542e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d5245564945572d524543454950542e6d64003f3f20646f63732f68616e646f6666732f43502d504552462d30312d5245564945572d53544152542e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d5245564945572e6d64003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f524553554c542e6d64003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f5245564945572e6d64003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30312d74657374732e657869742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30312d74657374732e7374646572722e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30312d74657374732e7374646f75742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30322d7473632e657869742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30322d7473632e7374646572722e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30322d7473632e7374646f75742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30332d6c696e742e657869742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30332d6c696e742e7374646572722e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30332d6c696e742e7374646f75742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30342d6275696c642e657869742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30342d6275696c642e7374646572722e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30342d6275696c642e7374646f75742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30352d6769742d646966662e657869742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30352d6769742d646966662e7374646572722e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f30352d6769742d646966662e7374646f75742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f636865636b732f6d616e69666573742e6a736f6e003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30312d74657374732e657869742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30312d74657374732e7374646572722e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30312d74657374732e7374646f75742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30322d7473632e657869742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30322d7473632e7374646572722e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30322d7473632e7374646f75742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30332d6c696e742e657869742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30332d6c696e742e7374646572722e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30332d6c696e742e7374646f75742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30342d6275696c642e657869742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30342d6275696c642e7374646572722e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30342d6275696c642e7374646f75742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30352d6769742d646966662e657869742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30352d6769742d646966662e7374646572722e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f30352d6769742d646966662e7374646f75742e747874003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f6d616e69666573742e6a736f6e003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f706f7374666c696768742e6a736f6e003f3f20646f63732f68616e646f6666732f43502d504552462d30312d6f75747075742f72657669657765722d636865636b732f707265666c696768742e6a736f6e003f3f20646f63732f68616e646f6666732f43502d504552462d30312e6d64003f3f20736372697074732f7365742d6f776e65722d70617373776f72642e6d6a73003f3f207372632f6170702f5b6c6f63616c655d2f63616c656e6461722f6c6f6164696e672e747378003f3f207372632f6170702f5b6c6f63616c655d2f69646561732f6c6f6164696e672e747378003f3f207372632f6170702f5b6c6f63616c655d2f706c616e6e65722f6c6f6164696e672e747378003f3f207372632f6170702f5b6c6f63616c655d2f73657474696e67732f6c6f6164696e672e747378003f3f207372632f6170702f5b6c6f63616c655d2f7461736b732f6c6f6164696e672e747378003f3f207372632f636f6d706f6e656e74732f7368656c6c2f4e617669676174696f6e50656e64696e672e747378003f3f207372632f636f6d706f6e656e74732f7368656c6c2f506167654c6f6164696e672e747378003f3f207372632f7574696c732f73757061626173652f6e617669676174696f6e52656164436f6e746578742e7473003f3f2074657374732f6e617669676174696f6e2d706572666f726d616e63652e746573742e6d6a73003f3f2074657374732f6e617669676174696f6e2d72312d666978747572652e6d6a73003f3f2074657374732f6e617669676174696f6e2d72312d6c6f616465722e6d6a7300"
+}

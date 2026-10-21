@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from "@/utils/supabase/server";
+import { getNavigationReadContext } from "@/utils/supabase/navigationReadContext";
 import type { Platform, ReferenceAccount } from "@/types/planner";
 import { validateUuid, sanitizeTitle, sanitizeOptionalText, validateUrl } from "@/utils/validation";
 import { revalidatePath } from "next/cache";
@@ -27,12 +28,10 @@ export async function getReferenceAccountsAction(): Promise<{
   error: string | null;
 }> {
   try {
-    const supabase = await createClient();
-    const { data: claimsData } = await supabase.auth.getClaims();
-    const userId = claimsData?.claims?.sub;
+    const { supabase, userId, error: authError } = await getNavigationReadContext();
 
-    if (!userId) {
-      return { accounts: [], error: "unauthorized" };
+    if (!userId || !supabase) {
+      return { accounts: [], error: authError || "unauthorized" };
     }
 
     const { data, error } = await supabase

@@ -1,0 +1,359 @@
+{
+  "candidate_manifest": "/Users/nack/.hermes/workspaces/content-planer/CP-PERF-01/incoming/manifest.json",
+  "candidate_manifest_sha256": "e3d2adb58a33dacb232dd8cb5aa16fa3f70d8b9da6fb265163aac2907aba0452",
+  "candidate_sealed_files": 149,
+  "candidate_sealed_files_verified": 149,
+  "candidate_hash_mismatches": 0,
+  "preflight_porcelain_v1_z": " M ARCHITECTURE.md\u0000 M HANDOFF.md\u0000 M HOSTED_IMPORT_FINISH_PLAN.md\u0000 M PROJECT.md\u0000 M TASKS.md\u0000 M scripts/prepare-hosted-import.mjs\u0000 M src/app/[locale]/calendar/page.tsx\u0000 M src/app/[locale]/ideas/page.tsx\u0000 M src/app/[locale]/planner/page.tsx\u0000 M src/app/[locale]/tasks/page.tsx\u0000 M src/app/actions/content.ts\u0000 M src/app/actions/reference-accounts.ts\u0000 M src/app/actions/tasks.ts\u0000 M src/components/shell/DesktopSidebar.tsx\u0000 M src/components/shell/MobileNav.tsx\u0000 M src/messages/en.json\u0000 M src/messages/th.json\u0000?? PASSWORD_LOGIN_SETUP.md\u0000?? chatgpt-conversation-history.md\u0000?? docs/handoffs/CP-PERF-01-INTAKE.md\u0000?? docs/handoffs/CP-PERF-01-PROMPT.txt\u0000?? docs/handoffs/CP-PERF-01-REVIEW-PROMPT.txt\u0000?? docs/handoffs/CP-PERF-01-REVIEW-START.txt\u0000?? docs/handoffs/CP-PERF-01-REVIEW.md\u0000?? docs/handoffs/CP-PERF-01-output/RESULT.md\u0000?? docs/handoffs/CP-PERF-01-output/checks/01-tests.exit.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/01-tests.stderr.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/01-tests.stdout.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/02-tsc.exit.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/02-tsc.stderr.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/02-tsc.stdout.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/03-lint.exit.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/03-lint.stderr.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/03-lint.stdout.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/04-build.exit.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/04-build.stderr.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/04-build.stdout.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/05-git-diff.exit.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/05-git-diff.stderr.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/05-git-diff.stdout.txt\u0000?? docs/handoffs/CP-PERF-01-output/checks/manifest.json\u0000?? docs/handoffs/CP-PERF-01.md\u0000?? scripts/set-owner-password.mjs\u0000?? src/app/[locale]/calendar/loading.tsx\u0000?? src/app/[locale]/ideas/loading.tsx\u0000?? src/app/[locale]/planner/loading.tsx\u0000?? src/app/[locale]/settings/loading.tsx\u0000?? src/app/[locale]/tasks/loading.tsx\u0000?? src/components/shell/NavigationPending.tsx\u0000?? src/components/shell/PageLoading.tsx\u0000?? src/utils/supabase/navigationReadContext.ts\u0000?? tests/navigation-performance.test.mjs\u0000",
+  "preflight_files": [
+    {
+      "status": " M",
+      "path": "ARCHITECTURE.md",
+      "sha256": "a7bc9640a93ffbe37a5af7f40f4543e3291911acd424441d61575862b0252ac0",
+      "bytes": 13825
+    },
+    {
+      "status": " M",
+      "path": "HANDOFF.md",
+      "sha256": "3ac19fcf6c22ac37c9eee5dde087c495599451517f6e7870a04c545ba180c3f5",
+      "bytes": 58645
+    },
+    {
+      "status": " M",
+      "path": "HOSTED_IMPORT_FINISH_PLAN.md",
+      "sha256": "f73defd50d95997dee5a761681e2d697136cd68adf4ce92b0af92f3bfef0a8b2",
+      "bytes": 6709
+    },
+    {
+      "status": " M",
+      "path": "PROJECT.md",
+      "sha256": "dcfa4e9c24b4324b111ffbe9f9058ff5dbf4d98e8a8ce865bde0faffd014030b",
+      "bytes": 10430
+    },
+    {
+      "status": " M",
+      "path": "TASKS.md",
+      "sha256": "29e5039485455a9ba353a060ba06c26c6c5b447d030f1a8a82a4cf76bc829d6f",
+      "bytes": 48538
+    },
+    {
+      "status": " M",
+      "path": "scripts/prepare-hosted-import.mjs",
+      "sha256": "368eee543ebc2cc89df6d8a1410a667be490ee90a459388071b58a8bb14d9393",
+      "bytes": 55772
+    },
+    {
+      "status": " M",
+      "path": "src/app/[locale]/calendar/page.tsx",
+      "sha256": "5e3576af6a706e0b781600b1b6fda200ab3d7cc26dd0ddefac82a08ee022356f",
+      "bytes": 1829
+    },
+    {
+      "status": " M",
+      "path": "src/app/[locale]/ideas/page.tsx",
+      "sha256": "9af8346ee66eba654b4656bffeac3dbbbb116db97ec53fae2f89924fdd703daa",
+      "bytes": 2263
+    },
+    {
+      "status": " M",
+      "path": "src/app/[locale]/planner/page.tsx",
+      "sha256": "bdd71d3a2bab497bd1be7b402fb56974937fb9d02421dd42879d32e543e7c7c6",
+      "bytes": 1893
+    },
+    {
+      "status": " M",
+      "path": "src/app/[locale]/tasks/page.tsx",
+      "sha256": "688ffbbcdc097b38d8c674c366aa1917e649d58483ea9fbe0e4a1d8680632e09",
+      "bytes": 1917
+    },
+    {
+      "status": " M",
+      "path": "src/app/actions/content.ts",
+      "sha256": "f2440fb4637e6954ed0522c224636693de59cf4bbbbe4e466715091870b22fe8",
+      "bytes": 19152
+    },
+    {
+      "status": " M",
+      "path": "src/app/actions/reference-accounts.ts",
+      "sha256": "494dd70a4da4742ffcb16e2947cb7d0460b336c2daa21fb3f35385a2a291a576",
+      "bytes": 5858
+    },
+    {
+      "status": " M",
+      "path": "src/app/actions/tasks.ts",
+      "sha256": "5585b1edbaeaac31e7fd90d31495daec4bd60c74575d9cc6672d1166545fb0de",
+      "bytes": 9337
+    },
+    {
+      "status": " M",
+      "path": "src/components/shell/DesktopSidebar.tsx",
+      "sha256": "4852ab9ee967788cbbffb2614860bd2df1b1f7975224fcd5bc6decfd841bb039",
+      "bytes": 5037
+    },
+    {
+      "status": " M",
+      "path": "src/components/shell/MobileNav.tsx",
+      "sha256": "7f0994814d211ae9673b092950f9b8be4516e38d978a4809481f868679fb1462",
+      "bytes": 2288
+    },
+    {
+      "status": " M",
+      "path": "src/messages/en.json",
+      "sha256": "117ab2f290b773b67fb1dc881fc4b3c381a5c9ad2e044f4f3de0c0c283b43756",
+      "bytes": 17066
+    },
+    {
+      "status": " M",
+      "path": "src/messages/th.json",
+      "sha256": "75940e38fe5023eb845e4b1716d9adb7dd73fd8bb41328f276522f2a67af965b",
+      "bytes": 31459
+    },
+    {
+      "status": "??",
+      "path": "PASSWORD_LOGIN_SETUP.md",
+      "sha256": "86a6b1b2b73867fa39247ff680e7dd36f52324463e4bd2d13a20ac446b1f8aa6",
+      "bytes": 2513
+    },
+    {
+      "status": "??",
+      "path": "chatgpt-conversation-history.md",
+      "sha256": "0390459b95b01fa8eb9d19546bead3a18d50ff3eb17ce587e497cb5ec6e65286",
+      "bytes": 750926
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-INTAKE.md",
+      "sha256": "9dc3ad7184e95b5ff3825b6314b0878fd0c59eb9fb7cec54e56aefba3a012c0b",
+      "bytes": 5627
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-PROMPT.txt",
+      "sha256": "2900dbfcf1feef57507596d45f76530b37704e931394e50de79dd77d514de092",
+      "bytes": 1435
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-REVIEW-PROMPT.txt",
+      "sha256": "0353c476cdbf79a3fdc9525f07f865b4b34a1559e4bc02c2df9ab907609af957",
+      "bytes": 1384
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-REVIEW-START.txt",
+      "sha256": "dc8166b1659f6c7268dcd716e8abdcf3c25d9002914afca1cd65dc4f897b268c",
+      "bytes": 949
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-REVIEW.md",
+      "sha256": "a6602807ce55220640eef665469190ed1e2e177d15ee65356d472b1fef4c179c",
+      "bytes": 4882
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/RESULT.md",
+      "sha256": "f2ca8a4399c511a79ab86618ae33da159d74445b924de19a1a2e1917f09faa60",
+      "bytes": 14581
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/01-tests.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/01-tests.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/01-tests.stdout.txt",
+      "sha256": "e560a003819e870afae5efed1f8ee39ade6713e6fa84144e61ccf6467f708803",
+      "bytes": 5969
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/02-tsc.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/02-tsc.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/02-tsc.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/03-lint.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/03-lint.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/03-lint.stdout.txt",
+      "sha256": "da194d48ddb14a801a6f3e853ae6f3f822e493d46ced44da8ba5b52f8badfdf4",
+      "bytes": 40
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/04-build.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/04-build.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/04-build.stdout.txt",
+      "sha256": "777d9b3fb5da44b73be8c998fd147b0f67e50cf1807f38a0edcf1b34372729d7",
+      "bytes": 1171
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/05-git-diff.exit.txt",
+      "sha256": "194ff5bca66278888f0f00be5c7ca523d15098ece958b14952533811089f6106",
+      "bytes": 7
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/05-git-diff.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/05-git-diff.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01-output/checks/manifest.json",
+      "sha256": "ded0ce2b7426fc0ad6f2f8998182e8df3a3eb4462af0dc8f8b74d8dd5afa1d17",
+      "bytes": 2212
+    },
+    {
+      "status": "??",
+      "path": "docs/handoffs/CP-PERF-01.md",
+      "sha256": "691d7d0392e2861fc0ba9cc8966d7ee4ede0154616d4e2c36af499fb6a962cc5",
+      "bytes": 10747
+    },
+    {
+      "status": "??",
+      "path": "scripts/set-owner-password.mjs",
+      "sha256": "ff3a5b0e528a76df5d7d5d9e7fff00b679dda6f37e5a74ca5ec970e09a91c097",
+      "bytes": 4908
+    },
+    {
+      "status": "??",
+      "path": "src/app/[locale]/calendar/loading.tsx",
+      "sha256": "332af5771f3f108cda5cc01fd38f2e007806621a7bf160fb553950b8697dab9f",
+      "bytes": 243
+    },
+    {
+      "status": "??",
+      "path": "src/app/[locale]/ideas/loading.tsx",
+      "sha256": "0f0d3062be99a7cd613395619de2cd85a75658aa8c9a0d248c4219db5837819f",
+      "bytes": 237
+    },
+    {
+      "status": "??",
+      "path": "src/app/[locale]/planner/loading.tsx",
+      "sha256": "dc6210eb0bf517b820f3020b7f13583bae66c9ce5877767ea07a2c2f7c3fffac",
+      "bytes": 152
+    },
+    {
+      "status": "??",
+      "path": "src/app/[locale]/settings/loading.tsx",
+      "sha256": "8e4ce218756cfc2ed20579db633085683f87c76a9c168a00a6ff2879f03e5bed",
+      "bytes": 244
+    },
+    {
+      "status": "??",
+      "path": "src/app/[locale]/tasks/loading.tsx",
+      "sha256": "46523f39fcd55842b0837adfed29be04e0e4888bb802528681baa60b4e22ef3e",
+      "bytes": 148
+    },
+    {
+      "status": "??",
+      "path": "src/components/shell/NavigationPending.tsx",
+      "sha256": "2797f8adc7b4f528c89a405cf707b07b58de302bf35b6fcb9d77c5cf7c682230",
+      "bytes": 1942
+    },
+    {
+      "status": "??",
+      "path": "src/components/shell/PageLoading.tsx",
+      "sha256": "402352cb2fe3baa0edcebbc098fb84fd24b958b2a0f871f52a74184e09de6d81",
+      "bytes": 8960
+    },
+    {
+      "status": "??",
+      "path": "src/utils/supabase/navigationReadContext.ts",
+      "sha256": "25c05b6499a6c1a77de3fd038da961a8d360e9932d5273cd5acb18a8769e4999",
+      "bytes": 2448
+    },
+    {
+      "status": "??",
+      "path": "tests/navigation-performance.test.mjs",
+      "sha256": "8e140341d902dab35c2d1e0a0447286fecf778ecfd222ce7f35b5240eaa4b2c7",
+      "bytes": 23620
+    }
+  ],
+  "baseline_inherited_preservation": [
+    {
+      "path": "ARCHITECTURE.md",
+      "matches_original_baseline": true,
+      "matches_candidate_seal": true
+    },
+    {
+      "path": "PROJECT.md",
+      "matches_original_baseline": true,
+      "matches_candidate_seal": true
+    },
+    {
+      "path": "HOSTED_IMPORT_FINISH_PLAN.md",
+      "matches_original_baseline": true,
+      "matches_candidate_seal": true
+    },
+    {
+      "path": "scripts/prepare-hosted-import.mjs",
+      "matches_original_baseline": true,
+      "matches_candidate_seal": true
+    },
+    {
+      "path": "PASSWORD_LOGIN_SETUP.md",
+      "matches_original_baseline": true,
+      "matches_candidate_seal": true
+    },
+    {
+      "path": "chatgpt-conversation-history.md",
+      "matches_original_baseline": true,
+      "matches_candidate_seal": true
+    },
+    {
+      "path": "scripts/set-owner-password.mjs",
+      "matches_original_baseline": true,
+      "matches_candidate_seal": true
+    }
+  ]
+}

@@ -240,7 +240,7 @@ export function ReferenceAccountsView({
         <button
           type="button"
           onClick={handleOpenCreate}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#A13F5B] hover:bg-[#8D324C] active:bg-[#78283E] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
         >
           <IconPlus className="w-4 h-4" size={16} />
           <span>{t("ideas.newReferenceAccount")}</span>
@@ -263,7 +263,7 @@ export function ReferenceAccountsView({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("filters.searchPlaceholder")}
-              className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
             />
           </div>
 
@@ -275,7 +275,7 @@ export function ReferenceAccountsView({
               id="ref-platform-filter"
               value={platformFilter}
               onChange={(e) => setPlatformFilter(e.target.value)}
-              className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
             >
               <option value="all">{t("planner.allPlatforms")}</option>
               {ALL_PLATFORMS.map((p) => (
@@ -320,14 +320,14 @@ export function ReferenceAccountsView({
           <button
             type="button"
             onClick={handleOpenCreate}
-            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-[#A13F5B] hover:bg-[#8D324C] rounded-lg shadow-sm transition-colors cursor-pointer"
           >
             {t("ideas.newReferenceAccount")}
           </button>
         </div>
       ) : filteredAccounts.length === 0 ? (
         <div className="py-16 px-6 text-center bg-white rounded-xl border border-slate-200 shadow-sm max-w-lg mx-auto my-8">
-          <div className="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mx-auto mb-4 border border-purple-100">
+          <div className="w-12 h-12 rounded-full bg-[#F5E4E8] text-[#A13F5B] flex items-center justify-center mx-auto mb-4 border border-[#E8CCD2]">
             <IconSearch className="w-6 h-6" size={24} />
           </div>
           <h3 className="text-base font-semibold text-slate-900 mb-1">
@@ -342,7 +342,7 @@ export function ReferenceAccountsView({
               setSearch("");
               setPlatformFilter("all");
             }}
-            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-[#A13F5B] bg-[#F5E4E8] hover:bg-[#EED8DC] rounded-lg border border-[#E8CCD2] transition-colors cursor-pointer"
           >
             {t("empty.resetFilterBtn")}
           </button>
@@ -352,7 +352,7 @@ export function ReferenceAccountsView({
           {filteredAccounts.map((acc) => (
             <div
               key={acc.id}
-              className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs hover:border-purple-200 transition-colors flex flex-col justify-between"
+              className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs hover:border-[#E8CCD2] transition-colors flex flex-col justify-between"
             >
               <div className="space-y-2">
                 <div className="flex items-start justify-between gap-2">
@@ -360,7 +360,7 @@ export function ReferenceAccountsView({
                     <h3 className="font-semibold text-sm text-slate-900 truncate">
                       {acc.account_label || t("referenceAccounts.unnamed")}
                     </h3>
-                    <span className="inline-block mt-0.5 text-[11px] font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                    <span className="inline-block mt-0.5 text-[11px] font-medium text-[#A13F5B] bg-[#F5E4E8] px-2 py-0.5 rounded border border-[#E8CCD2]">
                       {t(`platform.${acc.platform}`)}
                     </span>
                   </div>
@@ -368,7 +368,7 @@ export function ReferenceAccountsView({
                     type="button"
                     onClick={() => handleOpenEdit(acc)}
                     aria-label={t("referenceAccounts.editAccount")}
-                    className="text-xs text-slate-500 hover:text-purple-600 p-1 rounded hover:bg-slate-50 transition-colors"
+                    className="text-xs text-slate-500 hover:text-[#A13F5B] p-1 rounded hover:bg-slate-50 transition-colors"
                   >
                     {t("referenceAccounts.editAccount")}
                   </button>
@@ -386,7 +386,7 @@ export function ReferenceAccountsView({
                   href={acc.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-purple-600 hover:text-purple-700 font-medium truncate max-w-[200px]"
+                  className="text-xs text-[#A13F5B] hover:text-[#8D324C] font-medium truncate max-w-[200px]"
                 >
                   {t("referenceAccounts.openUrl")} &rarr;
                 </a>
@@ -444,7 +444,7 @@ export function ReferenceAccountsView({
                   value={formLabel}
                   onChange={(e) => setFormLabel(e.target.value)}
                   placeholder={t("referenceAccounts.fields.labelPlaceholder")}
-                  className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
                 />
               </div>
 
@@ -457,7 +457,7 @@ export function ReferenceAccountsView({
                   id="ref-platform-select"
                   value={formPlatform}
                   onChange={(e) => setFormPlatform(e.target.value as Platform)}
-                  className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
                 >
                   {ALL_PLATFORMS.map((p) => (
                     <option key={p} value={p}>
@@ -479,7 +479,7 @@ export function ReferenceAccountsView({
                   value={formUrl}
                   onChange={(e) => setFormUrl(e.target.value)}
                   placeholder={t("referenceAccounts.fields.urlPlaceholder")}
-                  className="w-full px-3 py-2 text-sm font-mono bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 text-sm font-mono bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
                 />
               </div>
 
@@ -494,7 +494,7 @@ export function ReferenceAccountsView({
                   value={formNotes}
                   onChange={(e) => setFormNotes(e.target.value)}
                   placeholder={t("referenceAccounts.fields.notesPlaceholder")}
-                  className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                  className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B] resize-none"
                 />
               </div>
 
@@ -524,7 +524,7 @@ export function ReferenceAccountsView({
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="px-4 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 active:bg-purple-800 rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                    className="px-4 py-1.5 text-xs font-semibold text-white bg-[#A13F5B] hover:bg-[#8D324C] active:bg-[#78283E] rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50"
                   >
                     {isPending ? t("common.saving") : t("recordModal.save")}
                   </button>

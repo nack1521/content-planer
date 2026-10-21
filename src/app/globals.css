@@ -1,16 +1,30 @@
 @import "tailwindcss";
 
+@theme {
+  --color-paper: #FBF7F5;
+  --color-surface: #FFFFFF;
+  --color-ink: #2D2526;
+  --color-secondary: #746365;
+  --color-primary-rose: #A13F5B;
+  --color-primary-hover: #8D324C;
+  --color-primary-active: #78283E;
+  --color-soft-rose: #F5E4E8;
+  --color-soft-rose-hover: #EED8DC;
+  --color-rose-border: #E8CCD2;
+  --color-card-border: #F0E6E3;
+}
+
 @layer base {
   :root {
-    --background: #f8fafc;
-    --foreground: #0f172a;
-    --orchid-50: #faf5ff;
-    --orchid-100: #f3e8ff;
-    --orchid-500: #a855f7;
-    --orchid-600: #9333ea;
-    --orchid-700: #7e22ce;
-    --graphite-900: #0f172a;
-    --graphite-950: #080c14;
+    --background: #FBF7F5;
+    --foreground: #2D2526;
+    --orchid-50: #F5E4E8;
+    --orchid-100: #EED8DC;
+    --orchid-500: #C26880;
+    --orchid-600: #A13F5B;
+    --orchid-700: #8D324C;
+    --graphite-900: #2D2526;
+    --graphite-950: #1F191A;
   }
 
   html {
@@ -32,7 +46,7 @@
 
   /* Accessible focus indicators */
   :focus-visible {
-    outline: 2px solid #9333ea;
+    outline: 2px solid #A13F5B;
     outline-offset: 2px;
   }
 }
@@ -48,10 +62,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #E8CCD2;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #D9AAB6;
 }

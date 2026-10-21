@@ -14,12 +14,12 @@ export function LocaleSwitch({ variant = 'compact', className = '' }: LocaleSwit
 
   return (
     <div
-      className={`inline-flex items-center p-0.5 rounded-lg bg-slate-800/80 border border-slate-700/60 ${className}`}
+      className={`inline-flex items-center p-0.5 rounded-lg bg-[#F5E4E8]/60 border border-[#E8CCD2] ${className}`}
       role="group"
       aria-label={t('common.switchLocale')}
     >
       {variant === 'full' && (
-        <span className="pl-2 pr-1 text-slate-400">
+        <span className="pl-2 pr-1 text-[#746365]">
           <IconGlobe className="w-3.5 h-3.5" size={14} />
         </span>
       )}
@@ -29,8 +29,8 @@ export function LocaleSwitch({ variant = 'compact', className = '' }: LocaleSwit
         onClick={() => setLocale('th')}
         className={`px-2 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
           locale === 'th'
-            ? 'bg-purple-600 text-white shadow-xs'
-            : 'text-slate-400 hover:text-white'
+            ? 'bg-[#A13F5B] text-white shadow-xs'
+            : 'text-[#746365] hover:text-[#2D2526]'
         }`}
         aria-pressed={locale === 'th'}
       >
@@ -42,8 +42,8 @@ export function LocaleSwitch({ variant = 'compact', className = '' }: LocaleSwit
         onClick={() => setLocale('en')}
         className={`px-2 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
           locale === 'en'
-            ? 'bg-purple-600 text-white shadow-xs'
-            : 'text-slate-400 hover:text-white'
+            ? 'bg-[#A13F5B] text-white shadow-xs'
+            : 'text-[#746365] hover:text-[#2D2526]'
         }`}
         aria-pressed={locale === 'en'}
       >

@@ -1,0 +1,39 @@
+{
+  "sequence": "CP-PERF-01-R1 Finite Checks Sequence",
+  "executed_at": "2026-10-20T17:34:43+07:00",
+  "status": "ALL_PASSED",
+  "checks": [
+    {
+      "gate": 1,
+      "name": "Navigation performance regression suite with R1 synthetic loader",
+      "argv": [
+        "node",
+        "--loader",
+        "./tests/test-loader.mjs",
+        "--loader",
+        "./tests/navigation-r1-loader.mjs",
+        "--test",
+        "tests/navigation-performance.test.mjs"
+      ],
+      "command": "node --loader ./tests/test-loader.mjs --loader ./tests/navigation-r1-loader.mjs --test tests/navigation-performance.test.mjs",
+      "stdout_file": "01-tests.stdout.txt",
+      "stderr_file": "01-tests.stderr.txt",
+      "exit_code": 0,
+      "tests_passed": 19,
+      "tests_failed": 0
+    },
+    {
+      "gate": 2,
+      "name": "Git diff whitespace check",
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "command": "git diff --check",
+      "stdout_file": "02-git-diff.stdout.txt",
+      "stderr_file": "02-git-diff.stderr.txt",
+      "exit_code": 0
+    }
+  ]
+}

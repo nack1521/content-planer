@@ -60,14 +60,14 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-between p-4 sm:p-6 text-slate-100">
+    <div className="min-h-screen bg-[#FBF7F5] flex flex-col justify-between p-4 sm:p-6 text-[#2D2526]">
       {/* Top Header: Brand & Language Switch */}
       <header className="flex items-center justify-between w-full max-w-md mx-auto">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-orchid-500 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-purple-900/30">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#8D324C] via-[#A13F5B] to-[#C26880] flex items-center justify-center text-white font-bold text-sm shadow-md shadow-[#A13F5B]/30">
             CP
           </div>
-          <span className="font-bold text-sm text-white tracking-tight">
+          <span className="font-bold text-sm text-[#2D2526] tracking-tight">
             {t('app.title')}
           </span>
         </div>
@@ -76,16 +76,16 @@ export function LoginForm() {
 
       {/* Main Login Card */}
       <main className="w-full max-w-md mx-auto my-auto py-8">
-        <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-6">
+        <div className="bg-white border border-[#F0E6E3] rounded-2xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-6">
           {/* Card Header */}
           <div className="space-y-2 text-center">
-            <span className="inline-block text-[11px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-purple-950/80 text-purple-300 border border-purple-800/60">
+            <span className="inline-block text-[11px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-[#F5E4E8] text-[#A13F5B] border border-[#E8CCD2]">
               {t('auth.ownerOnlyBadge')}
             </span>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#2D2526]">
               {t('auth.loginTitle')}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400">
+            <p className="text-xs sm:text-sm text-[#746365]">
               {t('auth.loginSubtitle')}
             </p>
           </div>
@@ -93,11 +93,11 @@ export function LoginForm() {
           {/* URL Error Feedback */}
           {errorParam === 'unauthorized' && (
             <div
-              className="p-3.5 rounded-xl bg-rose-950/60 border border-rose-800/60 text-rose-200 text-xs sm:text-sm space-y-1"
+              className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm space-y-1"
               role="alert"
             >
               <span className="font-semibold block">{t('auth.unauthorizedTitle')}</span>
-              <p className="text-rose-300/90 text-xs leading-relaxed">
+              <p className="text-rose-700 text-xs leading-relaxed">
                 {t('auth.unauthorizedMessage')}
               </p>
             </div>
@@ -105,7 +105,7 @@ export function LoginForm() {
 
           {errorParam === 'auth_failed' && (
             <div
-              className="p-3.5 rounded-xl bg-amber-950/60 border border-amber-800/60 text-amber-200 text-xs sm:text-sm"
+              className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs sm:text-sm"
               role="alert"
             >
               <span>{t('auth.errorGeneric')}</span>
@@ -115,7 +115,7 @@ export function LoginForm() {
           {/* Form Content: Sent State vs Entry Form */}
           {isSent ? (
             <div className="space-y-5 text-center py-4">
-              <div className="w-14 h-14 rounded-2xl bg-purple-600/20 text-purple-400 border border-purple-500/30 flex items-center justify-center mx-auto shadow-inner">
+              <div className="w-14 h-14 rounded-2xl bg-[#F5E4E8] text-[#A13F5B] border border-[#E8CCD2] flex items-center justify-center mx-auto shadow-inner">
                 <svg
                   className="w-7 h-7"
                   fill="none"
@@ -130,10 +130,10 @@ export function LoginForm() {
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-base sm:text-lg font-bold text-white">
+                <h2 className="text-base sm:text-lg font-bold text-[#2D2526]">
                   {t('auth.magicLinkSentTitle')}
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-sm mx-auto">
+                <p className="text-xs sm:text-sm text-[#746365] leading-relaxed max-w-sm mx-auto">
                   {t('auth.neutralSuccessMessage')}
                 </p>
               </div>
@@ -144,7 +144,7 @@ export function LoginForm() {
                   setIsSent(false);
                   setEmail('');
                 }}
-                className="text-xs sm:text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
+                className="text-xs sm:text-sm font-medium text-[#A13F5B] hover:text-[#8D324C] transition-colors cursor-pointer"
               >
                 {t('auth.backToLogin')}
               </button>
@@ -162,7 +162,7 @@ export function LoginForm() {
                     setClientError(null);
                     setPassword('');
                   }}
-                  className={`min-h-11 rounded-xl border px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${method === 'password' ? 'border-purple-500 bg-purple-600 text-white' : 'border-slate-700 bg-slate-950 text-slate-300 hover:bg-slate-800'}`}
+                  className={`min-h-11 rounded-xl border px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A13F5B] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${method === 'password' ? 'border-[#A13F5B] bg-[#A13F5B] text-white' : 'border-[#E8CCD2] bg-[#FBF7F5] text-[#746365] hover:bg-[#F5E4E8]'}`}
                 >
                   {t('auth.passwordMethod')}
                 </button>
@@ -175,7 +175,7 @@ export function LoginForm() {
                     setClientError(null);
                     setPassword('');
                   }}
-                  className={`min-h-11 rounded-xl border px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${method === 'link' ? 'border-purple-500 bg-purple-600 text-white' : 'border-slate-700 bg-slate-950 text-slate-300 hover:bg-slate-800'}`}
+                  className={`min-h-11 rounded-xl border px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A13F5B] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${method === 'link' ? 'border-[#A13F5B] bg-[#A13F5B] text-white' : 'border-[#E8CCD2] bg-[#FBF7F5] text-[#746365] hover:bg-[#F5E4E8]'}`}
                 >
                   {t('auth.emailLinkMethod')}
                 </button>
@@ -183,7 +183,7 @@ export function LoginForm() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="email-input"
-                  className="block text-sm font-semibold text-slate-300"
+                  className="block text-sm font-semibold text-[#2D2526]"
                 >
                   {t('auth.emailLabel')}
                 </label>
@@ -196,13 +196,13 @@ export function LoginForm() {
                   required
                   autoFocus
                   autoComplete="email"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 text-base focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#9C8B8E] text-[#2D2526] placeholder:text-[#746365] text-base focus:outline-none focus:ring-2 focus:ring-[#A13F5B] focus:border-[#A13F5B] transition-colors"
                 />
               </div>
 
               {method === 'password' && (
                 <div className="space-y-1.5">
-                  <label htmlFor="password-input" className="block text-sm font-semibold text-slate-300">
+                  <label htmlFor="password-input" className="block text-sm font-semibold text-[#2D2526]">
                     {t('auth.passwordLabel')}
                   </label>
                   <input
@@ -212,19 +212,19 @@ export function LoginForm() {
                     onChange={(event) => setPassword(event.target.value)}
                     autoComplete="current-password"
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-base focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#9C8B8E] text-[#2D2526] text-base focus:outline-none focus:ring-2 focus:ring-[#A13F5B] focus:border-[#A13F5B] transition-colors"
                   />
                 </div>
               )}
 
               {clientError && (
-                <p role="alert" className="text-sm text-rose-400 font-medium">{clientError}</p>
+                <p role="alert" className="text-sm text-rose-600 font-medium">{clientError}</p>
               )}
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-purple-600 hover:bg-purple-500 active:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-purple-950 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-[#A13F5B] hover:bg-[#8D324C] active:bg-[#78283E] disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <span>{method === 'password' ? t('auth.signingIn') : t('auth.sending')}</span>
@@ -238,7 +238,7 @@ export function LoginForm() {
       </main>
 
       {/* Footer Notice */}
-      <footer className="w-full max-w-md mx-auto text-center text-xs text-slate-500">
+      <footer className="w-full max-w-md mx-auto text-center text-xs text-[#746365]">
         <span>{t('app.timezoneBadge')}</span>
       </footer>
     </div>

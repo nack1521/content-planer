@@ -1,0 +1,63 @@
+{
+  "task": "CP-COLOR-01-F1F2 same-reviewer preflight",
+  "scope": "F1/F2 only",
+  "candidate_seal": {
+    "incoming_manifest": "/Users/nack/.hermes/workspaces/content-planer/CP-COLOR-01-F1F2/incoming/manifest.json",
+    "sha256": "556c327b852b26b00df0c546a1df48484d57bb70594c5b4c71c6822bed62f0aa",
+    "entries": 250,
+    "current_entry_hashes_verified": 250,
+    "missing": [],
+    "mismatches": [],
+    "correction_baseline_entries": 234,
+    "common_hash_changed_paths": [
+      "src/app/[locale]/settings/page.tsx",
+      "src/components/auth/LoginForm.tsx",
+      "src/components/planner/DiscardConfirmDialog.tsx",
+      "src/components/shell/DesktopSidebar.tsx"
+    ],
+    "baseline_only_mutable_routing_paths": ["HANDOFF.md", "TASKS.md"],
+    "candidate_only_artifacts_and_routing_docs": 18
+  },
+  "four_file_full_line_diff": {
+    "baseline_before_copies_match_received_manifest": true,
+    "changed_lines": 8,
+    "exact_expected_transforms_only": true,
+    "files": {
+      "src/components/auth/LoginForm.tsx": [67, 79, 199, 215],
+      "src/components/shell/DesktopSidebar.tsx": [74, 99],
+      "src/app/[locale]/settings/page.tsx": [203],
+      "src/components/planner/DiscardConfirmDialog.tsx": [101]
+    },
+    "full_line_inspection": "Each changed complete line is exactly the received .before line with only the authorized F1/F2 token substitution; no additional changed lines or line-count differences."
+  },
+  "login_source_and_contrast": {
+    "email": "bg-white; border border-[#9C8B8E]; text-[#2D2526]; placeholder:text-[#746365]; focus:ring-2 focus:ring-[#A13F5B]; focus:border-[#A13F5B]",
+    "password": "bg-white; border border-[#9C8B8E]; text-[#2D2526]; focus:ring-2 focus:ring-[#A13F5B]; focus:border-[#A13F5B]",
+    "placeholder_on_white_ratio": 5.6523727590711355,
+    "resting_border_on_white_ratio": 3.232146487691866,
+    "focus_color_on_white_ratio": 6.217649098435143,
+    "math": "Calculated independently from source hex values using sRGB relative luminance; thresholds compared without rounding."
+  },
+  "retained_scoped_checks": {
+    "implementer_manifest": "docs/handoffs/CP-COLOR-01-F1F2-output/checks/manifest.json",
+    "manifest_sha256": "4fc929f63e748f53c8ed0536405e4bc7ce1f1427e0190317a4880491d99d6bbc",
+    "all_13_listed_artifact_hashes_and_sizes_match": true,
+    "exit_codes": {"verify-f1f2.mjs": 0, "scoped-eslint": 0, "tsc": 0, "git-diff-check": 0},
+    "reviewer_will_not_rerun_scoped_eslint_tsc_or_git_diff_check": true
+  },
+  "frozen_verifier_safety": {
+    "only_imports": ["node:fs", "node:path", "node:crypto"],
+    "network_subprocess_env_or_service_calls_found": false,
+    "filesystem_writes_found": false,
+    "manifest_paths_are_relative_and_have_no_parent_traversal": true,
+    "operation": "Local read-only source/diff and SHA-256 checks plus console assertions; manifest-protected bytes are hashed, not emitted or otherwise inspected.",
+    "frozen_command_to_run_once": "node docs/handoffs/CP-COLOR-01-F1F2-output/checks/verify-f1f2.mjs"
+  },
+  "preservation_preflight": {
+    "original_color_hold_sha256": "6863570179316eff61cbfa76a139d93e628c2c4039a32af47308d93189007079",
+    "HANDOFF.md_sha256": "21bd76752ee8762edc839f8a328c1df8f57b8f100e657cff34f55f3686e8b257",
+    "TASKS.md_sha256": "f4bc6d9e6181a91e01edeb10bc9f2872fe134366b6e8b0ecf1a3a70be130ae3c",
+    "reviewer_checks_directory_was_absent": true
+  },
+  "unverified": ["Rendered/browser behavior", "real-account authentication", "hosted state and owner UAT"]
+}

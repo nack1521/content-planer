@@ -77,7 +77,7 @@ export function PlannerFilters({
             onChange={(e) => onFilterChange({ search: e.target.value })}
             placeholder={t('filters.searchPlaceholder')}
             aria-label={t('filters.searchAriaLabel')}
-            className="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors"
+            className="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#A13F5B]/20 focus:border-[#A13F5B] transition-colors"
           />
           {filters.search && (
             <button
@@ -107,7 +107,7 @@ export function PlannerFilters({
               {showMobileFilters ? t('filters.hideFilters') : t('filters.toggleFilters')}
             </span>
             {activeDropdownCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-bold flex items-center justify-center">
+              <span className="w-4 h-4 rounded-full bg-[#A13F5B] text-white text-[10px] font-bold flex items-center justify-center">
                 {activeDropdownCount}
               </span>
             )}
@@ -123,7 +123,7 @@ export function PlannerFilters({
             <button
               type="button"
               onClick={onResetFilters}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-md font-medium transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-[#A13F5B] bg-[#F5E4E8] hover:bg-[#EED8DC] border border-[#E8CCD2] rounded-md font-medium transition-colors cursor-pointer"
             >
               <IconX className="w-3.5 h-3.5" size={14} />
               <span>{t('filters.reset')}</span>
@@ -150,7 +150,7 @@ export function PlannerFilters({
             id="filter-platform"
             value={filters.platform}
             onChange={(e) => onFilterChange({ platform: e.target.value })}
-            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer"
+            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#A13F5B]/20 focus:border-[#A13F5B] cursor-pointer"
           >
             <option value="all">{t('filters.allPlatforms')}</option>
             {PLATFORMS.map((p) => (
@@ -173,7 +173,7 @@ export function PlannerFilters({
             id="filter-status"
             value={filters.status}
             onChange={(e) => onFilterChange({ status: e.target.value })}
-            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer"
+            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#A13F5B]/20 focus:border-[#A13F5B] cursor-pointer"
           >
             <option value="all">{t('filters.allStatuses')}</option>
             {STATUSES.map((st) => (
@@ -196,7 +196,7 @@ export function PlannerFilters({
             id="filter-pillar"
             value={filters.pillarId}
             onChange={(e) => onFilterChange({ pillarId: e.target.value })}
-            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer"
+            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#A13F5B]/20 focus:border-[#A13F5B] cursor-pointer"
           >
             <option value="all">{t('filters.allPillars')}</option>
             {pillars.map((pil) => (
@@ -219,7 +219,7 @@ export function PlannerFilters({
             id="filter-format"
             value={filters.format}
             onChange={(e) => onFilterChange({ format: e.target.value })}
-            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer"
+            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#A13F5B]/20 focus:border-[#A13F5B] cursor-pointer"
           >
             <option value="all">{t('filters.allFormats')}</option>
             {FORMATS.map((fmt) => (
@@ -242,7 +242,7 @@ export function PlannerFilters({
             id="filter-goal"
             value={filters.goal}
             onChange={(e) => onFilterChange({ goal: e.target.value })}
-            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer"
+            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#A13F5B]/20 focus:border-[#A13F5B] cursor-pointer"
           >
             <option value="all">{t('filters.allGoals')}</option>
             {GOALS.map((g) => (

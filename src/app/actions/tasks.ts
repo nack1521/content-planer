@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { getNavigationReadContext } from "@/utils/supabase/navigationReadContext";
 import type { ProductionTask, TaskStatus, TaskPriority, TaskType } from "@/types/planner";
 import {
   validateUuid,
@@ -43,12 +44,10 @@ interface SupabaseProductionTaskRow {
 
 export async function getTasksAction(): Promise<{ tasks: ProductionTask[]; error?: string | null }> {
   try {
-    const supabase = await createClient();
-    const { data: claimsData } = await supabase.auth.getClaims();
-    const userId = claimsData?.claims?.sub;
+    const { supabase, userId, error: authError } = await getNavigationReadContext();
 
-    if (!userId) {
-      return { tasks: [], error: "unauthorized" };
+    if (!userId || !supabase) {
+      return { tasks: [], error: authError || "unauthorized" };
     }
 
     const { data, error } = await supabase

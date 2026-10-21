@@ -1,0 +1,7 @@
+Start the sole CP-COLOR-01 review in /Users/nack/contentPlaner. Read AGENTS.md, the current HANDOFF.md block, docs/handoffs/CP-COLOR-01.md, CP-COLOR-01-INTAKE.md, CP-COLOR-01-REVIEW.md and the implementation RESULT.md/logs. Verify the color candidate seal; compare with the received COLOR baseline, not Git HEAD.
+
+Review material regressions and the explicit COLORS-ONLY scope: no layout, spacing, typography, shadow geometry, behavior/auth/data changes. Assess the intake's sidebar font/shadow differences and actual changed color/contrast pairs; preserve semantic/platform/pillar exceptions. Do not reopen performance/R1, create a prototype, demand unrelated polish or add browser infrastructure. Rendered/real-account UAT was explicitly deferred.
+
+Run only the five frozen checks once after safety checks; stop on failure/block. Keep baseline fixture warnings distinct from regressions. No fixes, source/test/config edits, installs, real login, network/DB/accounts, server/browser, Git writes or deployment.
+
+Write docs/handoffs/CP-COLOR-01-output/REVIEW.md with PASS/HOLD/BLOCKED, consolidated material findings, actual checks/contrast coverage and evidence limits. Store fresh raw reviewer logs under reviewer-checks/. Return CP-COLOR-01-REVIEW-DONE with verdict/path and STOP. No automatic correction or second review.

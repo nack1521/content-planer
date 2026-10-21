@@ -1,0 +1,7 @@
+Work in /Users/nack/contentPlaner on the current worktree. Implement CP-PERF-01 only. Read AGENTS.md, PROJECT.md, ARCHITECTURE.md, TASKS.md, the current HANDOFF.md block, then docs/handoffs/CP-PERF-01.md; this named follow-up overrides the old first-unchecked milestone.
+
+One bounded pass: add real route-loading and pending-navigation feedback, and safely remove duplicate initial-read authentication within one server request. Preserve proxy/mutation auth, owner isolation, full editor payloads, CRUD, date clearing, sorting/pagination, Thai/English and the current theme. Use installed Next.js docs and the handoff's exact file allowlist, cases and finite checks. Preserve all inherited dirty/untracked work and compare the frozen baseline before editing.
+
+No host/theme migration, schema/data/account changes, real password login, cross-request user/data cache, dependency installs, config changes, Git writes or deployment. Do not run the full test runner or DB/auth/import suites. Use synthetic no-network regression tests; distinguish source/synthetic evidence from actual browser/hosted timing. Do not claim a measured speedup without measurements.
+
+Write docs/handoffs/CP-PERF-01-output/RESULT.md and raw check outputs as specified, update only this task's status in TASKS.md/HANDOFF.md, then return CP-PERF-01-IMPLEMENTATION-DONE or CP-PERF-01-BLOCKED and STOP. No theme work or automatic correction loop; Luna reviews next.

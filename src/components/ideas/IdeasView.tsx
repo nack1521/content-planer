@@ -274,11 +274,11 @@ export function IdeasView({
           aria-controls="tabpanel-unscheduled"
           onClick={() => setActiveTab('unscheduled')}
           onKeyDown={(e) => handleTabKeyDown(e, 0)}
-          className={"pb-3 text-sm font-semibold inline-flex items-center gap-2 border-b-2 transition-colors cursor-pointer " + (activeTab === "unscheduled" ? "border-purple-600 text-purple-600" : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300")}
+          className={"pb-3 text-sm font-semibold inline-flex items-center gap-2 border-b-2 transition-colors cursor-pointer " + (activeTab === "unscheduled" ? "border-[#A13F5B] text-[#A13F5B]" : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300")}
         >
           <span>{t('ideas.tabs.unscheduled')}</span>
           <span
-            className={"text-[11px] px-2 py-0.5 rounded-full font-bold " + (activeTab === "unscheduled" ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-600")}
+            className={"text-[11px] px-2 py-0.5 rounded-full font-bold " + (activeTab === "unscheduled" ? "bg-[#F5E4E8] text-[#A13F5B]" : "bg-slate-100 text-slate-600")}
           >
             {unscheduledIdeas.length}
           </span>
@@ -294,7 +294,7 @@ export function IdeasView({
           aria-controls="tabpanel-reference"
           onClick={() => setActiveTab('referenceAccounts')}
           onKeyDown={(e) => handleTabKeyDown(e, 1)}
-          className={"pb-3 text-sm font-semibold inline-flex items-center gap-2 border-b-2 transition-colors cursor-pointer " + (activeTab === "referenceAccounts" ? "border-purple-600 text-purple-600" : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300")}
+          className={"pb-3 text-sm font-semibold inline-flex items-center gap-2 border-b-2 transition-colors cursor-pointer " + (activeTab === "referenceAccounts" ? "border-[#A13F5B] text-[#A13F5B]" : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300")}
         >
           <span>{t('ideas.tabs.referenceAccounts')}</span>
         </button>
@@ -311,7 +311,7 @@ export function IdeasView({
           {/* Quick Capture Card */}
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
+              <div className="w-7 h-7 rounded-lg bg-[#F5E4E8] text-[#A13F5B] flex items-center justify-center border border-[#E8CCD2]">
                 <IconLightbulb className="w-4 h-4" size={16} />
               </div>
               <h2 className="text-sm font-bold text-slate-900">
@@ -371,7 +371,7 @@ export function IdeasView({
                       if (validationError) setValidationError(null);
                     }}
                     placeholder={t('ideas.quickCapturePlaceholder')}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all disabled:opacity-60"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A13F5B] focus:bg-white transition-all disabled:opacity-60"
                   />
                 </div>
 
@@ -389,7 +389,7 @@ export function IdeasView({
                     id="quick-capture-submit-btn"
                     type="submit"
                     disabled={isCapturing}
-                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#A13F5B] hover:bg-[#8D324C] active:bg-[#78283E] disabled:opacity-50 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
                   >
                     <IconPlus className="w-4 h-4" size={16} />
                     <span>{isCapturing ? t('ideas.capturing') : t('ideas.captureButton')}</span>
@@ -410,7 +410,7 @@ export function IdeasView({
                     disabled={isCapturing}
                     onChange={(e) => setQuickNotes(e.target.value)}
                     placeholder={t('ideas.notesPlaceholder')}
-                    className="w-full px-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all resize-none disabled:opacity-60"
+                    className="w-full px-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A13F5B] focus:bg-white transition-all resize-none disabled:opacity-60"
                   />
                 </div>
               )}
@@ -430,7 +430,7 @@ export function IdeasView({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('ideas.searchPlaceholder')}
-                className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
               />
               {searchQuery && (
                 <button
@@ -470,7 +470,7 @@ export function IdeasView({
           ) : unscheduledIdeas.length === 0 ? (
             /* Empty Unscheduled Ideas State */
             <div className="py-16 px-4 text-center bg-white rounded-2xl border border-slate-200 shadow-xs max-w-lg mx-auto my-6 space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto border border-purple-100">
+              <div className="w-12 h-12 rounded-xl bg-[#F5E4E8] text-[#A13F5B] flex items-center justify-center mx-auto border border-[#E8CCD2]">
                 <IconLightbulb className="w-6 h-6" size={24} />
               </div>
               <h3 className="text-base font-bold text-slate-900">
@@ -489,7 +489,7 @@ export function IdeasView({
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="text-xs text-purple-600 hover:text-purple-700 font-semibold cursor-pointer"
+                className="text-xs text-[#A13F5B] hover:text-[#8D324C] font-semibold cursor-pointer"
               >
                 {t('ideas.clearSearch')}
               </button>
@@ -503,7 +503,7 @@ export function IdeasView({
                 return (
                   <div
                     key={idea.id}
-                    className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs hover:border-purple-200 transition-all flex flex-col justify-between"
+                    className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs hover:border-[#E8CCD2] transition-all flex flex-col justify-between"
                   >
                     <div className="space-y-2.5">
                       {/* Top Badges & Meta */}
@@ -537,7 +537,7 @@ export function IdeasView({
                       <button
                         type="button"
                         onClick={() => handleOpenEdit(idea)}
-                        className="text-xs text-slate-500 hover:text-purple-600 font-medium cursor-pointer"
+                        className="text-xs text-slate-500 hover:text-[#A13F5B] font-medium cursor-pointer"
                       >
                         {t('ideas.editIdea')}
                       </button>
@@ -547,7 +547,7 @@ export function IdeasView({
                         type="button"
                         onClick={() => handleOpenEdit(idea)}
                         aria-label={t('ideas.planIdeaAria', { title: idea.title })}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#A13F5B] hover:bg-[#8D324C] active:bg-[#78283E] text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
                       >
                         <IconCalendar className="w-3.5 h-3.5" size={14} />
                         <span>{t('ideas.planIdea')}</span>

@@ -28,10 +28,10 @@ export function PlannerTable({ items, onSelectItem, sort, onSort }: PlannerTable
         type="button"
         onClick={() => onSort(key)}
         aria-label={t('table.sortBy', { column: label, direction: nextDirection === 'asc' ? t('table.sortAscending') : t('table.sortDescending') })}
-        className="inline-flex min-h-9 items-center gap-1.5 text-left hover:text-purple-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 cursor-pointer"
+        className="inline-flex min-h-9 items-center gap-1.5 text-left hover:text-[#8D324C] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A13F5B] cursor-pointer"
       >
         <span>{label}</span>
-        <span aria-hidden="true" className={active ? 'text-purple-700' : 'text-slate-400'}>
+        <span aria-hidden="true" className={active ? 'text-[#A13F5B]' : 'text-slate-400'}>
           {active ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'}
         </span>
       </button>
@@ -98,7 +98,7 @@ export function PlannerTable({ items, onSelectItem, sort, onSort }: PlannerTable
                   <td className="py-3.5 px-4 align-top">
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-slate-900 line-clamp-1 group-hover:text-purple-600 transition-colors">
+                        <span className="font-semibold text-slate-900 line-clamp-1 group-hover:text-[#A13F5B] transition-colors">
                           {item.title}
                         </span>
                       </div>
@@ -109,7 +109,7 @@ export function PlannerTable({ items, onSelectItem, sort, onSort }: PlannerTable
                           <button
                             type="button"
                             onClick={(e) => handleCopyHook(e, item)}
-                            className="text-slate-400 hover:text-purple-600 p-0.5 rounded transition-colors"
+                            className="text-slate-400 hover:text-[#A13F5B] p-0.5 rounded transition-colors"
                             title={t('table.copyHook')}
                             aria-label={t('table.copyHook')}
                           >
@@ -181,7 +181,7 @@ export function PlannerTable({ items, onSelectItem, sort, onSort }: PlannerTable
                           <span className="font-mono text-xs sm:text-sm">{formattedSchedule}</span>
                         </div>
                         {isToday && (
-                          <span className="inline-flex items-center text-xs font-bold text-purple-700 bg-purple-100/70 px-1.5 py-0.5 rounded">
+                          <span className="inline-flex items-center text-xs font-bold text-[#A13F5B] bg-[#F5E4E8] px-1.5 py-0.5 rounded">
                             {t('common.today')}
                           </span>
                         )}

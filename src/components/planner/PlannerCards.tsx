@@ -66,7 +66,7 @@ export function PlannerCards({ items, onSelectItem }: PlannerCardsProps) {
                 <button
                   type="button"
                   onClick={(e) => handleCopyHook(e, item)}
-                  className="text-slate-400 hover:text-purple-600 p-1 shrink-0 transition-colors"
+                  className="text-slate-400 hover:text-[#A13F5B] p-1 shrink-0 transition-colors"
                   title={t('table.copyHook')}
                   aria-label={t('table.copyHook')}
                 >
@@ -82,7 +82,7 @@ export function PlannerCards({ items, onSelectItem }: PlannerCardsProps) {
             {/* Format & Goal Tags */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
               {item.format && (
-                <span className="px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 font-semibold text-xs border border-purple-100">
+                <span className="px-2.5 py-1 rounded-md bg-[#F5E4E8] text-[#A13F5B] font-semibold text-xs border border-[#E8CCD2]">
                   {t(`format.${item.format}`)}
                 </span>
               )}
@@ -110,7 +110,7 @@ export function PlannerCards({ items, onSelectItem }: PlannerCardsProps) {
                 </div>
 
                 {isToday && (
-                  <span className="inline-flex items-center text-xs font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">
+                  <span className="inline-flex items-center text-xs font-bold text-[#A13F5B] bg-[#F5E4E8] px-2 py-0.5 rounded">
                     {t('common.today')}
                   </span>
                 )}

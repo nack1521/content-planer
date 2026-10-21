@@ -14,7 +14,8 @@
     "settings": "Settings",
     "mainNavAria": "Main navigation",
     "mobileNavAria": "Mobile navigation bar",
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "navigating": "Loading..."
   },
   "summary": {
     "title": "Production Overview",
@@ -209,7 +210,8 @@
     "defaultPlatformsLabel": "Default Platforms",
     "defaultPlatformsDesc": "Platforms selected by default for new content",
     "saved": "Saved",
-    "saveError": "Failed to save settings. Please try again."
+    "saveError": "Failed to save settings. Please try again.",
+    "loading": "Loading settings..."
   },
   "auth": {
     "loginTitle": "Sign In",

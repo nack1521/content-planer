@@ -1,0 +1,89 @@
+{
+  "sequence": "CP-PERF-01 primary review authorized finite checks",
+  "started_at_local": "2026-10-20T17:01:37+07:00",
+  "status": "ALL_PASSED",
+  "checks": [
+    {
+      "gate": 1,
+      "label": "tests",
+      "argv": [
+        "node",
+        "--loader",
+        "./tests/test-loader.mjs",
+        "--test",
+        "tests/navigation-performance.test.mjs",
+        "tests/planner-list.test.mjs",
+        "tests/task-list.test.mjs",
+        "tests/task-content-search.test.mjs",
+        "tests/localization-scanner.test.mjs"
+      ],
+      "stdout_file": "01-tests.stdout.txt",
+      "stderr_file": "01-tests.stderr.txt",
+      "exit_file": "01-tests.exit.txt",
+      "exit_code": 0,
+      "stdout_bytes": 5976,
+      "stderr_bytes": 0
+    },
+    {
+      "gate": 2,
+      "label": "tsc",
+      "argv": [
+        "npx",
+        "--no-install",
+        "tsc",
+        "--noEmit"
+      ],
+      "stdout_file": "02-tsc.stdout.txt",
+      "stderr_file": "02-tsc.stderr.txt",
+      "exit_file": "02-tsc.exit.txt",
+      "exit_code": 0,
+      "stdout_bytes": 0,
+      "stderr_bytes": 154
+    },
+    {
+      "gate": 3,
+      "label": "lint",
+      "argv": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "stdout_file": "03-lint.stdout.txt",
+      "stderr_file": "03-lint.stderr.txt",
+      "exit_file": "03-lint.exit.txt",
+      "exit_code": 0,
+      "stdout_bytes": 40,
+      "stderr_bytes": 154
+    },
+    {
+      "gate": 4,
+      "label": "build",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "stdout_file": "04-build.stdout.txt",
+      "stderr_file": "04-build.stderr.txt",
+      "exit_file": "04-build.exit.txt",
+      "exit_code": 0,
+      "stdout_bytes": 1171,
+      "stderr_bytes": 154
+    },
+    {
+      "gate": 5,
+      "label": "git-diff",
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "stdout_file": "05-git-diff.stdout.txt",
+      "stderr_file": "05-git-diff.stderr.txt",
+      "exit_file": "05-git-diff.exit.txt",
+      "exit_code": 0,
+      "stdout_bytes": 0,
+      "stderr_bytes": 0
+    }
+  ]
+}

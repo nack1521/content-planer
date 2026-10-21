@@ -14,9 +14,9 @@ export function ProgressBar({ progress, className = '', showText = true }: Progr
   if (clamped >= 100) {
     barColor = 'bg-emerald-500';
   } else if (clamped >= 70) {
-    barColor = 'bg-orchid-600';
+    barColor = 'bg-[#8D324C]';
   } else if (clamped >= 30) {
-    barColor = 'bg-purple-500';
+    barColor = 'bg-[#A13F5B]';
   } else if (clamped > 0) {
     barColor = 'bg-sky-500';
   }

@@ -1,0 +1,57 @@
+{
+  "task": "CP-COLOR-01-F1F2 same-reviewer postflight",
+  "verdict": "PASS — F1/F2 only",
+  "incoming_candidate": {
+    "manifest_sha256": "556c327b852b26b00df0c546a1df48484d57bb70594c5b4c71c6822bed62f0aa",
+    "entries": 250,
+    "current_entries_verified": 250,
+    "missing": [],
+    "mismatches": []
+  },
+  "mutable_status_hashes": {
+    "HANDOFF.md": {
+      "preflight": "21bd76752ee8762edc839f8a328c1df8f57b8f100e657cff34f55f3686e8b257",
+      "postflight": "21bd76752ee8762edc839f8a328c1df8f57b8f100e657cff34f55f3686e8b257",
+      "unchanged": true
+    },
+    "TASKS.md": {
+      "preflight": "f4bc6d9e6181a91e01edeb10bc9f2872fe134366b6e8b0ecf1a3a70be130ae3c",
+      "postflight": "f4bc6d9e6181a91e01edeb10bc9f2872fe134366b6e8b0ecf1a3a70be130ae3c",
+      "unchanged": true
+    }
+  },
+  "original_hold": {
+    "path": "docs/handoffs/CP-COLOR-01-output/REVIEW.md",
+    "sha256": "6863570179316eff61cbfa76a139d93e628c2c4039a32af47308d93189007079",
+    "unchanged": true
+  },
+  "review_report": {
+    "path": "docs/handoffs/CP-COLOR-01-F1F2-output/REVIEW.md",
+    "bytes": 5492,
+    "sha256": "9ed43641eebbe604f23c8b299adbbdb7792b759bceff35c56174359059cfded2",
+    "read_back_and_verified": true
+  },
+  "fresh_frozen_verifier": {
+    "command": "node docs/handoffs/CP-COLOR-01-F1F2-output/checks/verify-f1f2.mjs",
+    "runs": 1,
+    "exit": 0,
+    "passes": 14,
+    "failures": 0,
+    "stdout": {"bytes":1527,"sha256":"705e31b25bf4b6863a4d110487cba1ae3fa17ae499c106b3577fcacdd07bda64"},
+    "stderr": {"bytes":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    "exit_file": {"bytes":2,"sha256":"9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"}
+  },
+  "retained_implementer_evidence": {
+    "manifest_sha256": "4fc929f63e748f53c8ed0536405e4bc7ce1f1427e0190317a4880491d99d6bbc",
+    "listed_artifacts_verified": 13,
+    "recorded_gate_exits": [0,0,0,0],
+    "rerun_by_reviewer": false
+  },
+  "reviewer_check_artifacts_before_this_receipt": [
+    "preflight.json",
+    "01-verify.stdout.txt",
+    "01-verify.stderr.txt",
+    "01-verify.exit.txt"
+  ],
+  "this_postflight_receipt_is_not_in_the_incoming_candidate_seal": true
+}

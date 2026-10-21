@@ -76,29 +76,29 @@ export function DiscardConfirmDialog({
         aria-modal="true"
         aria-labelledby="discard-dialog-title"
         aria-describedby="discard-dialog-desc"
-        className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md p-5 space-y-4 animate-in zoom-in-95 duration-100"
+        className="bg-white rounded-xl border border-[#F0E6E3] shadow-2xl w-full max-w-md p-5 space-y-4 animate-in zoom-in-95 duration-100"
       >
         <div className="space-y-1.5">
           <h3
             id="discard-dialog-title"
-            className="text-base font-bold text-slate-900"
+            className="text-base font-bold text-[#2D2526]"
           >
             {t('recordModal.discardTitle')}
           </h3>
           <p
             id="discard-dialog-desc"
-            className="text-xs sm:text-sm text-slate-600 leading-relaxed"
+            className="text-xs sm:text-sm text-[#746365] leading-relaxed"
           >
             {t('recordModal.discardMessage')}
           </p>
         </div>
 
-        <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#F0E6E3]">
           <button
             ref={cancelBtnRef}
             type="button"
             onClick={onCancel}
-            className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 text-xs font-semibold text-[#2D2526] bg-[#FBF7F5] hover:bg-[#F5E4E8] border-[#E8CCD2] rounded-lg transition-colors cursor-pointer"
           >
             {t('recordModal.keepEditing')}
           </button>

@@ -78,7 +78,7 @@ export function LinkCard({
           <span className="text-xs font-semibold text-slate-800 truncate max-w-[200px]" title={fallbackLabel}>
             {fallbackLabel}
           </span>
-          <span className="text-[10px] font-medium text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded">
+          <span className="text-[10px] font-medium text-[#A13F5B] bg-[#F5E4E8] border border-[#E8CCD2] px-1.5 py-0.5 rounded">
             {t(`recordModal.linkTypes.${link.link_type}`)}
           </span>
           {link.platform ? (
@@ -143,7 +143,7 @@ export function LinkCard({
               rel="noopener noreferrer"
               aria-label={t('recordModal.openLink')}
               title={t('recordModal.openLink')}
-              className="p-1 text-purple-700 hover:text-purple-900 hover:bg-purple-50 rounded transition-colors inline-flex items-center"
+              className="p-1 text-[#A13F5B] hover:text-[#8D324C] hover:bg-[#F5E4E8] rounded transition-colors inline-flex items-center"
             >
               <IconExternalLink className="w-3.5 h-3.5" size={14} />
             </a>
@@ -186,7 +186,7 @@ export function LinkCard({
             onChange={(e) =>
               onChange(link.clientId, 'link_type', e.target.value as EditableLinkItem['link_type'])
             }
-            className="w-full px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+            className="w-full px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-[#A13F5B]"
           >
             {ALL_LINK_TYPES.map((lt) => (
               <option key={lt} value={lt}>
@@ -209,7 +209,7 @@ export function LinkCard({
             onChange={(e) =>
               onChange(link.clientId, 'platform', (e.target.value as Platform) || null)
             }
-            className="w-full px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+            className="w-full px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-[#A13F5B]"
           >
             <option value="">{t('recordModal.unassigned')}</option>
             {ALL_PLATFORMS.map((p) => (
@@ -233,7 +233,7 @@ export function LinkCard({
             value={link.label || ''}
             onChange={(e) => onChange(link.clientId, 'label', e.target.value)}
             placeholder={t('recordModal.linkLabelPlaceholder')}
-            className="w-full px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+            className="w-full px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-[#A13F5B]"
           />
         </div>
       </div>
@@ -249,7 +249,7 @@ export function LinkCard({
           value={link.url}
           onChange={(e) => onChange(link.clientId, 'url', e.target.value)}
           placeholder={t('recordModal.linkUrlPlaceholder')}
-          className="w-full px-2.5 py-1 font-mono text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+          className="w-full px-2.5 py-1 font-mono text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-[#A13F5B]"
         />
       </div>
     </div>

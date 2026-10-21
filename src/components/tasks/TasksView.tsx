@@ -384,10 +384,10 @@ export function TasksView({
           column: label,
           direction: nextDirection === "asc" ? t("table.sortAscending") : t("table.sortDescending"),
         })}
-        className="inline-flex min-h-9 items-center gap-1.5 text-left hover:text-purple-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 cursor-pointer"
+        className="inline-flex min-h-9 items-center gap-1.5 text-left hover:text-[#8D324C] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A13F5B] cursor-pointer"
       >
         <span>{label}</span>
-        <span aria-hidden="true" className={active ? "text-purple-700" : "text-slate-400"}>
+        <span aria-hidden="true" className={active ? "text-[#A13F5B]" : "text-slate-400"}>
           {active ? (sort.direction === "asc" ? "↑" : "↓") : "↕"}
         </span>
       </button>
@@ -413,7 +413,7 @@ export function TasksView({
         <button
           type="button"
           onClick={handleOpenCreate}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#A13F5B] hover:bg-[#8D324C] active:bg-[#78283E] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
         >
           <IconPlus className="w-4 h-4" size={16} />
           <span>{t('tasks.newTask')}</span>
@@ -436,7 +436,7 @@ export function TasksView({
               value={search}
               onChange={(e) => { setSearch(e.target.value); setRequestedPage(1); }}
               placeholder={t('filters.searchPlaceholder')}
-              className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
             />
           </div>
 
@@ -449,7 +449,7 @@ export function TasksView({
               id="task-status-filter"
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setRequestedPage(1); }}
-              className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
             >
               <option value="all">{t('tasks.allStatuses')}</option>
               {ALL_STATUSES.map((st) => (
@@ -467,7 +467,7 @@ export function TasksView({
               id="task-priority-filter"
               value={priorityFilter}
               onChange={(e) => { setPriorityFilter(e.target.value); setRequestedPage(1); }}
-              className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
             >
               <option value="all">{t('tasks.allPriorities')}</option>
               {ALL_PRIORITIES.map((pr) => (
@@ -485,7 +485,7 @@ export function TasksView({
               id="task-type-filter"
               value={typeFilter}
               onChange={(e) => { setTypeFilter(e.target.value); setRequestedPage(1); }}
-              className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
             >
               <option value="all">{t('tasks.allTypes')}</option>
               {ALL_TYPES.map((tp) => (
@@ -503,7 +503,7 @@ export function TasksView({
               id="task-due-date-filter"
               value={dueDateFilter}
               onChange={(e) => { setDueDateFilter(e.target.value); setRequestedPage(1); }}
-              className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
             >
               <option value="all">{t('tasks.filterDue.all')}</option>
               <option value="overdue">{t('tasks.filterDue.overdue')}</option>
@@ -547,14 +547,14 @@ export function TasksView({
           <button
             type="button"
             onClick={handleOpenCreate}
-            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-[#A13F5B] hover:bg-[#8D324C] rounded-lg shadow-sm transition-colors cursor-pointer"
           >
             {t('tasks.newTask')}
           </button>
         </div>
       ) : filteredTasks.length === 0 ? (
         <div className="py-16 px-6 text-center bg-white rounded-xl border border-slate-200 shadow-sm max-w-lg mx-auto my-8">
-          <div className="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mx-auto mb-4 border border-purple-100">
+          <div className="w-12 h-12 rounded-full bg-[#F5E4E8] text-[#A13F5B] flex items-center justify-center mx-auto mb-4 border border-[#E8CCD2]">
             <IconSearch className="w-6 h-6" size={24} />
           </div>
           <h3 className="text-base font-semibold text-slate-900 mb-1">
@@ -572,7 +572,7 @@ export function TasksView({
               setTypeFilter('all');
               setDueDateFilter('all');
             }}
-            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-[#A13F5B] bg-[#F5E4E8] hover:bg-[#EED8DC] rounded-lg border border-[#E8CCD2] transition-colors cursor-pointer"
           >
             {t('empty.resetFilterBtn')}
           </button>
@@ -656,7 +656,7 @@ export function TasksView({
                             type="button"
                             onClick={() => handleOpenEdit(task)}
                             aria-label={`${t('tasks.editTask')}: ${task.title}`}
-                            className="block w-full min-h-[44px] h-full px-2 py-3 text-left font-medium text-slate-900 hover:text-purple-600 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-purple-600 transition-colors cursor-pointer"
+                            className="block w-full min-h-[44px] h-full px-2 py-3 text-left font-medium text-slate-900 hover:text-[#A13F5B] hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#A13F5B] transition-colors cursor-pointer"
                           >
                             <span className={`block truncate ${isDone ? 'line-through text-slate-500' : ''}`}>
                               {task.title}
@@ -707,7 +707,7 @@ export function TasksView({
                               type="button"
                               onClick={() => handleOpenContentRecord(task.content_item!.id)}
                               title={t('tasks.openContent')}
-                              className="inline-flex w-full min-w-0 items-center gap-1 text-[11px] text-purple-700 bg-purple-50 hover:bg-purple-100 px-1.5 py-1 rounded-md border border-purple-200 transition-colors cursor-pointer whitespace-nowrap"
+                              className="inline-flex w-full min-w-0 items-center gap-1 text-[11px] text-[#A13F5B] bg-[#F5E4E8] hover:bg-[#EED8DC] px-1.5 py-1 rounded-md border border-[#E8CCD2] transition-colors cursor-pointer whitespace-nowrap"
                             >
                               {task.content_item.source_number ? (
                                 <span className="shrink-0 font-mono font-bold">
@@ -751,7 +751,7 @@ export function TasksView({
                     setSort(resolveMobileTaskSort(event.target.value));
                     setRequestedPage(1);
                   }}
-                  className="w-full min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800 focus-visible:outline-2 focus-visible:outline-purple-600"
+                  className="w-full min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800 focus-visible:outline-2 focus-visible:outline-[#A13F5B]"
                 >
                   <option value="default">{t('table.defaultOrder')}</option>
                   <option value="title">{t('tasks.fields.title')}</option>
@@ -767,7 +767,7 @@ export function TasksView({
                 disabled={!sort}
                 onClick={() => sort && handleSort(sort.key)}
                 aria-label={t('table.reverseSort')}
-                className="min-h-10 min-w-10 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer disabled:cursor-not-allowed"
+                className="min-h-10 min-w-10 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-[#A13F5B] cursor-pointer disabled:cursor-not-allowed"
               >
                 <span aria-hidden="true">{sort?.direction === 'desc' ? '↓' : '↑'}</span>
               </button>
@@ -799,7 +799,7 @@ export function TasksView({
                           type="button"
                           onClick={() => handleOpenEdit(task)}
                           aria-label={`${t('tasks.editTask')}: ${task.title}`}
-                          className="block w-full min-h-[44px] px-2 py-2 text-left font-semibold text-sm text-slate-900 hover:text-purple-600 focus-visible:outline-2 focus-visible:outline-purple-600 transition-colors cursor-pointer"
+                          className="block w-full min-h-[44px] px-2 py-2 text-left font-semibold text-sm text-slate-900 hover:text-[#A13F5B] focus-visible:outline-2 focus-visible:outline-[#A13F5B] transition-colors cursor-pointer"
                         >
                           <span className={isDone ? 'line-through text-slate-500' : ''}>
                             {task.title}
@@ -859,7 +859,7 @@ export function TasksView({
                         <button
                           type="button"
                           onClick={() => handleOpenContentRecord(task.content_item!.id)}
-                          className="inline-flex items-center gap-1 text-xs text-purple-700 bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded border border-purple-200 transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1 text-xs text-[#A13F5B] bg-[#F5E4E8] hover:bg-[#EED8DC] px-2 py-0.5 rounded border border-[#E8CCD2] transition-colors cursor-pointer"
                         >
                           <span className="font-bold">
                             #{task.content_item.source_number || ''}
@@ -884,7 +884,7 @@ export function TasksView({
                   type="button"
                   disabled={pageData.page === 1}
                   onClick={() => handlePageChange(pageData.page - 1)}
-                  className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer disabled:cursor-not-allowed"
+                  className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-[#A13F5B] cursor-pointer disabled:cursor-not-allowed"
                 >
                   {t('tasks.previousPage')}
                 </button>
@@ -892,7 +892,7 @@ export function TasksView({
                   type="button"
                   disabled={pageData.page === pageData.totalPages}
                   onClick={() => handlePageChange(pageData.page + 1)}
-                  className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer disabled:cursor-not-allowed"
+                  className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-[#A13F5B] cursor-pointer disabled:cursor-not-allowed"
                 >
                   {t('tasks.nextPage')}
                 </button>
@@ -948,7 +948,7 @@ export function TasksView({
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder={t('tasks.fields.titlePlaceholder')}
-                  className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
                 />
               </div>
 
@@ -962,7 +962,7 @@ export function TasksView({
                     id="task-status-select"
                     value={formStatus}
                     onChange={(e) => setFormStatus(e.target.value as TaskStatus)}
-                    className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
                   >
                     {ALL_STATUSES.map((st) => (
                       <option key={st} value={st}>
@@ -980,7 +980,7 @@ export function TasksView({
                     id="task-priority-select"
                     value={formPriority}
                     onChange={(e) => setFormPriority(e.target.value as TaskPriority)}
-                    className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
                   >
                     {ALL_PRIORITIES.map((pr) => (
                       <option key={pr} value={pr}>
@@ -1001,7 +1001,7 @@ export function TasksView({
                     id="task-type-select"
                     value={formType}
                     onChange={(e) => setFormType(e.target.value as TaskType)}
-                    className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B]"
                   >
                     {ALL_TYPES.map((tp) => (
                       <option key={tp} value={tp}>
@@ -1020,7 +1020,7 @@ export function TasksView({
                     type="date"
                     value={formDueDate}
                     onChange={(e) => setFormDueDate(e.target.value)}
-                    className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono"
+                    className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B] font-mono"
                   />
                 </div>
               </div>
@@ -1050,7 +1050,7 @@ export function TasksView({
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   placeholder={t('tasks.fields.descPlaceholder')}
-                  className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                  className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A13F5B] resize-none"
                 />
               </div>
 
@@ -1080,7 +1080,7 @@ export function TasksView({
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="px-4 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 active:bg-purple-800 rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                    className="px-4 py-1.5 text-xs font-semibold text-white bg-[#A13F5B] hover:bg-[#8D324C] active:bg-[#78283E] rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50"
                   >
                     {isPending ? t('common.saving') : t('tasks.save')}
                   </button>
